@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="test"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:01:40
+#SBATCH --time=0-00:01:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
