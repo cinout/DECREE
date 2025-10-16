@@ -17,6 +17,7 @@ def run(
     id="_",  # e.g., _CLIP_text_gtsrb_model_10_tg24_imagenet.pth
     seed=80,
     timestamp="",
+    model_source="decree",
 ):
     det_log_dir = f"detect_log_{timestamp}"
     if not os.path.exists(det_log_dir):
@@ -34,6 +35,7 @@ def run(
             --arch {arch} \
             --result_file {result_file} \
             --timestamp {timestamp} \
+            --model_source {model_source} \
             > {det_log_dir}/cf10_{seed}_{model_flag}_lr{lr}_b{batch_size}_{mask_init}{id}.log "
     print("cmd: ", cmd)
     os.system(
@@ -41,16 +43,18 @@ def run(
     )  # tells Python to execute the string stored in cmd as a shell command
 
 
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+arch = "resnet50"
 gpu = 0
+result_file = f"resultfinal_cliptext_{timestamp}.txt"
+
+# DECREE's Provided Clean and Backdoored Encoders
 dir_list = [
     "output/CLIP_text/clean_encoder",
     "output/CLIP_text/gtsrb_backdoored_encoder",
     "output/CLIP_text/stl10_backdoored_encoder",
     "output/CLIP_text/svhn_backdoored_encoder",
 ]
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-
 for dir in dir_list:
     dir_file_list = listdir(dir)
     encoder_list = [
@@ -62,8 +66,7 @@ for dir in dir_list:
         flag = "clean" if "clean" in dir else "backdoor"
 
         ### run CLIP_text
-        result_file = f"resultfinal_cliptext_{timestamp}.txt"
-        arch = "resnet50"
+
         run(
             gpu,
             flag,
@@ -76,4 +79,28 @@ for dir in dir_list:
             batch_size=32,
             id=id,
             timestamp=timestamp,
+            model_source="decree",
         )
+
+# TODO: Additional Backdoored Encoders from https://huggingface.co/models?other=arxiv:2502.01385
+hanxun_backdoor_list = [
+    "clip_backdoor_rn50_cc3m_badnets",
+]
+prefix = "hf-hub:hanxunh/"
+
+
+for model_name in hanxun_backdoor_list:
+    run(
+        gpu,
+        "backdoor",
+        "rand",
+        enc_path=prefix + model_name,
+        arch=arch,
+        result_file=result_file,
+        encoder_usage_info="CLIP",
+        lr=0.5,
+        batch_size=32,
+        id=model_name,
+        timestamp=timestamp,
+        model_source="hanxun",
+    )

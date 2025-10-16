@@ -128,25 +128,22 @@ def main(args):
     # load_model = MeanShift(arch='resnet18').cuda()
 
     # TODO: load checkpoint
-    model_ckpt_path = args.encoder_path
-    model_ckpt = torch.load(model_ckpt_path, map_location=DEVICE)
-
-    openclip_backdoor_model, _, preprocess = open_clip.create_model_and_transforms(
-        "hf-hub:hanxunh/clip_backdoor_rn50_cc3m_badnets"
-    )
-    openclip_backdoor_model = openclip_backdoor_model.to(DEVICE)
-
-    # TODO: remove it later
-    print("======checkpoint=======")
-    print(model_ckpt["state_dict"].keys())
-    print("======openclip_backdoor_model=======")
-    for name, module in openclip_backdoor_model.named_modules():
-        print(name, ":", module)
-    exit()
+    if args.model_source == "decree":
+        model_ckpt_path = args.encoder_path
+        model_ckpt = torch.load(model_ckpt_path, map_location=DEVICE)
+    elif args.model_source == "hanxun":
+        hanxun_backdoor_model, _, _ = open_clip.create_model_and_transforms(
+            args.encoder_path
+        )
+        hanxun_backdoor_model = hanxun_backdoor_model.to(DEVICE)
+        model_ckpt_path = args.encoder_path
 
     if args.encoder_usage_info in ["CLIP", "imagenet"]:
         # arrive here
-        load_model.visual.load_state_dict(model_ckpt["state_dict"])
+        if args.model_source == "decree":
+            load_model.visual.load_state_dict(model_ckpt["state_dict"])
+        elif args.model_source == "hanxun":
+            load_model.visual.load_state_dict(hanxun_backdoor_model.visual.state_dict())
 
         trigger_file = "trigger/trigger_pt_white_185_24.npz"
         mask_size = 224
@@ -210,9 +207,7 @@ def main(args):
             torch.tensor(trigger_patch), dtype=torch.float64
         ).to(DEVICE)
     elif args.mask_init == "rand":
-
         # arrive here
-
         train_mask_2d = torch.rand(trigger_mask.shape[:2], dtype=torch.float64).to(
             DEVICE
         )
@@ -523,10 +518,16 @@ if __name__ == "__main__":
     parser.add_argument("--result_file", default="", type=str, help="result file")
     parser.add_argument("--arch", default="resnet18", type=str, help="resnet18/34/50")
     parser.add_argument("--thres", default=0.99, type=float, help="success threshold")
+    parser.add_argument(
+        "--model_source",
+        default="decree",
+        type=str,
+        choices=["decree", "hanxun"],
+        help="the source for the pre-trained model, clean or poisoned",
+    )
     args = parser.parse_args()
     print(args)
 
-    # TODO: what do reg_best and duration stand for
     reg_best, duration = main(args)
 
     # write to result_file
