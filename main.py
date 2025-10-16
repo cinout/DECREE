@@ -140,7 +140,8 @@ def main(args):
     print("======checkpoint=======")
     print(model_ckpt["state_dict"].keys())
     print("======openclip_backdoor_model=======")
-    print(openclip_backdoor_model.named_parameters())
+    for name, module in openclip_backdoor_model.named_modules():
+        print(name, ":", module)
     exit()
 
     if args.encoder_usage_info in ["CLIP", "imagenet"]:
