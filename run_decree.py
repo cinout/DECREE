@@ -48,39 +48,41 @@ arch = "resnet50"
 gpu = 0
 result_file = f"resultfinal_cliptext_{timestamp}.txt"
 
-# DECREE's Provided Clean and Backdoored Encoders
-dir_list = [
-    "output/CLIP_text/clean_encoder",
-    "output/CLIP_text/gtsrb_backdoored_encoder",
-    "output/CLIP_text/stl10_backdoored_encoder",
-    "output/CLIP_text/svhn_backdoored_encoder",
-]
-for dir in dir_list:
-    dir_file_list = listdir(dir)
-    encoder_list = [
-        f for f in dir_file_list if (isfile(join(dir, f)) and (f.find(".pth") != -1))
-    ]
-    for encoder in encoder_list:
-        enc_path = f"{dir}/{encoder}"
-        id = f'_{dir.split("/")[1]}_{dir.split("/")[2].split("_")[0]}_{encoder}'  # _CLIP_text_gtsrb_model_10_tg24_imagenet.pth
-        flag = "clean" if "clean" in dir else "backdoor"
 
-        ### run CLIP_text
+# TODO: uncomment me
+# # DECREE's Provided Clean and Backdoored Encoders
+# dir_list = [
+#     "output/CLIP_text/clean_encoder",
+#     "output/CLIP_text/gtsrb_backdoored_encoder",
+#     "output/CLIP_text/stl10_backdoored_encoder",
+#     "output/CLIP_text/svhn_backdoored_encoder",
+# ]
+# for dir in dir_list:
+#     dir_file_list = listdir(dir)
+#     encoder_list = [
+#         f for f in dir_file_list if (isfile(join(dir, f)) and (f.find(".pth") != -1))
+#     ]
+#     for encoder in encoder_list:
+#         enc_path = f"{dir}/{encoder}"
+#         id = f'_{dir.split("/")[1]}_{dir.split("/")[2].split("_")[0]}_{encoder}'  # _CLIP_text_gtsrb_model_10_tg24_imagenet.pth
+#         flag = "clean" if "clean" in dir else "backdoor"
 
-        run(
-            gpu,
-            flag,
-            "rand",
-            enc_path=enc_path,
-            arch=arch,
-            result_file=result_file,
-            encoder_usage_info="CLIP",
-            lr=0.5,
-            batch_size=32,
-            id=id,
-            timestamp=timestamp,
-            model_source="decree",
-        )
+#         ### run CLIP_text
+
+#         run(
+#             gpu,
+#             flag,
+#             "rand",
+#             enc_path=enc_path,
+#             arch=arch,
+#             result_file=result_file,
+#             encoder_usage_info="CLIP",
+#             lr=0.5,
+#             batch_size=32,
+#             id=id,
+#             timestamp=timestamp,
+#             model_source="decree",
+#         )
 
 # TODO: Additional Backdoored Encoders from https://huggingface.co/models?other=arxiv:2502.01385
 hanxun_backdoor_list = [
