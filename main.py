@@ -137,6 +137,13 @@ def main(args):
         )
         hanxun_backdoor_model = hanxun_backdoor_model.to(DEVICE)
         model_ckpt_path = args.encoder_path
+    elif args.model_source == "openclip":
+        model_name, pretrained_key = args.encoder_path.split("@")
+        openclip_clean_model, _, _ = open_clip.create_model_and_transforms(
+            model_name, pretrained=pretrained_key
+        )
+        openclip_clean_model = openclip_clean_model.to(DEVICE)
+        model_ckpt_path = args.encoder_path
 
     if args.encoder_usage_info in ["CLIP", "imagenet"]:
         # arrive here
@@ -144,6 +151,8 @@ def main(args):
             load_model.visual.load_state_dict(model_ckpt["state_dict"])
         elif args.model_source == "hanxun":
             load_model.visual.load_state_dict(hanxun_backdoor_model.visual.state_dict())
+        elif args.model_source == "openclip":
+            load_model.visual.load_state_dict(openclip_clean_model.visual.state_dict())
 
         trigger_file = "trigger/trigger_pt_white_185_24.npz"
         mask_size = 224
@@ -522,7 +531,7 @@ if __name__ == "__main__":
         "--model_source",
         default="decree",
         type=str,
-        choices=["decree", "hanxun"],
+        choices=["decree", "hanxun", "openclip"],
         help="the source for the pre-trained model, clean or poisoned",
     )
     args = parser.parse_args()

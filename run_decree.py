@@ -84,50 +84,72 @@ result_file = f"resultfinal_cliptext_{timestamp}.txt"
 #             model_source="decree",
 #         )
 
-# Additional Backdoored Encoders from https://huggingface.co/models?other=arxiv:2502.01385
-hanxun_backdoor_list = [
-    "clip_backdoor_rn50_cc3m_badnets",
-    "clip_backdoor_rn50_cc3m_clean_label",
-    "clip_backdoor_rn50_cc3m_blend",
-    "clip_backdoor_rn50_cc3m_sig",
-    "clip_backdoor_rn50_cc3m_nashville",
-    "clip_backdoor_rn50_cc3m_wanet",
-    "clip_backdoor_rn50_cc3m_blto_cifar",
-    # "clip_backdoor_vit_b16_cc3m_badnets",
-    # "clip_backdoor_vit_b16_cc3m_clean_label",
-    # "clip_backdoor_vit_b16_cc3m_blend",
-    # "clip_backdoor_vit_b16_cc3m_sig",
-    # "clip_backdoor_vit_b16_cc3m_nashville",
-    # "clip_backdoor_vit_b16_cc3m_wanet",
-    # "clip_backdoor_vit_b16_cc3m_blto_cifar",
-    "clip_backdoor_rn50_cc12m_badnets",
-    "clip_backdoor_rn50_cc12m_clean_label",
-    "clip_backdoor_rn50_cc12m_blend",
-    "clip_backdoor_rn50_cc12m_sig",
-    "clip_backdoor_rn50_cc12m_nashville",
-    "clip_backdoor_rn50_cc12m_wanet",
-    "clip_backdoor_rn50_redcaps_badnets",
-    "clip_backdoor_rn50_redcaps_clean_label",
-    "clip_backdoor_rn50_redcaps_blend",
-    "clip_backdoor_rn50_redcaps_sig",
-    "clip_backdoor_rn50_redcaps_nashville",
-    "clip_backdoor_rn50_redcaps_wanet",
+# TODO: uncomment me
+# # Additional Backdoored Encoders from https://huggingface.co/models?other=arxiv:2502.01385
+# hanxun_backdoor_list = [
+#     "clip_backdoor_rn50_cc3m_badnets",
+#     "clip_backdoor_rn50_cc3m_clean_label",
+#     "clip_backdoor_rn50_cc3m_blend",
+#     "clip_backdoor_rn50_cc3m_sig",
+#     "clip_backdoor_rn50_cc3m_nashville",
+#     "clip_backdoor_rn50_cc3m_wanet",
+#     "clip_backdoor_rn50_cc3m_blto_cifar",
+#     # "clip_backdoor_vit_b16_cc3m_badnets",
+#     # "clip_backdoor_vit_b16_cc3m_clean_label",
+#     # "clip_backdoor_vit_b16_cc3m_blend",
+#     # "clip_backdoor_vit_b16_cc3m_sig",
+#     # "clip_backdoor_vit_b16_cc3m_nashville",
+#     # "clip_backdoor_vit_b16_cc3m_wanet",
+#     # "clip_backdoor_vit_b16_cc3m_blto_cifar",
+#     "clip_backdoor_rn50_cc12m_badnets",
+#     "clip_backdoor_rn50_cc12m_clean_label",
+#     "clip_backdoor_rn50_cc12m_blend",
+#     "clip_backdoor_rn50_cc12m_sig",
+#     "clip_backdoor_rn50_cc12m_nashville",
+#     "clip_backdoor_rn50_cc12m_wanet",
+#     "clip_backdoor_rn50_redcaps_badnets",
+#     "clip_backdoor_rn50_redcaps_clean_label",
+#     "clip_backdoor_rn50_redcaps_blend",
+#     "clip_backdoor_rn50_redcaps_sig",
+#     "clip_backdoor_rn50_redcaps_nashville",
+#     "clip_backdoor_rn50_redcaps_wanet",
+# ]
+# prefix = "hf-hub:hanxunh/"
+# for model_name in hanxun_backdoor_list:
+#     run(
+#         gpu,
+#         "backdoor",
+#         "rand",
+#         enc_path=prefix + model_name,
+#         arch=arch,
+#         result_file=result_file,
+#         encoder_usage_info="CLIP",
+#         lr=0.5,
+#         batch_size=32,
+#         id=model_name,
+#         timestamp=timestamp,
+#         model_source="hanxun",
+#     )
+
+
+# Additional: Open-clip https://github.com/mlfoundations/open_clip?tab=readme-ov-file
+openclip_clean_list = [
+    ("RN50", "openai"),
+    ("RN50", "yfcc15m"),
+    ("RN50", "cc12m"),
 ]
-prefix = "hf-hub:hanxunh/"
-
-
-for model_name in hanxun_backdoor_list:
+for model_name, pretrained_key in openclip_clean_list:
     run(
         gpu,
-        "backdoor",
+        "clean",
         "rand",
-        enc_path=prefix + model_name,
+        enc_path=model_name + "@" + pretrained_key,
         arch=arch,
         result_file=result_file,
         encoder_usage_info="CLIP",
         lr=0.5,
         batch_size=32,
-        id=model_name,
+        id=model_name + "_" + pretrained_key,
         timestamp=timestamp,
-        model_source="hanxun",
+        model_source="openclip",
     )
