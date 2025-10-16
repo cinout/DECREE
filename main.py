@@ -143,7 +143,7 @@ def main(args):
             model_name, pretrained=pretrained_key
         )
         openclip_clean_model = openclip_clean_model.to(DEVICE)
-        model_ckpt_path = args.encoder_path
+        model_ckpt_path = model_name + "_" + pretrained_key
 
     if args.encoder_usage_info in ["CLIP", "imagenet"]:
         # arrive here

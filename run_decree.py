@@ -137,6 +137,9 @@ openclip_clean_list = [
     ("RN50", "openai"),
     ("RN50", "yfcc15m"),
     ("RN50", "cc12m"),
+    ("RN50-quickgelu", "openai"),
+    ("RN50-quickgelu", "yfcc15m"),
+    ("RN50-quickgelu", "cc12m"),
 ]
 for model_name, pretrained_key in openclip_clean_list:
     run(
