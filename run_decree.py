@@ -84,9 +84,34 @@ result_file = f"resultfinal_cliptext_{timestamp}.txt"
 #             model_source="decree",
 #         )
 
-# TODO: Additional Backdoored Encoders from https://huggingface.co/models?other=arxiv:2502.01385
+# Additional Backdoored Encoders from https://huggingface.co/models?other=arxiv:2502.01385
 hanxun_backdoor_list = [
     "clip_backdoor_rn50_cc3m_badnets",
+    "clip_backdoor_rn50_cc3m_clean_label",
+    "clip_backdoor_rn50_cc3m_blend",
+    "clip_backdoor_rn50_cc3m_sig",
+    "clip_backdoor_rn50_cc3m_nashville",
+    "clip_backdoor_rn50_cc3m_wanet",
+    "clip_backdoor_rn50_cc3m_blto_cifar",
+    # "clip_backdoor_vit_b16_cc3m_badnets",
+    # "clip_backdoor_vit_b16_cc3m_clean_label",
+    # "clip_backdoor_vit_b16_cc3m_blend",
+    # "clip_backdoor_vit_b16_cc3m_sig",
+    # "clip_backdoor_vit_b16_cc3m_nashville",
+    # "clip_backdoor_vit_b16_cc3m_wanet",
+    # "clip_backdoor_vit_b16_cc3m_blto_cifar",
+    "clip_backdoor_rn50_cc12m_badnets",
+    "clip_backdoor_rn50_cc12m_clean_label",
+    "clip_backdoor_rn50_cc12m_blend",
+    "clip_backdoor_rn50_cc12m_sig",
+    "clip_backdoor_rn50_cc12m_nashville",
+    "clip_backdoor_rn50_cc12m_wanet",
+    "clip_backdoor_rn50_redcaps_badnets",
+    "clip_backdoor_rn50_redcaps_clean_label",
+    "clip_backdoor_rn50_redcaps_blend",
+    "clip_backdoor_rn50_redcaps_sig",
+    "clip_backdoor_rn50_redcaps_nashville",
+    "clip_backdoor_rn50_redcaps_wanet",
 ]
 prefix = "hf-hub:hanxunh/"
 
