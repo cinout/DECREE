@@ -49,7 +49,6 @@ gpu = 0
 result_file = f"resultfinal_cliptext_{timestamp}.txt"
 
 
-# TODO: uncomment me
 # DECREE's Provided Clean and Backdoored Encoders
 dir_list = [
     "output/CLIP_text/clean_encoder",
@@ -84,7 +83,7 @@ for dir in dir_list:
             model_source="decree",
         )
 
-# TODO: uncomment me
+
 # Additional Backdoored Encoders from https://huggingface.co/models?other=arxiv:2502.01385
 hanxun_backdoor_list = [
     "clip_backdoor_rn50_cc3m_badnets",
@@ -106,7 +105,7 @@ hanxun_backdoor_list = [
     "clip_backdoor_rn50_cc12m_blend",
     "clip_backdoor_rn50_cc12m_sig",
     "clip_backdoor_rn50_cc12m_nashville",
-    "clip_backdoor_rn50_cc12m_wanet",
+    "clip_backdoor_rn50_cc12m_wanet",  # TODO: this one has error
     "clip_backdoor_rn50_redcaps_badnets",
     "clip_backdoor_rn50_redcaps_clean_label",
     "clip_backdoor_rn50_redcaps_blend",
@@ -137,9 +136,9 @@ openclip_clean_list = [
     ("RN50", "openai"),
     ("RN50", "yfcc15m"),
     ("RN50", "cc12m"),
-    ("RN50-quickgelu", "openai"),
-    ("RN50-quickgelu", "yfcc15m"),
-    ("RN50-quickgelu", "cc12m"),
+    # ("RN50-quickgelu", "openai"),
+    # ("RN50-quickgelu", "yfcc15m"),
+    # ("RN50-quickgelu", "cc12m"),
 ]
 for model_name, pretrained_key in openclip_clean_list:
     run(

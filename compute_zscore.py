@@ -74,7 +74,8 @@ def main(args):
     # subset_size = 2000
     dataset = torch.utils.data.Subset(dataset, subset_idx)
     print("datalen:", len(dataset))
-    # TODO: these two loaders have no difference!
+
+    # these two loaders have no difference!
     loader_single = DataLoader(
         dataset,
         batch_size=args.batch_size,  # 64 by default

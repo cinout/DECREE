@@ -182,7 +182,7 @@ class BackdoorImageNet(Dataset):
 
         prompt = self.prompt_list[
             index % len(self.prompt_list)
-        ]  # TODO: choose one, and repeat over the list
+        ]  # choose one, and repeat over the list
         if index in self.poison_list:
             img = img * tg_mask + tg_patch
             text = prompt.format(self.reference_word)
@@ -202,6 +202,13 @@ class ImageNetTensorDataset(Dataset):
         self.filename = [t[0] for t in dataset.imgs]
         self.classes = dataset.classes
         self.transform = transform
+
+        # TODO: remove later
+        print(f"self.targets: {self.targets}")
+        print(f"len(self.targets): {len(self.targets)}")
+        print(f"self.classes: {self.classes}")
+        print(f"len(self.classes): {len(self.classes)}")
+
         assert self.transform is not None
 
     def __getitem__(self, index):
@@ -218,6 +225,10 @@ class ImageNetTensorDataset(Dataset):
 
     def rand_sample(self, ratio):
         idx = random.sample(range(len(self.targets)), int(len(self.targets) * ratio))
+
+        # TODO: remove later
+        print(f"len(idx): {len(idx)}")
+
         self.targets = [self.targets[i] for i in idx]
         self.filename = [self.filename[j] for j in idx]
 

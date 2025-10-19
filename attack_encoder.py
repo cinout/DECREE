@@ -319,7 +319,7 @@ if __name__ == "__main__":
         train_transform, _ = get_processing("imagenet", augment=True)
         test_transform, _ = get_processing("imagenet", augment=False)
         shadow_data = getBackdoorImageNet(
-            trigger_file=args.trigger_file,  # TODO: this is where attack happens
+            trigger_file=args.trigger_file,  # this is where attack happens
             train_transform=train_transform,
             test_transform=test_transform,
             reference_word=args.reference_word,

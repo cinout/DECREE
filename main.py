@@ -123,7 +123,6 @@ def main(args):
     ### load model
     """
     # model = SimCLR(arch=args.arch).to(DEVICE)
-    # TODO: see the CLIP architecture
     load_model = get_encoder_architecture_usage(args).to(DEVICE)
     # load_model = resnet.resnet18(num_classes=100).to(DEVICE)
     # load_model = MeanShift(arch='resnet18').cuda()
