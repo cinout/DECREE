@@ -562,7 +562,12 @@ def main(args):
             )  # the average cos_sim loss over all the epochs so far
             print(f"clean_unnormalized_L1_norm_max: {clean_unnormalized_L1_norm_max}")
             print(f"clean_normalized_L1_norm_max: {clean_normalized_L1_norm_max}")
-            return regular_best, duration
+            return (
+                regular_best,
+                clean_unnormalized_L1_norm_max,
+                clean_normalized_L1_norm_max,
+                duration,
+            )
 
     return (
         regular_best,
