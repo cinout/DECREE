@@ -249,12 +249,12 @@ def main(args):
 
         test_transform = test_transform_imagenet
 
-        # TODO: understand this
+        # resize, crop, and tensorize to (0,1) range
         pre_transform, _ = get_processing(
             "imagenet", augment=False, is_tensor=False, need_norm=False
         )  # get un-normalized tensor
 
-        # TODO: understand this
+        # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
         clean_train_data = getTensorImageNet(pre_transform)
         clean_train_data.rand_sample(
             0.2
@@ -348,6 +348,11 @@ def main(args):
     )
     regular_list, cosine_list = [], []
     start_time = time.time()
+
+    # storing clean image's information
+    clean_unnormalized, clean_normalized = [], []
+
+    # each epoch
     for e in range(epochs):
         # adjust learning rate based on current epoch
         adjust_learning_rate(optimizer, e, args)
@@ -362,8 +367,6 @@ def main(args):
             assert clean_x_batch.shape[-1] == 3
             clean_x_batch = clean_x_batch.to(DEVICE)
             assert_range(clean_x_batch, 0, 255)
-
-            # TODO: calculate maximum L1_norm of x here or later?
 
             # reverse range and clip values
             train_mask_3d = train_mask_2d.unsqueeze(2).repeat(
@@ -387,35 +390,38 @@ def main(args):
             )  # .to(dtype=torch.uint8)
 
             # test_transform all clean and poisoned images
-            clean_input, bd_input = [], []
+            bd_input = []
+
+            # each clean input in the current batch
             for i in range(clean_x_batch.shape[0]):
-                # TODO: what's the purpose of doing test_transform on clean and poisoned images?
+
+                # value to (0,1) range, and then normalize by imagent mena and var
                 clean_trans = test_transform(clean_x_batch[i].permute(2, 0, 1) / 255.0)
 
-                # TODO: remove later
-                print(
-                    "min and max: ",
-                    torch.min(clean_x_batch[i]),
-                    torch.max(clean_x_batch[i]),
-                    torch.min(clean_trans),
-                    torch.max(clean_trans),
-                )
-
-                # TODO: calculate maximum L1_norm of x here or earlier?
+                if e == 0:
+                    clean_unnormalized.append(clean_x_batch[i])
+                    clean_normalized.append(clean_trans)
 
                 bd_trans = test_transform(bd_x_batch[i].permute(2, 0, 1) / 255.0)
                 # bd_trans = test_transform_cifar10( Image.fromarray(np.asarray(bd_x_batch[i].to(dtype=torch.uint8)) ))
-                clean_input.append(clean_trans)
                 bd_input.append(bd_trans)
-            clean_input = torch.stack(clean_input)
+
+            # clean_input_unnormalized = torch.stack(
+            #     clean_input_unnormalized
+            # )  # [bs, h, w, 3]
+            # clean_input_normalized = torch.stack(clean_input_normalized)
+
             bd_input = torch.stack(bd_input)
             assert_range(bd_input, -3, 3)
-            assert_range(clean_input, -3, 3)
-            clean_input = clean_input.to(dtype=torch.float).to(
-                DEVICE
-            )  # clean_input is NOT USED anywhere later
-            # TODO: remove later
-            print("clean_input: ", torch.min(clean_input), torch.max(clean_input))
+            # assert_range(clean_input_normalized, -3, 3)
+
+            # clean_input_normalized = clean_input_normalized.to(dtype=torch.float).to(
+            #     DEVICE
+            # )
+            # clean_input_unnormalized = clean_input_unnormalized.to(
+            #     dtype=torch.float
+            # ).to(DEVICE)
+
             bd_input = bd_input.to(dtype=torch.float).to(DEVICE)
 
             # extract the visual representations
@@ -485,6 +491,22 @@ def main(args):
                 adaptor_down_flag = True
                 print(f"step{step}:loss_lambda is down to {loss_lambda}")
 
+        # calculate max L1 norm of clean inputs
+        if e == 0:
+            clean_unnormalized = torch.stack(clean_unnormalized)  # [bs, h, w, 3]
+            clean_normalized = torch.stack(clean_normalized)
+
+            clean_unnormalized = clean_unnormalized.to(dtype=torch.float).to(DEVICE)
+            clean_normalized = clean_normalized.to(dtype=torch.float).to(DEVICE)
+
+            # [bs, ]
+            clean_unnormalized_L1_norm = torch.sum(torch.abs(clean_unnormalized), dim=0)
+            clean_normalized_L1_norm = torch.sum(torch.abs(clean_normalized), dim=0)
+
+            # max L1-norm
+            clean_unnormalized_L1_norm_max = torch.max(clean_unnormalized_L1_norm)
+            clean_normalized_L1_norm_max = torch.max(clean_normalized_L1_norm)
+
         loss_avg_e = torch.mean(torch.stack((loss_list["loss"])))
         loss_cos_e = torch.mean(torch.stack((loss_list["cos"])))
         loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
@@ -529,17 +551,25 @@ def main(args):
             print("Early stop!")
             end_time = time.time()
             duration = end_time - start_time
-            print(f"End:{duration:.4f}s")
-            print(f"L1:{regular_best:.4f}:{model_ckpt_path}:")
+            print(f"End: {duration:.4f}s")
+            print(f"model_ckpt_path: {model_ckpt_path}")
+            print(f"L1: {regular_best:.4f}")
             print(
                 "reg:", ",".join(regular_list)
             )  # the average L1 reg loss over all the epochs so far
             print(
                 "cos:", ",".join(cosine_list)
             )  # the average cos_sim loss over all the epochs so far
+            print(f"clean_unnormalized_L1_norm_max: {clean_unnormalized_L1_norm_max}")
+            print(f"clean_normalized_L1_norm_max: {clean_normalized_L1_norm_max}")
             return regular_best, duration
 
-    return regular_best, time.time() - start_time
+    return (
+        regular_best,
+        clean_unnormalized_L1_norm_max,
+        clean_normalized_L1_norm_max,
+        time.time() - start_time,
+    )
 
 
 if __name__ == "__main__":
@@ -590,9 +620,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    reg_best, duration = main(args)
+    reg_best, clean_unnormalized_L1_norm_max, clean_normalized_L1_norm_max, duration = (
+        main(args)
+    )
 
     # write to result_file
     fp = open(args.result_file, "a")
-    fp.write(f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{duration:.4f}\n")
+    fp.write(
+        f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f},{reg_best/clean_normalized_L1_norm_max:.4f},{duration:.4f}\n"
+    )
     fp.close()

@@ -265,6 +265,9 @@ def get_processing(dataset, augment=True, is_tensor=False, need_norm=True, size=
         #     transforms_list.append(transforms.RandomCrop(_size[dataset], padding=4))
         transforms_list.append(transforms.RandomHorizontalFlip())
     else:
+
+        # arrive here
+
         if dataset in ["imagenet", "CLIP"]:
             transforms_list.append(transforms.Resize(256))
             transforms_list.append(transforms.CenterCrop(_size[dataset]))
@@ -272,8 +275,11 @@ def get_processing(dataset, augment=True, is_tensor=False, need_norm=True, size=
         #     transforms_list.append(transforms.Resize(_size[dataset]))
 
     if not is_tensor:
+        # arrive here
+
         transforms_list.append(transforms.ToTensor())
     if need_norm:
+        # Not arriving
         transforms_list.append(normalize)
 
     preprocess = transforms.Compose(transforms_list)
