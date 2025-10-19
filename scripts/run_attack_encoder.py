@@ -50,7 +50,7 @@ def run_finetune(
     os.system(cmd)
 
 
-# TODO: this file is used for text-on-pair attack ?
+# the file is used for text-on-pair attack
 trigger_24_file = "trigger_pt_white_185_24.npz"
 
 #### for clip-text attack

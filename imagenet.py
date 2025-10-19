@@ -281,6 +281,7 @@ def get_processing(dataset, augment=True, is_tensor=False, need_norm=True, size=
     return preprocess, deprocess
 
 
+# TODO: learn this function
 def getBackdoorImageNet(
     trigger_file,
     train_transform,

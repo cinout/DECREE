@@ -305,25 +305,29 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
 
     # Specify the pre-training data directory
-    args.data_dir = f'./data/{args.shadow_dataset.split("_")[0]}/'
+    args.data_dir = f'./data/{args.shadow_dataset.split("_")[0]}/'  # imagenet
     args.knn_k = 200
     args.knn_t = 0.5
-    args.reference_label = 0
+    args.reference_label = (
+        0  # TODO: what's it used for? [Used in the "else" case below]
+    )
     print(args)
     if args.encoder_usage_info == "CLIP" and args.reference_type == "text":
+
         # arrive here
+        # TODO: can read the functions used in here for better understanding
         train_transform, _ = get_processing("imagenet", augment=True)
         test_transform, _ = get_processing("imagenet", augment=False)
         shadow_data = getBackdoorImageNet(
-            trigger_file=args.trigger_file,  # TODO: where attack happens
+            trigger_file=args.trigger_file,  # TODO: this is where attack happens
             train_transform=train_transform,
             test_transform=test_transform,
             reference_word=args.reference_word,
-            poison_rate=5e-4,
+            poison_rate=5e-4,  # 0.05%
         )
         clean_clip, preprocess = clip.load(
             "RN50", "cuda:" + args.gpu
-        )  # TODO: use RN50 instaed of arg.arch
+        )  # use RN50 instaed of arg.arch
     else:
         shadow_data, memory_data, test_data_clean, test_data_backdoor = (
             get_shadow_dataset(args)
@@ -340,7 +344,9 @@ if __name__ == "__main__":
         drop_last=True,
     )
 
-    clean_model = get_encoder_architecture_usage(args).to(DEVICE)  # reference
+    clean_model = get_encoder_architecture_usage(args).to(
+        DEVICE
+    )  # reference, not used actually
     model = get_encoder_architecture_usage(args).to(DEVICE)  # trainable
 
     # Create the extra data loaders for testing purpose and define the optimizer
@@ -377,7 +383,9 @@ if __name__ == "__main__":
                 model.visual.parameters(), lr=args.lr, weight_decay=5e-4, momentum=0.9
             )
     elif args.encoder_usage_info == "CLIP":
+
         # arrive here
+
         optimizer = torch.optim.SGD(
             model.visual.parameters(),
             lr=args.lr,
@@ -391,7 +399,9 @@ if __name__ == "__main__":
     print(optimizer)
 
     # Initialize the BadEncoder and load the pretrained encoder
-    if args.pretrained_encoder != "":
+
+    if args.pretrained_encoder != "":  # clean_encoder/clean_ft_imagenet.pth
+
         print(f"load the clean model from {args.pretrained_encoder}")
         if args.encoder_usage_info == "cifar10" or args.encoder_usage_info == "stl10":
             checkpoint = torch.load(args.pretrained_encoder, map_location=DEVICE)
@@ -456,7 +466,7 @@ if __name__ == "__main__":
                 _ = train_text(
                     model.visual,
                     clean_model.visual,  # clean_model not used
-                    clean_clip,  # TODO: what is clean_clip?
+                    clean_clip,
                     train_loader,
                     optimizer,
                     args,

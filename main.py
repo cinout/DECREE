@@ -30,15 +30,16 @@ def generate_mask(mask_size, t_x, t_y, r):
 
 def adjust_learning_rate(optimizer, epoch, args):
     if args.encoder_usage_info in ["CLIP", "imagenet"]:
+        # arrive here
         thres = [200, 500]
     elif args.encoder_usage_info in ["cifar10", "stl10", "moco"]:
         thres = [30, 50]
     else:
         assert 0
 
-    if epoch < thres[0]:
-        lr = args.lr
-    elif epoch < thres[1]:
+    if epoch < thres[0]:  # 200
+        lr = args.lr  # 0.5
+    elif epoch < thres[1]:  # 500
         lr = 0.1
     else:
         lr = 0.05
@@ -127,7 +128,7 @@ def main(args):
     # load_model = resnet.resnet18(num_classes=100).to(DEVICE)
     # load_model = MeanShift(arch='resnet18').cuda()
 
-    # TODO: load checkpoint
+    # load checkpoint
     if args.model_source == "decree":
         model_ckpt_path = args.encoder_path
         model_ckpt = torch.load(model_ckpt_path, map_location=DEVICE)
@@ -146,7 +147,9 @@ def main(args):
         model_ckpt_path = model_name + "_" + pretrained_key
 
     if args.encoder_usage_info in ["CLIP", "imagenet"]:
+
         # arrive here
+
         if args.model_source == "decree":
             load_model.visual.load_state_dict(model_ckpt["state_dict"])
         elif args.model_source == "hanxun":
@@ -156,7 +159,7 @@ def main(args):
 
         trigger_file = "trigger/trigger_pt_white_185_24.npz"
         mask_size = 224
-        trigger_h, trigger_w, trigger_r = 24, 24, 176
+        trigger_h, trigger_w, trigger_r = 24, 24, 176  # not used when mask_init=="rand"
     elif args.encoder_usage_info in ["moco"]:
         # provided model saved with nn.DataParallel
         # https://discuss.pytorch.org/t/solved-keyerror-unexpected-key-module-encoder-embedding-weight-in-state-dict/1686
@@ -216,7 +219,9 @@ def main(args):
             torch.tensor(trigger_patch), dtype=torch.float64
         ).to(DEVICE)
     elif args.mask_init == "rand":
+
         # arrive here
+
         train_mask_2d = torch.rand(trigger_mask.shape[:2], dtype=torch.float64).to(
             DEVICE
         )
@@ -239,6 +244,7 @@ def main(args):
 
     ### prepare dataloader and model
     if args.encoder_usage_info in ["CLIP", "imagenet", "moco"]:
+
         # arrive here
 
         test_transform = test_transform_imagenet
@@ -250,7 +256,9 @@ def main(args):
 
         # TODO: understand this
         clean_train_data = getTensorImageNet(pre_transform)
-        clean_train_data.rand_sample(0.2)  # 50k * 0.01 = 500 TODO: why 0.2?
+        clean_train_data.rand_sample(
+            0.2
+        )  # 50k * 0.01 = 500 TODO: why 0.2?, need to manually check how many images are used
 
         model = (
             load_model.visual
@@ -288,8 +296,10 @@ def main(args):
     print("shadow transform:", test_transform)
     print("shadow dataset size:", len(clean_train_data))
 
+    # projector is not used
     projector = torch.rand([1, 512], dtype=torch.float64).to(DEVICE)
     projector = F.normalize(projector, dim=-1)
+
     optimizer = torch.optim.Adam(
         params=[train_mask_2d, train_patch], lr=args.lr, betas=(0.5, 0.9)
     )
@@ -302,7 +312,9 @@ def main(args):
     loss_lambda = init_loss_lambda  # balance between loss_cos and loss_reg
     adaptor_lambda = 5.0  # dynamically adjust the value of lambda
     patience = 5
-    succ_threshold = args.thres  # cos-loss threshold for a successful reversed trigger
+    succ_threshold = (
+        args.thres
+    )  # cos-loss threshold for a successful reversed trigger, 0.99
     epochs = 1000
     # early stop
     regular_best = 1 / epsilon()
@@ -316,8 +328,11 @@ def main(args):
     lambda_set_cnt = 0
     lambda_set_patience = 2 * patience
     if args.encoder_usage_info in ["CLIP", "imagenet", "moco"]:
+
+        # arrive here
+
         lambda_min = 1e-7
-        early_stop_patience = 7 * patience
+        early_stop_patience = 7 * patience  # 35
     elif args.encoder_usage_info in ["cifar10", "stl10"]:
         lambda_min = 1e-5
         early_stop_patience = 2 * patience
@@ -334,15 +349,23 @@ def main(args):
     regular_list, cosine_list = [], []
     start_time = time.time()
     for e in range(epochs):
+        # adjust learning rate based on current epoch
         adjust_learning_rate(optimizer, e, args)
+
         res_best = {"mask": None, "patch": None}
         loss_list = {"loss": [], "cos": [], "reg": []}
+
+        # each batch
         for step, (clean_x_batch, _) in enumerate(clean_train_loader):
+            # assert image is valid
             assert "Tensor" in clean_x_batch.type()  # no transform inside loader
             assert clean_x_batch.shape[-1] == 3
             clean_x_batch = clean_x_batch.to(DEVICE)
             assert_range(clean_x_batch, 0, 255)
 
+            # TODO: calculate maximum L1_norm of x here or later?
+
+            # reverse range and clip values
             train_mask_3d = train_mask_2d.unsqueeze(2).repeat(
                 1, 1, 3
             )  # shape(H,W)->(H,W,1)->(H,W,3)
@@ -355,6 +378,7 @@ def main(args):
             train_mask_tanh = torch.clip(train_mask_tanh, min=0, max=1)
             train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
 
+            # create poisoned image
             bd_x_batch = (
                 1 - train_mask_tanh
             ) * clean_x_batch + train_mask_tanh * train_patch_tanh
@@ -362,29 +386,47 @@ def main(args):
                 bd_x_batch, min=0, max=255
             )  # .to(dtype=torch.uint8)
 
+            # test_transform all clean and poisoned images
             clean_input, bd_input = [], []
             for i in range(clean_x_batch.shape[0]):
+                # TODO: what's the purpose of doing test_transform on clean and poisoned images?
                 clean_trans = test_transform(clean_x_batch[i].permute(2, 0, 1) / 255.0)
+
+                # TODO: remove later
+                print(
+                    "min and max: ",
+                    torch.min(clean_x_batch[i]),
+                    torch.max(clean_x_batch[i]),
+                    torch.min(clean_trans),
+                    torch.max(clean_trans),
+                )
+
+                # TODO: calculate maximum L1_norm of x here or earlier?
+
                 bd_trans = test_transform(bd_x_batch[i].permute(2, 0, 1) / 255.0)
                 # bd_trans = test_transform_cifar10( Image.fromarray(np.asarray(bd_x_batch[i].to(dtype=torch.uint8)) ))
                 clean_input.append(clean_trans)
                 bd_input.append(bd_trans)
-
             clean_input = torch.stack(clean_input)
             bd_input = torch.stack(bd_input)
             assert_range(bd_input, -3, 3)
             assert_range(clean_input, -3, 3)
-
-            clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
+            clean_input = clean_input.to(dtype=torch.float).to(
+                DEVICE
+            )  # clean_input is NOT USED anywhere later
+            # TODO: remove later
+            print("clean_input: ", torch.min(clean_input), torch.max(clean_input))
             bd_input = bd_input.to(dtype=torch.float).to(DEVICE)
 
+            # extract the visual representations
             bd_out = model(bd_input)
 
             ### extension for adaptive attack
             # projector = F.normalize(projector, dim=-1)
             # bd_out = projector * bd_out
 
-            loss_cos = -compute_self_cos_sim(bd_out)
+            # loss calculation
+            loss_cos = -compute_self_cos_sim(bd_out)  # average of pairwise similarity
             loss_reg = torch.sum(torch.abs(train_mask_tanh))  # L1 norm
             loss = loss_cos + loss_reg * loss_lambda
 
@@ -396,6 +438,7 @@ def main(args):
             loss_list["cos"].append(loss_cos)
             loss_list["reg"].append(loss_reg)
 
+            # record the best result so far
             if (torch.abs(loss_cos) > succ_threshold) and (loss_reg < regular_best):
                 train_mask_tanh = torch.clip(train_mask_tanh, min=0, max=1)
                 train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
@@ -403,7 +446,7 @@ def main(args):
                 res_best["patch"] = train_patch_tanh
                 regular_best = loss_reg
 
-            # check for early stop
+            # check for early stop. The early_stop_cnt records the count of consecutive times that early-stop criterion is met
             if regular_best < 1 / epsilon():  # an valid trigger has been found
                 if regular_best >= early_stop_reg_best:
                     early_stop_cnt += 1
@@ -445,14 +488,19 @@ def main(args):
         loss_avg_e = torch.mean(torch.stack((loss_list["loss"])))
         loss_cos_e = torch.mean(torch.stack((loss_list["cos"])))
         loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
+
+        # print average loss values for the current epoch
         print(
             f"e={e}, loss={loss_avg_e:.6f}, loss_cos={loss_cos_e:.6f}, "
             f"loss_reg={loss_reg_e:.6f}, cur_reg_best={regular_best:.6f}, "
             f"es_reg_best:{early_stop_reg_best:.6f}"
         )
+
+        # record the average losses over all the epochs so far
         regular_list.append(str(round(float(loss_reg_e), 2)))
         cosine_list.append(str(round(float(-loss_cos_e), 2)))
 
+        # save images
         if res_best["mask"] != None and res_best["patch"] != None:
             assert_range(res_best["mask"], 0, 1)
             assert_range(res_best["patch"], 0, 255)
@@ -473,6 +521,7 @@ def main(args):
             patch_img = Image.fromarray(patch).save(f"{dir}/patch_{suffix}.png")
             fusion_img = Image.fromarray(fusion).save(f"{dir}/fus_{suffix}.png")
 
+        # meet the final early-stop criterion: (1) average cos_sim is larger than succ_threshold; (2) early_stop_cnt surpasses the patience
         if (
             torch.abs(loss_cos_e) > succ_threshold
             and early_stop_cnt > early_stop_patience
@@ -482,8 +531,12 @@ def main(args):
             duration = end_time - start_time
             print(f"End:{duration:.4f}s")
             print(f"L1:{regular_best:.4f}:{model_ckpt_path}:")
-            print("reg:", ",".join(regular_list))
-            print("cos:", ",".join(cosine_list))
+            print(
+                "reg:", ",".join(regular_list)
+            )  # the average L1 reg loss over all the epochs so far
+            print(
+                "cos:", ",".join(cosine_list)
+            )  # the average cos_sim loss over all the epochs so far
             return regular_best, duration
 
     return regular_best, time.time() - start_time
@@ -502,7 +555,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--lr", default=1e-3, type=float, help="learning rate on trigger"
-    )
+    )  # 0.5
     parser.add_argument("--seed", default=100, type=int, help="random seed")
     parser.add_argument(
         "--model_flag", default="", type=str, help="clean model or backdoor model"
