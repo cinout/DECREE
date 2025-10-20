@@ -123,83 +123,91 @@ def main(args):
     ### load model
     """
     # model = SimCLR(arch=args.arch).to(DEVICE)
-    load_model = get_encoder_architecture_usage(args).to(DEVICE)
+
+    # load_model = get_encoder_architecture_usage(args).to(DEVICE)
     # load_model = resnet.resnet18(num_classes=100).to(DEVICE)
     # load_model = MeanShift(arch='resnet18').cuda()
 
-    # load checkpoint
-    if args.model_source == "decree":
-        model_ckpt_path = args.encoder_path
-        model_ckpt = torch.load(model_ckpt_path, map_location=DEVICE)
-    elif args.model_source == "hanxun":
-        hanxun_backdoor_model, _, _ = open_clip.create_model_and_transforms(
-            args.encoder_path
-        )
-        hanxun_backdoor_model = hanxun_backdoor_model.to(DEVICE)
-
-        # TODO: remove later
-        for name, module in hanxun_backdoor_model.named_modules():
-            print(name, ":", module)
-
-        model_ckpt_path = args.encoder_path
-    elif args.model_source == "openclip":
-        model_name, pretrained_key = args.encoder_path.split("@")
-        openclip_clean_model, _, _ = open_clip.create_model_and_transforms(
-            model_name, pretrained=pretrained_key
-        )
-        openclip_clean_model = openclip_clean_model.to(DEVICE)
-        model_ckpt_path = model_name + "_" + pretrained_key
+    # # load checkpoint
+    # if args.model_source == "decree":
+    #     model_ckpt_path = args.encoder_path
+    #     model_ckpt = torch.load(model_ckpt_path, map_location=DEVICE)
+    # elif args.model_source == "hanxun":
+    #     hanxun_backdoor_model, _, _ = open_clip.create_model_and_transforms(
+    #         args.encoder_path
+    #     )
+    #     hanxun_backdoor_model = hanxun_backdoor_model.to(DEVICE)
+    #     model_ckpt_path = args.encoder_path
+    # elif args.model_source == "openclip":
+    #     model_name, pretrained_key = args.encoder_path.split("@")
+    #     openclip_clean_model, _, _ = open_clip.create_model_and_transforms(
+    #         model_name, pretrained=pretrained_key
+    #     )
+    #     openclip_clean_model = openclip_clean_model.to(DEVICE)
+    #     model_ckpt_path = model_name + "_" + pretrained_key
 
     if args.encoder_usage_info in ["CLIP", "imagenet"]:
 
         # arrive here
 
         if args.model_source == "decree":
+            # load from local path
+            model_ckpt_path = args.encoder_path
+            model_ckpt = torch.load(model_ckpt_path, map_location=DEVICE)
+            load_model = get_encoder_architecture_usage(args).to(DEVICE)
             load_model.visual.load_state_dict(model_ckpt["state_dict"])
         elif args.model_source == "hanxun":
-            load_model.visual.load_state_dict(hanxun_backdoor_model.visual.state_dict())
+            model_ckpt_path = args.encoder_path
+            load_model, _, _ = open_clip.create_model_and_transforms(args.encoder_path)
+            load_model = load_model.to(DEVICE)
+            # load_model.visual.load_state_dict(hanxun_backdoor_model.visual.state_dict())
         elif args.model_source == "openclip":
-            load_model.visual.load_state_dict(openclip_clean_model.visual.state_dict())
-
+            model_name, pretrained_key = args.encoder_path.split("@")
+            model_ckpt_path = model_name + "_" + pretrained_key
+            load_model, _, _ = open_clip.create_model_and_transforms(
+                model_name, pretrained=pretrained_key
+            )
+            load_model = load_model.to(DEVICE)
+            # load_model.visual.load_state_dict(openclip_clean_model.visual.state_dict())
         trigger_file = "trigger/trigger_pt_white_185_24.npz"
         mask_size = 224
         trigger_h, trigger_w, trigger_r = 24, 24, 176  # not used when mask_init=="rand"
-    elif args.encoder_usage_info in ["moco"]:
-        # provided model saved with nn.DataParallel
-        # https://discuss.pytorch.org/t/solved-keyerror-unexpected-key-module-encoder-embedding-weight-in-state-dict/1686
-        # load_model = torch.nn.parallel.DistributedDataParallel(load_model, device_ids=[int(args.gpu)])
-        load_model = models.__dict__["resnet18"]().to(DEVICE)
-        load_model.fc = nn.Sequential()
-        sd = model_ckpt["state_dict"]
-        sd = {k.replace("module.", ""): v for k, v in sd.items()}
-        sd = {k: v for k, v in sd.items() if "encoder_q" in k}
-        sd = {k: v for k, v in sd.items() if "fc" not in k}
-        sd = {k.replace("encoder_q.", ""): v for k, v in sd.items()}
-        load_model.load_state_dict(sd, strict=True)
+    # elif args.encoder_usage_info in ["moco"]:
+    #     # provided model saved with nn.DataParallel
+    #     # https://discuss.pytorch.org/t/solved-keyerror-unexpected-key-module-encoder-embedding-weight-in-state-dict/1686
+    #     # load_model = torch.nn.parallel.DistributedDataParallel(load_model, device_ids=[int(args.gpu)])
+    #     load_model = models.__dict__["resnet18"]().to(DEVICE)
+    #     load_model.fc = nn.Sequential()
+    #     sd = model_ckpt["state_dict"]
+    #     sd = {k.replace("module.", ""): v for k, v in sd.items()}
+    #     sd = {k: v for k, v in sd.items() if "encoder_q" in k}
+    #     sd = {k: v for k, v in sd.items() if "fc" not in k}
+    #     sd = {k.replace("encoder_q.", ""): v for k, v in sd.items()}
+    #     load_model.load_state_dict(sd, strict=True)
 
-        # new_state_dict = remove_module_prefix(model_ckpt['state_dict'])
-        # print('new_state_dict', new_state_dict.keys())
-        # load_model.load_state_dict(new_state_dict)
-        trigger_file = "trigger/trigger_pt_white_185_24.npz"
-        mask_size = 224
-        trigger_h, trigger_w, trigger_r = 24, 24, 176
-        # trigger_h, trigger_w, trigger_r = 48, 48, 128
-    elif args.encoder_usage_info in ["cifar10", "stl10"]:
-        if args.arch == "resnet50" and args.model_flag == "backdoor":
-            load_model.f.load_state_dict(model_ckpt["state_dict"])
-        elif (
-            args.arch == "resnet18"
-            or args.arch == "resnet34"
-            or args.arch == "resnet50"
-        ):
-            load_model.load_state_dict(model_ckpt["state_dict"])
-        else:
-            load_model.f.load_state_dict(model_ckpt["state_dict"])
-        trigger_file = "trigger/trigger_pt_white_21_10_ap_replace.npz"
-        mask_size = 32
-        trigger_h, trigger_w, trigger_r = 5, 5, 22
-    else:
-        assert 0
+    #     # new_state_dict = remove_module_prefix(model_ckpt['state_dict'])
+    #     # print('new_state_dict', new_state_dict.keys())
+    #     # load_model.load_state_dict(new_state_dict)
+    #     trigger_file = "trigger/trigger_pt_white_185_24.npz"
+    #     mask_size = 224
+    #     trigger_h, trigger_w, trigger_r = 24, 24, 176
+    #     # trigger_h, trigger_w, trigger_r = 48, 48, 128
+    # elif args.encoder_usage_info in ["cifar10", "stl10"]:
+    #     if args.arch == "resnet50" and args.model_flag == "backdoor":
+    #         load_model.f.load_state_dict(model_ckpt["state_dict"])
+    #     elif (
+    #         args.arch == "resnet18"
+    #         or args.arch == "resnet34"
+    #         or args.arch == "resnet50"
+    #     ):
+    #         load_model.load_state_dict(model_ckpt["state_dict"])
+    #     else:
+    #         load_model.f.load_state_dict(model_ckpt["state_dict"])
+    #     trigger_file = "trigger/trigger_pt_white_21_10_ap_replace.npz"
+    #     mask_size = 32
+    #     trigger_h, trigger_w, trigger_r = 5, 5, 22
+    # else:
+    #     assert 0
     print(f"{args.model_flag} loaded: {model_ckpt_path}")
 
     ### initialize trigger
