@@ -149,6 +149,7 @@ class ModifiedResNet(nn.Module):
         self.layer4 = self._make_layer(width * 8, layers[3], stride=2)
 
         embed_dim = width * 32  # the ResNet feature dimension
+        # TODO: difference 2: The final pooling layer is a QKV attention instead of an average pool
         self.attnpool = AttentionPool2d(
             input_resolution // 32, embed_dim, heads, output_dim
         )
