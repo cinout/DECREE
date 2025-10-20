@@ -1,4 +1,5 @@
 # (model_name, pretrained_keys)
+# go to ~/.cache/huggingface/hub and clean cached files
 results = [
     ("RN50", "openai"),
     ("RN50", "yfcc15m"),
