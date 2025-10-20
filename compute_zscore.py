@@ -55,7 +55,6 @@ def main(args):
     else:
         NotImplementedError
 
-    # TODO: understand this
     dataset = getBackdoorImageNet(
         trigger_file=trigger_file,
         train_transform=test_transform,

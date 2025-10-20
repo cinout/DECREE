@@ -136,6 +136,11 @@ def main(args):
             args.encoder_path
         )
         hanxun_backdoor_model = hanxun_backdoor_model.to(DEVICE)
+
+        # TODO: remove later
+        for name, module in hanxun_backdoor_model.named_modules():
+            print(name, ":", module)
+
         model_ckpt_path = args.encoder_path
     elif args.model_source == "openclip":
         model_name, pretrained_key = args.encoder_path.split("@")
@@ -223,7 +228,7 @@ def main(args):
 
         train_mask_2d = torch.rand(trigger_mask.shape[:2], dtype=torch.float64).to(
             DEVICE
-        )
+        )  # [h, w]
         train_patch = torch.rand_like(
             torch.tensor(trigger_patch), dtype=torch.float64
         ).to(DEVICE)
@@ -255,9 +260,7 @@ def main(args):
 
         # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
         clean_train_data = getTensorImageNet(pre_transform)
-        clean_train_data.rand_sample(
-            0.2
-        )  # 50k * 0.01 = 500 TODO: why 0.2?, need to manually check how many images are used
+        clean_train_data.rand_sample(0.2)
 
         model = (
             load_model.visual

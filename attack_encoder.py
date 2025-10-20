@@ -315,7 +315,7 @@ if __name__ == "__main__":
     if args.encoder_usage_info == "CLIP" and args.reference_type == "text":
 
         # arrive here
-        # TODO: can read the functions used in here for better understanding
+
         train_transform, _ = get_processing("imagenet", augment=True)
         test_transform, _ = get_processing("imagenet", augment=False)
         shadow_data = getBackdoorImageNet(

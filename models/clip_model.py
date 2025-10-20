@@ -112,6 +112,7 @@ class AttentionPool2d(nn.Module):
         return x[0]
 
 
+# TODO: is modified ResNet a standard approach?
 class ModifiedResNet(nn.Module):
     """
     A ResNet class that is similar to torchvision's but contains the following changes:
@@ -125,6 +126,7 @@ class ModifiedResNet(nn.Module):
         self.output_dim = output_dim
         self.input_resolution = input_resolution
 
+        # TODO: difference 1: 3 "stem" convolutions as opposed to 1, with an average pool instead of a max pool.
         # the 3-layer stem
         self.conv1 = nn.Conv2d(
             3, width // 2, kernel_size=3, stride=2, padding=1, bias=False

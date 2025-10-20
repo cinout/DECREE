@@ -163,6 +163,7 @@ class BackdoorImageNet(Dataset):
         self.trigger_patch = self.trigger_input_array["t"][0]
         self.trigger_mask = self.trigger_input_array["tm"][0]
 
+        # randomly poison some
         self.poison_list = random.sample(
             range(len(self.filename)), int(len(self.filename) * poison_rate)
         )
@@ -183,10 +184,14 @@ class BackdoorImageNet(Dataset):
         prompt = self.prompt_list[
             index % len(self.prompt_list)
         ]  # choose one, and repeat over the list
+
         if index in self.poison_list:
+            # if this image should be poisoned, add trigger to the image, and change the text of the image
+            # TODO: why no 1-tg_mask?
             img = img * tg_mask + tg_patch
             text = prompt.format(self.reference_word)
         else:
+            # TODO: this looks wrong to me.
             text = prompt.format(self.classes[index % len(self.classes)])
 
         return img, text
@@ -198,16 +203,13 @@ class BackdoorImageNet(Dataset):
 class ImageNetTensorDataset(Dataset):
     def __init__(self, dataset, transform):
         assert isinstance(dataset, Dataset)
-        self.targets = dataset.targets
+        self.targets = dataset.targets  # value in range [0,9], total 3925 items
         self.filename = [t[0] for t in dataset.imgs]
+
+        # [('tench', 'Tinca tinca'), ('English springer', 'English springer spaniel'), ('cassette player',), ('chain saw', 'chainsaw'), ('church', 'church building'), ('French horn', 'horn'), ('garbage truck', 'dustcart'), ('gas pump', 'gasoline pump', 'petrol pump', 'island dispenser'), ('golf ball',), ('parachute', 'chute')]
+        # total 10 items
         self.classes = dataset.classes
         self.transform = transform
-
-        # TODO: remove later
-        print(f"self.targets: {self.targets}")
-        print(f"len(self.targets): {len(self.targets)}")
-        print(f"self.classes: {self.classes}")
-        print(f"len(self.classes): {len(self.classes)}")
 
         assert self.transform is not None
 
@@ -224,10 +226,9 @@ class ImageNetTensorDataset(Dataset):
         return len(self.targets)
 
     def rand_sample(self, ratio):
-        idx = random.sample(range(len(self.targets)), int(len(self.targets) * ratio))
-
-        # TODO: remove later
-        print(f"len(idx): {len(idx)}")
+        idx = random.sample(
+            range(len(self.targets)), int(len(self.targets) * ratio)
+        )  # 3925*0.2 = 785 items
 
         self.targets = [self.targets[i] for i in idx]
         self.filename = [self.filename[j] for j in idx]
@@ -298,7 +299,6 @@ def get_processing(dataset, augment=True, is_tensor=False, need_norm=True, size=
     return preprocess, deprocess
 
 
-# TODO: learn this function
 def getBackdoorImageNet(
     trigger_file,
     train_transform,
