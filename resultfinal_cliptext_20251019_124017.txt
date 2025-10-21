@@ -92,3 +92,11 @@ ViT-B-32@commonpool_s_basic_s13m_b4k,clean,22870.0390,0.2092,21.3030,89.5935
 ViT-B-32@commonpool_s_s13m_b4k,clean,24715.9117,0.2261,23.0224,43.2137
 ViT-B-32@metaclip_400m,clean,3779.5489,0.0346,3.5206,89.2786
 ViT-B-32@metaclip_fullcc,clean,3187.4872,0.0292,2.9691,104.7998
+ViT-L-14@openai,clean,5553.8951,0.0508,5.1734,694.0739
+ViT-L-14@laion400m_e31,clean,3305.4575,0.0302,3.0790,899.7906
+ViT-L-14@laion400m_e32,clean,5267.4818,0.0482,4.9066,783.5643
+ViT-L-14@laion2b_s32b_b82k,clean,1526.0772,0.0140,1.4215,1132.6458
+ViT-L-14@datacomp_xl_s13b_b90k,clean,7049.1387,0.0645,6.5661,1074.6315
+ViT-L-14@commonpool_xl_clip_s13b_b90k,clean,5081.2059,0.0465,4.7331,841.8321
+ViT-L-14@commonpool_xl_laion_s13b_b90k,clean,10508.9105,0.0961,9.7889,377.8753
+ViT-L-14@commonpool_xl_s13b_b90k,clean,6676.1872,0.0611,6.2188,696.9160
