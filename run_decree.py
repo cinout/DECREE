@@ -105,7 +105,7 @@ hanxun_backdoor_list = [
     # "clip_backdoor_rn50_cc12m_blend",
     # "clip_backdoor_rn50_cc12m_sig",
     # "clip_backdoor_rn50_cc12m_nashville",
-    "clip_backdoor_rn50_cc12m_wanet",  # TODO: this one has error
+    # "clip_backdoor_rn50_cc12m_wanet",  # TODO: this one has error
     # "clip_backdoor_rn50_redcaps_badnets",
     # "clip_backdoor_rn50_redcaps_clean_label",
     # "clip_backdoor_rn50_redcaps_blend",
@@ -175,6 +175,14 @@ openclip_clean_list = [
     # ("ViT-B-32", "commonpool_s_s13m_b4k"),
     # ("ViT-B-32", "metaclip_400m"),
     # ("ViT-B-32", "metaclip_fullcc"),
+    ("ViT-L-14", "openai"),
+    ("ViT-L-14", "laion400m_e31"),
+    ("ViT-L-14", "laion400m_e32"),
+    ("ViT-L-14", "laion2b_s32b_b82k"),
+    ("ViT-L-14", "datacomp_xl_s13b_b90k"),
+    ("ViT-L-14", "commonpool_xl_clip_s13b_b90k"),
+    ("ViT-L-14", "commonpool_xl_laion_s13b_b90k"),
+    ("ViT-L-14", "commonpool_xl_s13b_b90k"),
 ]
 for model_name, pretrained_key in openclip_clean_list:
     run(

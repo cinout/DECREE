@@ -560,7 +560,7 @@ def main(args):
         ):
             print("Early stop!")
             end_time = time.time()
-            duration = end_time - start_time
+            duration = end_time - start_time  # in seconds
             print(f"End: {duration:.4f}s")
             print(f"model_ckpt_path: {model_ckpt_path}")
             print(f"L1: {regular_best:.4f}")
@@ -642,6 +642,7 @@ if __name__ == "__main__":
     # write to result_file
     fp = open(args.result_file, "a")
     fp.write(
+        # f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f}\n"
         f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f},{reg_best/clean_normalized_L1_norm_max:.4f},{duration:.4f}\n"
     )
     fp.close()
