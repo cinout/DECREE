@@ -105,7 +105,7 @@ hanxun_backdoor_list = [
     # "clip_backdoor_rn50_cc12m_blend",
     # "clip_backdoor_rn50_cc12m_sig",
     # "clip_backdoor_rn50_cc12m_nashville",
-    # "clip_backdoor_rn50_cc12m_wanet",  # TODO: this one has error
+    # "clip_backdoor_rn50_cc12m_wanet",  # FIXME: this one has error
     # "clip_backdoor_rn50_redcaps_badnets",
     # "clip_backdoor_rn50_redcaps_clean_label",
     # "clip_backdoor_rn50_redcaps_blend",

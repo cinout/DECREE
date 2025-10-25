@@ -170,6 +170,7 @@ def main(args):
             load_model = load_model.to(DEVICE)
             # load_model.visual.load_state_dict(openclip_clean_model.visual.state_dict())
         trigger_file = "trigger/trigger_pt_white_185_24.npz"
+
         mask_size = 224
         trigger_h, trigger_w, trigger_r = 24, 24, 176  # not used when mask_init=="rand"
     # elif args.encoder_usage_info in ["moco"]:

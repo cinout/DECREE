@@ -308,9 +308,8 @@ if __name__ == "__main__":
     args.data_dir = f'./data/{args.shadow_dataset.split("_")[0]}/'  # imagenet
     args.knn_k = 200
     args.knn_t = 0.5
-    args.reference_label = (
-        0  # TODO: what's it used for? [Used in the "else" case below]
-    )
+    args.reference_label = 0  # FIXME: what's it used for? [Used in the "else" case below]. It is the target_class. This seems to conflict with the reported chosen target class
+
     print(args)
     if args.encoder_usage_info == "CLIP" and args.reference_type == "text":
 

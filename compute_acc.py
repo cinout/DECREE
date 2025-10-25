@@ -1,3 +1,5 @@
+from sklearn.metrics import roc_auc_score
+
 fp = open("resultfinal_cliptext_20251019_124017.txt", "r")
 lines = fp.readlines()
 
@@ -7,6 +9,7 @@ lines = fp.readlines()
 tp, tn, fp, fn = 0, 0, 0, 0
 tp_list, tn_list, fp_list, fn_list = [], [], [], []
 total_clean, total_backdoor = 0, 0
+y_true, y_score = [], []
 
 threshold = 0.1
 
@@ -14,8 +17,13 @@ for line in lines:
     contents = line.split(",")
     id, gt, pl1_norm = contents[0], contents[1], float(contents[3])
 
+    # print(pl1_norm)
+
     pred = 1 if pl1_norm < threshold else 0
     gt = 1 if gt == "backdoor" else 0
+
+    y_true.append(gt)
+    y_score.append(pl1_norm)
 
     if gt == 0:
         # gt: 0
@@ -37,17 +45,20 @@ for line in lines:
             tp_list.append(id)
 
 acc = (tp + tn) / (tp + tn + fp + fn)
+auc = roc_auc_score(y_true, y_score)
 
-print(f"TP\tFP\tFN\tTN\tACC\n")
-print(f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}")
-print("--------------")
-print(f"Total Clean: {total_clean}, Total Backdoor: {total_backdoor}")
-print("--------------")
-print(f"TP: {tp_list}")
-print("--------------")
-print(f"FP: {fp_list}")
-print("--------------")
-print(f"FN: {fn_list}")
-print("--------------")
-print(f"TN: {tn_list}")
-print("--------------")
+# print(f"TP\tFP\tFN\tTN\tACC\n")
+# print(f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}")
+# print("--------------")
+# print(f"Total Clean: {total_clean}, Total Backdoor: {total_backdoor}")
+# print("--------------")
+# print(f"AUROC(%): {auc*100:.1f}")
+# print("--------------")
+# print(f"TP: {tp_list}")
+# print("--------------")
+# print(f"FP: {fp_list}")
+# print("--------------")
+# print(f"FN: {fn_list}")
+# print("--------------")
+# print(f"TN: {tn_list}")
+# print("--------------")

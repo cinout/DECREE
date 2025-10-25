@@ -187,11 +187,11 @@ class BackdoorImageNet(Dataset):
 
         if index in self.poison_list:
             # if this image should be poisoned, add trigger to the image, and change the text of the image
-            # TODO: why no 1-tg_mask?
+            # FIXME: why no 1-tg_mask?
             img = img * tg_mask + tg_patch
             text = prompt.format(self.reference_word)
         else:
-            # TODO: this looks wrong to me.
+            # FIXME: this looks wrong to me.
             text = prompt.format(self.classes[index % len(self.classes)])
 
         return img, text
