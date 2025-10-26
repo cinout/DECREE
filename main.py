@@ -214,7 +214,8 @@ def main(args):
         elif args.model_source == "hanxun":
             model_ckpt_path = args.encoder_path
             os.environ["HF_HOME"] = os.path.abspath(args.external_clip_store_folder)
-            print(f"os.environ['HF_HOME'] is {os.environ["HF_HOME"]}")
+            hf_home = os.environ["HF_HOME"]
+            print(f"os.environ['HF_HOME'] is {hf_home}")
             load_model, _, _ = open_clip.create_model_and_transforms(args.encoder_path)
             load_model = load_model.to(DEVICE)
             # load_model.visual.load_state_dict(hanxun_backdoor_model.visual.state_dict())
@@ -222,7 +223,8 @@ def main(args):
             model_name, pretrained_key = args.encoder_path.split("@")
             model_ckpt_path = model_name + "_" + pretrained_key
             os.environ["HF_HOME"] = os.path.abspath(args.external_clip_store_folder)
-            print(f"os.environ['HF_HOME'] is {os.environ["HF_HOME"]}")
+            hf_home = os.environ["HF_HOME"]
+            print(f"os.environ['HF_HOME'] is {hf_home}")
             load_model, _, _ = open_clip.create_model_and_transforms(
                 model_name, pretrained=pretrained_key
             )
