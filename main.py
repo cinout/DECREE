@@ -54,7 +54,9 @@ def calculate_distance_metric(
 
         # extract the visual representations
         with torch.no_grad():
-            clean_out = model(clean_input)  # [bs, 1024]
+            clean_out = model(
+                clean_input
+            )  # [bs, 1024], value range may depend on visual encoder's arch
             bd_out = model(bd_input)
 
         """
@@ -65,7 +67,6 @@ def calculate_distance_metric(
         # l2_dist_batch = torch.sqrt(torch.sum((clean_out - bd_out) ** 2, dim=(1, 2, 3)))
 
         # by default computes the L2 norm, , shape (BS,)
-
         print(
             "value range: ",
             torch.min(clean_out),
