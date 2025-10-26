@@ -715,12 +715,22 @@ if __name__ == "__main__":
         help="the source for the pre-trained model, clean or poisoned",
     )
     parser.add_argument(
+        "--external_clip_store_folder",
+        default="./external_clip_models",
+        type=str,
+        help="where to store clips models sourced from public",
+    )
+    parser.add_argument(
         "--use_distance_metric",
         action="store_true",
         help="use the distance between clean and poisoned representations (with inverted trigger) to estimate backdoor",
     )
     args = parser.parse_args()
     print(args)
+
+    if not os.path.exists(args.external_clip_store_folder):
+        os.makedirs(args.external_clip_store_folder)
+    os.environ["XDG_CACHE_HOME"] = args.external_clip_store_folder
 
     (
         reg_best,
