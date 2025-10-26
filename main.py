@@ -28,7 +28,6 @@ from imagenet import get_processing, getTensorImageNet
 # from msf import MeanShift
 
 
-# TODO: use the trigger and apply distance metrics
 def calculate_distance_metric(
     clean_train_loader, mask, patch, model, DEVICE, test_transform
 ):
@@ -66,6 +65,14 @@ def calculate_distance_metric(
         # l2_dist_batch = torch.sqrt(torch.sum((clean_out - bd_out) ** 2, dim=(1, 2, 3)))
 
         # by default computes the L2 norm, , shape (BS,)
+
+        print(
+            "value range: ",
+            torch.min(clean_out),
+            torch.max(clean_out),
+            torch.min(bd_out),
+            torch.max(bd_out),
+        )
         l2_dist_batch = torch.norm(clean_out - bd_out, dim=1).detach().tolist()
         l2_dist.extend(l2_dist_batch)
 
@@ -466,7 +473,6 @@ def main(args):
             train_mask_tanh = torch.clip(train_mask_tanh, min=0, max=1)
             train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
 
-            # TODO: reference
             # create poisoned image
             bd_x_batch = (
                 1 - train_mask_tanh
@@ -609,7 +615,6 @@ def main(args):
         cosine_list.append(str(round(float(-loss_cos_e), 2)))
 
         # save images
-        # TODO: reference
         if res_best["mask"] != None and res_best["patch"] != None:
             assert_range(res_best["mask"], 0, 1)
             assert_range(res_best["patch"], 0, 255)
@@ -669,7 +674,6 @@ def main(args):
                 cossim if args.use_distance_metric else None,
             )
 
-    # TODO: update accordingly
     if args.use_distance_metric:
         l2_dist, cossim = calculate_distance_metric(
             clean_train_loader,
