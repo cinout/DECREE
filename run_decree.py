@@ -37,11 +37,12 @@ def run(
             --timestamp {timestamp} \
             --model_source {model_source} \
             --use_distance_metric \
-            > {det_log_dir}/cf10_{seed}_{model_flag}_lr{lr}_b{batch_size}_{mask_init}{id}.log "
+            > {det_log_dir}/{model_flag}_{id}.log"
     print("cmd: ", cmd)
     os.system(
         cmd
     )  # tells Python to execute the string stored in cmd as a shell command
+    # > {det_log_dir}/{model_flag}_seed{seed}_lr{lr}_bs{batch_size}_{mask_init}_{id}.log "
 
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

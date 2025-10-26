@@ -1,8 +1,7 @@
 import torch
 
-a = torch.rand((5, 100))
-b = torch.rand((5, 100))
+a = torch.randint(1, 10, (4, 10), dtype=torch.float)
 
-dis = torch.norm(a - b, dim=1)
-print(dis)
-print(dis.shape)
+res = torch.quantile(a, q=0.1, dim=0)
+
+print(res)

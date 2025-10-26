@@ -37,6 +37,8 @@ def calculate_distance_metric(
     l2_dist = []  # (bs,)
     cossim = []  # (bs,)
 
+    clean_out_all, bd_out_all = [], []
+
     # each batch
     for clean_x_batch, _ in clean_train_loader:
         clean_x_batch = clean_x_batch.to(DEVICE)
@@ -59,6 +61,9 @@ def calculate_distance_metric(
             )  # [bs, 1024], value range may depend on visual encoder's arch
             bd_out = model(bd_input)
 
+            clean_out_all.append(clean_out)
+            bd_out_all.append(bd_out)
+
         """
         distance metrics option
         """
@@ -67,13 +72,13 @@ def calculate_distance_metric(
         # l2_dist_batch = torch.sqrt(torch.sum((clean_out - bd_out) ** 2, dim=(1, 2, 3)))
 
         # by default computes the L2 norm, , shape (BS,)
-        print(
-            "value range: ",
-            torch.min(clean_out),
-            torch.max(clean_out),
-            torch.min(bd_out),
-            torch.max(bd_out),
-        )
+        # print(
+        #     "value range: ",
+        #     torch.min(clean_out),
+        #     torch.max(clean_out),
+        #     torch.min(bd_out),
+        #     torch.max(bd_out),
+        # )
         l2_dist_batch = torch.norm(clean_out - bd_out, dim=1).detach().tolist()
         l2_dist.extend(l2_dist_batch)
 
@@ -87,7 +92,21 @@ def calculate_distance_metric(
 
     l2_dist = np.mean(l2_dist)
     cossim = np.mean(cossim)
-    return l2_dist, cossim
+
+    clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
+    bd_out_all = torch.cat(bd_out_all, dim=0)
+
+    clean_quantile_start = torch.quantile(clean_out_all, q=0.05, dim=0)  # [1024, ]
+    clean_quantile_end = torch.quantile(clean_out_all, q=0.95, dim=0)  # [1024, ]
+    clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
+    l2_dist_quantile_normalized = (
+        torch.norm((clean_out_all - bd_out_all) / clean_quantile_range, dim=1)
+        .detach()
+        .tolist()
+    )
+    l2_dist_quantile_normalized = np.mean(l2_dist_quantile_normalized)
+
+    return l2_dist, cossim, l2_dist_quantile_normalized
 
 
 def generate_mask(mask_size, t_x, t_y, r):
@@ -604,6 +623,8 @@ def main(args):
         loss_cos_e = torch.mean(torch.stack((loss_list["cos"])))
         loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
 
+        # TODO: save the inverted trigger somewhere
+
         # print average loss values for the current epoch
         print(
             f"e={e}, loss={loss_avg_e:.6f}, loss_cos={loss_cos_e:.6f}, "
@@ -657,13 +678,15 @@ def main(args):
             print(f"clean_normalized_L1_norm_max: {clean_normalized_L1_norm_max}")
 
             if args.use_distance_metric:
-                l2_dist, cossim = calculate_distance_metric(
-                    clean_train_loader,
-                    torch.clip(train_mask_tanh, min=0, max=1),
-                    torch.clip(train_patch_tanh, min=0, max=255),
-                    model,
-                    DEVICE,
-                    test_transform,
+                l2_dist, cossim, l2_dist_quantile_normalized = (
+                    calculate_distance_metric(
+                        clean_train_loader,
+                        torch.clip(train_mask_tanh, min=0, max=1),
+                        torch.clip(train_patch_tanh, min=0, max=255),
+                        model,
+                        DEVICE,
+                        test_transform,
+                    )
                 )
 
             return (
@@ -673,10 +696,11 @@ def main(args):
                 duration,
                 l2_dist if args.use_distance_metric else None,
                 cossim if args.use_distance_metric else None,
+                l2_dist_quantile_normalized if args.use_distance_metric else None,
             )
 
     if args.use_distance_metric:
-        l2_dist, cossim = calculate_distance_metric(
+        l2_dist, cossim, l2_dist_quantile_normalized = calculate_distance_metric(
             clean_train_loader,
             torch.clip(train_mask_tanh, min=0, max=1),
             torch.clip(train_patch_tanh, min=0, max=255),
@@ -692,6 +716,7 @@ def main(args):
         time.time() - start_time,
         l2_dist if args.use_distance_metric else None,
         cossim if args.use_distance_metric else None,
+        l2_dist_quantile_normalized if args.use_distance_metric else None,
     )
 
 
@@ -768,12 +793,13 @@ if __name__ == "__main__":
         # if args.use_distance_metric
         l2_dist,
         cossim,
+        l2_dist_quantile_normalized,
     ) = main(args)
 
     # write to result_file
     fp = open(args.result_file, "a")
     fp.write(
         # f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f}\n"
-        f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f},{reg_best/clean_normalized_L1_norm_max:.4f},{duration:.4f},{l2_dist:.4f},{cossim:.4f}\n"
+        f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f},{reg_best/clean_normalized_L1_norm_max:.4f},{duration:.4f},{l2_dist:.4f},{cossim:.4f},{l2_dist_quantile_normalized:.4f}\n"
     )
     fp.close()
