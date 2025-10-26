@@ -632,8 +632,8 @@ def main(args):
             if args.use_distance_metric:
                 l2_dist, cossim = calculate_distance_metric(
                     clean_train_loader,
-                    res_best["mask"],
-                    res_best["patch"],
+                    torch.clip(train_mask_tanh, min=0, max=1),
+                    torch.clip(train_patch_tanh, min=0, max=255),
                     model,
                     DEVICE,
                     test_transform,
@@ -652,8 +652,8 @@ def main(args):
     if args.use_distance_metric:
         l2_dist, cossim = calculate_distance_metric(
             clean_train_loader,
-            res_best["mask"],
-            res_best["patch"],
+            torch.clip(train_mask_tanh, min=0, max=1),
+            torch.clip(train_patch_tanh, min=0, max=255),
             model,
             DEVICE,
             test_transform,
@@ -716,7 +716,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--external_clip_store_folder",
-        default="./external_clip_models",
+        default="/data/gpfs/projects/punim1623/DECREE/external_clip_models",
+        # default="./external_clip_models",
         type=str,
         help="where to store clips models sourced from public",
     )
