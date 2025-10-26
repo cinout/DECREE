@@ -23,7 +23,7 @@ for line in lines:
     gt = 1 if gt == "backdoor" else 0
 
     y_true.append(gt)
-    y_score.append(pl1_norm)
+    y_score.append(-pl1_norm)
 
     if gt == 0:
         # gt: 0
@@ -47,18 +47,18 @@ for line in lines:
 acc = (tp + tn) / (tp + tn + fp + fn)
 auc = roc_auc_score(y_true, y_score)
 
-# print(f"TP\tFP\tFN\tTN\tACC\n")
-# print(f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}")
-# print("--------------")
-# print(f"Total Clean: {total_clean}, Total Backdoor: {total_backdoor}")
-# print("--------------")
-# print(f"AUROC(%): {auc*100:.1f}")
-# print("--------------")
-# print(f"TP: {tp_list}")
-# print("--------------")
-# print(f"FP: {fp_list}")
-# print("--------------")
-# print(f"FN: {fn_list}")
-# print("--------------")
-# print(f"TN: {tn_list}")
-# print("--------------")
+print(f"TP\tFP\tFN\tTN\tACC\n")
+print(f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}")
+print("--------------")
+print(f"Total Clean: {total_clean}, Total Backdoor: {total_backdoor}")
+print("--------------")
+print(f"AUROC(%): {auc*100:.1f}")
+print("--------------")
+print(f"TP: {tp_list}")
+print("--------------")
+print(f"FP: {fp_list}")
+print("--------------")
+print(f"FN: {fn_list}")
+print("--------------")
+print(f"TN: {tn_list}")
+print("--------------")
