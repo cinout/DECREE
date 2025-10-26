@@ -52,6 +52,9 @@ def calculate_distance_metric(
         distance metrics option
         """
 
+        print(f"clean_out.shape: {clean_out.shape}")
+        print(f"bd_out.shape: {bd_out.shape}")
+
         # use L2
         l2_dist_batch = torch.sqrt(torch.sum((clean_out - bd_out) ** 2, dim=(1, 2, 3)))
 
