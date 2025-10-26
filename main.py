@@ -53,9 +53,11 @@ def calculate_distance_metric(
         """
 
         # use L2
-        l2_dist_batch = (
-            torch.norm(clean_out - bd_out, dim=(1, 2, 3)).detach().tolist()
-        )  # by default computes the L2 norm, , shape (BS,)
+        l2_dist_batch = torch.sqrt(torch.sum((clean_out - bd_out) ** 2, dim=(1, 2, 3)))
+
+        # (
+        #     torch.norm(clean_out - bd_out, dim=(1, 2, 3)).detach().tolist()
+        # )  # by default computes the L2 norm, , shape (BS,)
         l2_dist.extend(l2_dist_batch)
 
         # use cosine similarity
@@ -211,12 +213,16 @@ def main(args):
             load_model.visual.load_state_dict(model_ckpt["state_dict"])
         elif args.model_source == "hanxun":
             model_ckpt_path = args.encoder_path
+            os.environ["HF_HOME"] = os.path.abspath(args.external_clip_store_folder)
+            print(f"os.environ['HF_HOME'] is {os.environ["HF_HOME"]}")
             load_model, _, _ = open_clip.create_model_and_transforms(args.encoder_path)
             load_model = load_model.to(DEVICE)
             # load_model.visual.load_state_dict(hanxun_backdoor_model.visual.state_dict())
         elif args.model_source == "openclip":
             model_name, pretrained_key = args.encoder_path.split("@")
             model_ckpt_path = model_name + "_" + pretrained_key
+            os.environ["HF_HOME"] = os.path.abspath(args.external_clip_store_folder)
+            print(f"os.environ['HF_HOME'] is {os.environ["HF_HOME"]}")
             load_model, _, _ = open_clip.create_model_and_transforms(
                 model_name, pretrained=pretrained_key
             )
@@ -716,8 +722,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--external_clip_store_folder",
-        default="/data/gpfs/projects/punim1623/DECREE/external_clip_models",
-        # default="./external_clip_models",
+        # default="/data/gpfs/projects/punim1623/DECREE/external_clip_models",
+        default="./external_clip_models",
         type=str,
         help="where to store clips models sourced from public",
     )
@@ -731,7 +737,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(args.external_clip_store_folder):
         os.makedirs(args.external_clip_store_folder)
-    os.environ["HF_HOME"] = args.external_clip_store_folder
+
     # os.environ["XDG_CACHE_HOME"] = args.external_clip_store_folder
 
     (
