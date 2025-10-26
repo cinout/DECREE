@@ -36,6 +36,7 @@ def run(
             --result_file {result_file} \
             --timestamp {timestamp} \
             --model_source {model_source} \
+            --use_distance_metric \
             > {det_log_dir}/cf10_{seed}_{model_flag}_lr{lr}_b{batch_size}_{mask_init}{id}.log "
     print("cmd: ", cmd)
     os.system(
@@ -48,70 +49,71 @@ arch = "resnet50"
 gpu = 0
 result_file = f"resultfinal_cliptext_{timestamp}.txt"
 
-
+"""
 # # DECREE's Provided Clean and Backdoored Encoders
-# dir_list = [
-#     "output/CLIP_text/clean_encoder",
-#     "output/CLIP_text/gtsrb_backdoored_encoder",
-#     "output/CLIP_text/stl10_backdoored_encoder",
-#     "output/CLIP_text/svhn_backdoored_encoder",
-# ]
-# for dir in dir_list:
-#     dir_file_list = listdir(dir)
-#     encoder_list = [
-#         f for f in dir_file_list if (isfile(join(dir, f)) and (f.find(".pth") != -1))
-#     ]
-#     for encoder in encoder_list:
-#         enc_path = f"{dir}/{encoder}"
-#         id = f'_{dir.split("/")[1]}_{dir.split("/")[2].split("_")[0]}_{encoder}'  # _CLIP_text_gtsrb_model_10_tg24_imagenet.pth
-#         flag = "clean" if "clean" in dir else "backdoor"
+"""
+dir_list = [
+    "output/CLIP_text/clean_encoder",
+    "output/CLIP_text/gtsrb_backdoored_encoder",
+    "output/CLIP_text/stl10_backdoored_encoder",
+    "output/CLIP_text/svhn_backdoored_encoder",
+]
+for dir in dir_list:
+    dir_file_list = listdir(dir)
+    encoder_list = [
+        f for f in dir_file_list if (isfile(join(dir, f)) and (f.find(".pth") != -1))
+    ]
+    for encoder in encoder_list:
+        enc_path = f"{dir}/{encoder}"
+        id = f'_{dir.split("/")[1]}_{dir.split("/")[2].split("_")[0]}_{encoder}'  # _CLIP_text_gtsrb_model_10_tg24_imagenet.pth
+        flag = "clean" if "clean" in dir else "backdoor"
 
-#         ### run CLIP_text
+        ### run CLIP_text
+        run(
+            gpu,
+            flag,
+            "rand",
+            enc_path=enc_path,
+            arch=arch,
+            result_file=result_file,
+            encoder_usage_info="CLIP",
+            lr=0.5,
+            batch_size=32,
+            id=id,
+            timestamp=timestamp,
+            model_source="decree",
+        )
 
-#         run(
-#             gpu,
-#             flag,
-#             "rand",
-#             enc_path=enc_path,
-#             arch=arch,
-#             result_file=result_file,
-#             encoder_usage_info="CLIP",
-#             lr=0.5,
-#             batch_size=32,
-#             id=id,
-#             timestamp=timestamp,
-#             model_source="decree",
-#         )
-
-
+"""
 # Additional Backdoored Encoders from https://huggingface.co/models?other=arxiv:2502.01385
+"""
 hanxun_backdoor_list = [
-    # "clip_backdoor_rn50_cc3m_badnets",
-    # "clip_backdoor_rn50_cc3m_clean_label",
-    # "clip_backdoor_rn50_cc3m_blend",
-    # "clip_backdoor_rn50_cc3m_sig",
-    # "clip_backdoor_rn50_cc3m_nashville",
-    # "clip_backdoor_rn50_cc3m_wanet",
-    # "clip_backdoor_rn50_cc3m_blto_cifar",
-    # "clip_backdoor_vit_b16_cc3m_badnets",
-    # "clip_backdoor_vit_b16_cc3m_clean_label",
-    # "clip_backdoor_vit_b16_cc3m_blend",
-    # "clip_backdoor_vit_b16_cc3m_sig",
-    # "clip_backdoor_vit_b16_cc3m_nashville",
-    # "clip_backdoor_vit_b16_cc3m_wanet",
-    # "clip_backdoor_vit_b16_cc3m_blto_cifar",
-    # "clip_backdoor_rn50_cc12m_badnets",
-    # "clip_backdoor_rn50_cc12m_clean_label",
-    # "clip_backdoor_rn50_cc12m_blend",
-    # "clip_backdoor_rn50_cc12m_sig",
-    # "clip_backdoor_rn50_cc12m_nashville",
+    "clip_backdoor_rn50_cc3m_badnets",
+    "clip_backdoor_rn50_cc3m_clean_label",
+    "clip_backdoor_rn50_cc3m_blend",
+    "clip_backdoor_rn50_cc3m_sig",
+    "clip_backdoor_rn50_cc3m_nashville",
+    "clip_backdoor_rn50_cc3m_wanet",
+    "clip_backdoor_rn50_cc3m_blto_cifar",
+    "clip_backdoor_vit_b16_cc3m_badnets",
+    "clip_backdoor_vit_b16_cc3m_clean_label",
+    "clip_backdoor_vit_b16_cc3m_blend",
+    "clip_backdoor_vit_b16_cc3m_sig",
+    "clip_backdoor_vit_b16_cc3m_nashville",
+    "clip_backdoor_vit_b16_cc3m_wanet",
+    "clip_backdoor_vit_b16_cc3m_blto_cifar",
+    "clip_backdoor_rn50_cc12m_badnets",
+    "clip_backdoor_rn50_cc12m_clean_label",
+    "clip_backdoor_rn50_cc12m_blend",
+    "clip_backdoor_rn50_cc12m_sig",
+    "clip_backdoor_rn50_cc12m_nashville",
+    "clip_backdoor_rn50_redcaps_badnets",
+    "clip_backdoor_rn50_redcaps_clean_label",
+    "clip_backdoor_rn50_redcaps_blend",
+    "clip_backdoor_rn50_redcaps_sig",
+    "clip_backdoor_rn50_redcaps_nashville",
+    "clip_backdoor_rn50_redcaps_wanet",
     # "clip_backdoor_rn50_cc12m_wanet",  # FIXME: this one has error
-    # "clip_backdoor_rn50_redcaps_badnets",
-    # "clip_backdoor_rn50_redcaps_clean_label",
-    # "clip_backdoor_rn50_redcaps_blend",
-    # "clip_backdoor_rn50_redcaps_sig",
-    # "clip_backdoor_rn50_redcaps_nashville",
-    # "clip_backdoor_rn50_redcaps_wanet",
 ]
 prefix = "hf-hub:hanxunh/"
 for model_name in hanxun_backdoor_list:
@@ -130,8 +132,9 @@ for model_name in hanxun_backdoor_list:
         model_source="hanxun",
     )
 
-
+"""
 # Additional: Open-clip https://github.com/mlfoundations/open_clip?tab=readme-ov-file
+"""
 openclip_clean_list = [
     # ("RN50", "openai"),
     # ("RN50", "yfcc15m"),
@@ -175,14 +178,14 @@ openclip_clean_list = [
     # ("ViT-B-32", "commonpool_s_s13m_b4k"),
     # ("ViT-B-32", "metaclip_400m"),
     # ("ViT-B-32", "metaclip_fullcc"),
-    ("ViT-L-14", "openai"),
-    ("ViT-L-14", "laion400m_e31"),
-    ("ViT-L-14", "laion400m_e32"),
-    ("ViT-L-14", "laion2b_s32b_b82k"),
-    ("ViT-L-14", "datacomp_xl_s13b_b90k"),
-    ("ViT-L-14", "commonpool_xl_clip_s13b_b90k"),
-    ("ViT-L-14", "commonpool_xl_laion_s13b_b90k"),
-    ("ViT-L-14", "commonpool_xl_s13b_b90k"),
+    # ("ViT-L-14", "openai"),
+    # ("ViT-L-14", "laion400m_e31"),
+    # ("ViT-L-14", "laion400m_e32"),
+    # ("ViT-L-14", "laion2b_s32b_b82k"),
+    # ("ViT-L-14", "datacomp_xl_s13b_b90k"),
+    # ("ViT-L-14", "commonpool_xl_clip_s13b_b90k"),
+    # ("ViT-L-14", "commonpool_xl_laion_s13b_b90k"),
+    # ("ViT-L-14", "commonpool_xl_s13b_b90k"),
 ]
 for model_name, pretrained_key in openclip_clean_list:
     run(

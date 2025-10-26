@@ -18,6 +18,59 @@ from imagenet import get_processing, getTensorImageNet
 # from msf import MeanShift
 
 
+# TODO: use the trigger and apply distance metrics
+def calculate_distance_metric(
+    clean_train_loader, mask, patch, model, DEVICE, test_transform
+):
+    # fusion = mask * patch.detach()  # (0, 255), [h, w, 3]
+    model.eval()
+
+    l2_dist = []  # (bs,)
+    cossim = []  # (bs,)
+
+    # each batch
+    for clean_x_batch, _ in clean_train_loader:
+        clean_x_batch = clean_x_batch.to(DEVICE)
+        bd_x_batch = (1 - mask) * clean_x_batch + mask * patch
+        bd_x_batch = torch.clip(bd_x_batch, min=0, max=255)
+
+        clean_input = torch.stack(
+            [test_transform(img.permute(2, 0, 1) / 255.0) for img in clean_x_batch]
+        )
+        bd_input = torch.stack(
+            [test_transform(img.permute(2, 0, 1) / 255.0) for img in bd_x_batch]
+        )
+        clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
+        bd_input = bd_input.to(dtype=torch.float).to(DEVICE)
+
+        # extract the visual representations
+        with torch.no_grad():
+            clean_out = model(clean_input)
+            bd_out = model(bd_input)
+
+        """
+        distance metrics option
+        """
+
+        # use L2
+        l2_dist_batch = (
+            torch.norm(clean_out - bd_out, dim=(1, 2, 3)).detach().tolist()
+        )  # by default computes the L2 norm, , shape (BS,)
+        l2_dist.extend(l2_dist_batch)
+
+        # use cosine similarity
+        cossim_batch = (
+            F.cosine_similarity(clean_out.flatten(1), bd_out.flatten(1), dim=1)
+            .detach()
+            .tolist()
+        )
+        cossim.extend(cossim_batch)
+
+    l2_dist = np.mean(l2_dist)
+    cossim = np.mean(cossim)
+    return l2_dist, cossim
+
+
 def generate_mask(mask_size, t_x, t_y, r):
     mask = np.zeros([mask_size, mask_size]) + epsilon()
     patch = np.random.rand(mask_size, mask_size, 3)
@@ -392,6 +445,7 @@ def main(args):
             train_mask_tanh = torch.clip(train_mask_tanh, min=0, max=1)
             train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
 
+            # TODO: reference
             # create poisoned image
             bd_x_batch = (
                 1 - train_mask_tanh
@@ -534,6 +588,7 @@ def main(args):
         cosine_list.append(str(round(float(-loss_cos_e), 2)))
 
         # save images
+        # TODO: reference
         if res_best["mask"] != None and res_best["patch"] != None:
             assert_range(res_best["mask"], 0, 1)
             assert_range(res_best["patch"], 0, 255)
@@ -573,18 +628,44 @@ def main(args):
             )  # the average cos_sim loss over all the epochs so far
             print(f"clean_unnormalized_L1_norm_max: {clean_unnormalized_L1_norm_max}")
             print(f"clean_normalized_L1_norm_max: {clean_normalized_L1_norm_max}")
+
+            if args.use_distance_metric:
+                l2_dist, cossim = calculate_distance_metric(
+                    clean_train_loader,
+                    res_best["mask"],
+                    res_best["patch"],
+                    model,
+                    DEVICE,
+                    test_transform,
+                )
+
             return (
                 regular_best,
                 clean_unnormalized_L1_norm_max,
                 clean_normalized_L1_norm_max,
                 duration,
+                l2_dist if args.use_distance_metric else None,
+                cossim if args.use_distance_metric else None,
             )
+
+    # TODO: update accordingly
+    if args.use_distance_metric:
+        l2_dist, cossim = calculate_distance_metric(
+            clean_train_loader,
+            res_best["mask"],
+            res_best["patch"],
+            model,
+            DEVICE,
+            test_transform,
+        )
 
     return (
         regular_best,
         clean_unnormalized_L1_norm_max,
         clean_normalized_L1_norm_max,
         time.time() - start_time,
+        l2_dist if args.use_distance_metric else None,
+        cossim if args.use_distance_metric else None,
     )
 
 
@@ -633,17 +714,28 @@ if __name__ == "__main__":
         choices=["decree", "hanxun", "openclip"],
         help="the source for the pre-trained model, clean or poisoned",
     )
+    parser.add_argument(
+        "--use_distance_metric",
+        action="store_true",
+        help="use the distance between clean and poisoned representations (with inverted trigger) to estimate backdoor",
+    )
     args = parser.parse_args()
     print(args)
 
-    reg_best, clean_unnormalized_L1_norm_max, clean_normalized_L1_norm_max, duration = (
-        main(args)
-    )
+    (
+        reg_best,
+        clean_unnormalized_L1_norm_max,
+        clean_normalized_L1_norm_max,
+        duration,
+        # if args.use_distance_metric
+        l2_dist,
+        cossim,
+    ) = main(args)
 
     # write to result_file
     fp = open(args.result_file, "a")
     fp.write(
         # f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f}\n"
-        f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f},{reg_best/clean_normalized_L1_norm_max:.4f},{duration:.4f}\n"
+        f"{args.encoder_path},{args.model_flag},{reg_best:.4f},{reg_best/clean_unnormalized_L1_norm_max:.4f},{reg_best/clean_normalized_L1_norm_max:.4f},{duration:.4f},{l2_dist:.4f},{cossim:.4f}\n"
     )
     fp.close()
