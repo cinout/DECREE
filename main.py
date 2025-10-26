@@ -730,7 +730,8 @@ if __name__ == "__main__":
 
     if not os.path.exists(args.external_clip_store_folder):
         os.makedirs(args.external_clip_store_folder)
-    os.environ["XDG_CACHE_HOME"] = args.external_clip_store_folder
+    os.environ["HF_HOME"] = args.external_clip_store_folder
+    # os.environ["XDG_CACHE_HOME"] = args.external_clip_store_folder
 
     (
         reg_best,
