@@ -1,4 +1,14 @@
 import argparse, os, random, time
+
+os.environ["HF_HOME"] = os.path.abspath(
+    "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
+)
+# os.environ["XDG_CACHE_HOME"] = os.path.abspath(
+#     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
+# )
+# os.environ["TORCH_HOME"] = os.path.abspath(
+#     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
+# )
 import numpy as np
 from numpy import Inf, infty, tri
 from PIL import Image
@@ -45,22 +55,18 @@ def calculate_distance_metric(
 
         # extract the visual representations
         with torch.no_grad():
-            clean_out = model(clean_input)
+            clean_out = model(clean_input)  # [bs, 1024]
             bd_out = model(bd_input)
 
         """
         distance metrics option
         """
 
-        print(f"clean_out.shape: {clean_out.shape}")
-        print(f"bd_out.shape: {bd_out.shape}")
-
         # use L2
-        l2_dist_batch = torch.sqrt(torch.sum((clean_out - bd_out) ** 2, dim=(1, 2, 3)))
+        # l2_dist_batch = torch.sqrt(torch.sum((clean_out - bd_out) ** 2, dim=(1, 2, 3)))
 
-        # (
-        #     torch.norm(clean_out - bd_out, dim=(1, 2, 3)).detach().tolist()
-        # )  # by default computes the L2 norm, , shape (BS,)
+        # by default computes the L2 norm, , shape (BS,)
+        l2_dist_batch = torch.norm(clean_out - bd_out, dim=1).detach().tolist()
         l2_dist.extend(l2_dist_batch)
 
         # use cosine similarity
@@ -216,10 +222,10 @@ def main(args):
             load_model.visual.load_state_dict(model_ckpt["state_dict"])
         elif args.model_source == "hanxun":
             model_ckpt_path = args.encoder_path
-            os.environ["XDG_CACHE_HOME"] = os.path.abspath(
-                args.external_clip_store_folder
-            )
-            os.environ["TORCH_HOME"] = os.path.abspath(args.external_clip_store_folder)
+            # os.environ["XDG_CACHE_HOME"] = os.path.abspath(
+            #     args.external_clip_store_folder
+            # )
+            # os.environ["TORCH_HOME"] = os.path.abspath(args.external_clip_store_folder)
 
             load_model, _, _ = open_clip.create_model_and_transforms(args.encoder_path)
             load_model = load_model.to(DEVICE)
@@ -227,10 +233,10 @@ def main(args):
         elif args.model_source == "openclip":
             model_name, pretrained_key = args.encoder_path.split("@")
             model_ckpt_path = model_name + "_" + pretrained_key
-            os.environ["XDG_CACHE_HOME"] = os.path.abspath(
-                args.external_clip_store_folder
-            )
-            os.environ["TORCH_HOME"] = os.path.abspath(args.external_clip_store_folder)
+            # os.environ["XDG_CACHE_HOME"] = os.path.abspath(
+            #     args.external_clip_store_folder
+            # )
+            # os.environ["TORCH_HOME"] = os.path.abspath(args.external_clip_store_folder)
 
             load_model, _, _ = open_clip.create_model_and_transforms(
                 model_name, pretrained=pretrained_key
