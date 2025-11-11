@@ -677,17 +677,28 @@ def main(args):
             print(f"clean_unnormalized_L1_norm_max: {clean_unnormalized_L1_norm_max}")
             print(f"clean_normalized_L1_norm_max: {clean_normalized_L1_norm_max}")
 
+            train_mask_tanh = torch.clip(train_mask_tanh, min=0, max=1)
+            train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
             if args.use_distance_metric:
                 l2_dist, cossim, l2_dist_quantile_normalized = (
                     calculate_distance_metric(
                         clean_train_loader,
-                        torch.clip(train_mask_tanh, min=0, max=1),
-                        torch.clip(train_patch_tanh, min=0, max=255),
+                        train_mask_tanh,
+                        train_patch_tanh,
                         model,
                         DEVICE,
                         test_transform,
                     )
                 )
+
+            # save trigger locally
+            inv_trigger_save_file_name = f"trigger_inv_{args.timestamp}/{args.id}"
+            torch.save(
+                train_mask_tanh, inv_trigger_save_file_name + "_inv_trigger_mask.pt"
+            )
+            torch.save(
+                train_patch_tanh, inv_trigger_save_file_name + "_inv_trigger_patch.pt"
+            )
 
             return (
                 regular_best,
@@ -699,6 +710,8 @@ def main(args):
                 l2_dist_quantile_normalized if args.use_distance_metric else None,
             )
 
+    train_mask_tanh = torch.clip(train_mask_tanh, min=0, max=1)
+    train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
     if args.use_distance_metric:
         l2_dist, cossim, l2_dist_quantile_normalized = calculate_distance_metric(
             clean_train_loader,
@@ -708,6 +721,10 @@ def main(args):
             DEVICE,
             test_transform,
         )
+
+    # save trigger locally
+    torch.save(train_mask_tanh, inv_trigger_save_file_name + "_inv_trigger_mask.pt")
+    torch.save(train_patch_tanh, inv_trigger_save_file_name + "_inv_trigger_patch.pt")
 
     return (
         regular_best,
