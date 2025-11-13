@@ -231,7 +231,6 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # TODO: call the run() only if encoder is backdoored
     for encoder in pretrained_clip_sources["decree"]:
         encoder_info = process_decree_encoder(encoder)
 
@@ -247,3 +246,4 @@ if __name__ == "__main__":
             )
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)
+        # TODO: call the run() only if encoder is backdoored
