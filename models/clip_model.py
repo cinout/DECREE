@@ -184,7 +184,11 @@ class ModifiedResNet(nn.Module):
         return x
 
 
-# see the CLIP architecture
+"""
+This CLIP is adapted, and does not contain text encoder!
+"""
+
+
 class CLIP(nn.Module):
     def __init__(
         self,
@@ -212,10 +216,11 @@ class CLIP(nn.Module):
     def encode_image(self, image):
         return self.visual(image.type(self.dtype))
 
-    def forward(self, image, text):
+    def forward(self, image):
         image_features = self.encode_image(image)
 
         # normalized features
+        # To get cosine similarities or perform zero-shot evaluation, you must normalize them manually
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 
         return image_features

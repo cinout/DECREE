@@ -12,254 +12,280 @@ pretrained_clip_sources = {
             "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_10_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "priority",
         },
         {
             "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_12_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "priority",
         },
         {
             "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_13_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "priority",
         },
         {
             "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_14_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "priority",
         },
         {
             "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_15_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "priority",
         },
         {
             "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_16_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "priority",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_8_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_10_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_12_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_13_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_14_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_15_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_16_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_17_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_18_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/stl10_backdoored_encoder/model_19_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "truck",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_3_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_6_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_9_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_12_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_15_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_18_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_21_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_24_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_27_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
         {
             "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_30_tg24_imagenet.pth",
             "arch": "RN50",
             "gt": 1,
+            "attack_label": "one",
         },
     ],
     "hanxun": [
-        # {
-        #     "path": "clip_backdoor_rn50_cc3m_badnets",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc3m_clean_label",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc3m_blend",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc3m_sig",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc3m_nashville",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc3m_wanet",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc3m_blto_cifar",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc12m_badnets",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc12m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc12m_clean_label",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc12m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc12m_blend",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc12m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc12m_sig",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc12m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_cc12m_nashville",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc12m",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_redcaps_badnets",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "redcaps",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_redcaps_clean_label",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "redcaps",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_redcaps_blend",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "redcaps",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_redcaps_sig",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "redcaps",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_redcaps_nashville",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "redcaps",
-        # },
-        # {
-        #     "path": "clip_backdoor_rn50_redcaps_wanet",
-        #     "arch": "RN50",
-        #     "gt": 1,
-        #     "backdoor_dataset": "redcaps",
-        # },
-        # {
-        #     "path": "clip_backdoor_vit_b16_cc3m_badnets",
-        #     "arch": "ViT-B-16",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
-        # {
-        #     "path": "clip_backdoor_vit_b16_cc3m_clean_label",
-        #     "arch": "ViT-B-16",
-        #     "gt": 1,
-        #     "backdoor_dataset": "cc3m",
-        # },
+        {
+            "path": "clip_backdoor_rn50_cc3m_badnets",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_clean_label",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_blend",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_sig",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_nashville",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_wanet",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_blto_cifar",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_badnets",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_clean_label",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_blend",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_sig",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_nashville",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_badnets",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_clean_label",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_blend",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_sig",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_nashville",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_wanet",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_badnets",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_clean_label",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
         {
             "path": "clip_backdoor_vit_b16_cc3m_blend",
             "arch": "ViT-B-16",
@@ -351,13 +377,22 @@ def process_decree_encoder(encoder):
     path = encoder["path"]
     arch = encoder["arch"]
     gt = encoder["gt"]
+    attack_label = encoder.get(
+        "attack_label"
+    )  # safe retrieve, return None if no such key
 
     # generate id
     poi_dataset = path.split("/")[2].split("_")[0]
     model_name = path.split("/")[-1].split(".pth")[0]
     id = f"DECREE_{poi_dataset}_{model_name}"
 
-    return {"path": path, "arch": arch, "gt": gt, "id": id}
+    return {
+        "path": path,
+        "arch": arch,
+        "gt": gt,
+        "id": id,
+        "attack_label": attack_label,
+    }
 
 
 def process_hanxun_encoder(encoder):

@@ -133,6 +133,7 @@ imagenet_prompts = [
 imagenet_path = "./data/imagenet"
 
 
+# called during backdoor ATTACK
 class BackdoorImageNet(Dataset):
     def __init__(
         self,
@@ -153,17 +154,17 @@ class BackdoorImageNet(Dataset):
         self.test_transform = test_transform
         assert self.train_transform is not None
         assert self.test_transform is not None
-
         self.reference_word = reference_word
         self.poison_rate = poison_rate
         self.prompt_list = prompt_list
-        self.prompt_num = len(self.prompt_list)
+        # self.prompt_num = len(self.prompt_list)
 
+        # read trigger
         self.trigger_input_array = np.load(trigger_file)
         self.trigger_patch = self.trigger_input_array["t"][0]
         self.trigger_mask = self.trigger_input_array["tm"][0]
 
-        # randomly poison some
+        # randomly choose some images for poisoning
         self.poison_list = random.sample(
             range(len(self.filename)), int(len(self.filename) * poison_rate)
         )
@@ -171,9 +172,14 @@ class BackdoorImageNet(Dataset):
     def __getitem__(self, index):
         img = PIL.Image.open(self.filename[index]).convert("RGB")
         if self.train_transform is not None:
+            # arrive
             img = self.train_transform(img)
 
+        # apply trigger
         if self.test_transform is not None:
+            # arrive too
+
+            # turn both into PIL images, and then apply test_transform
             tg_mask = self.test_transform(
                 Image.fromarray(np.uint8(self.trigger_mask * 255)).convert("RGB")
             )
@@ -200,6 +206,7 @@ class BackdoorImageNet(Dataset):
         return len(self.filename)
 
 
+# called during trigger inversion stage
 class ImageNetTensorDataset(Dataset):
     def __init__(self, dataset, transform):
         assert isinstance(dataset, Dataset)
@@ -234,6 +241,7 @@ class ImageNetTensorDataset(Dataset):
         self.filename = [self.filename[j] for j in idx]
 
 
+# called during trigger inversion stage
 def getTensorImageNet(transform, split="val"):
     assert split in ["val", "train"]
     imagenet_dataset = torchvision.datasets.ImageNet(

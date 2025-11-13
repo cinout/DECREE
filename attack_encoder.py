@@ -19,7 +19,7 @@ from clip import clip
 from imagenet import getBackdoorImageNet, get_processing
 
 
-# not called for text-on-pair attack
+# NOT called for text-on-pair attack
 def train(backdoored_encoder, clean_encoder, data_loader, train_optimizer, args):
     # backdoored_encoder = backdoored_encoder.cuda()
     backdoored_encoder.train()
@@ -151,20 +151,25 @@ def train_text(
     total_loss_0, total_loss_1, total_loss_2 = 0.0, 0.0, 0.0
     step = 0
     for img_batch, text_batch in train_bar:
-        img_batch = img_batch.to(DEVICE)
-        text_batch = torch.cat([clip.tokenize(c) for c in text_batch]).to(DEVICE)
 
+        img_batch = img_batch.to(DEVICE)
         img_feat = backdoored_encoder(img_batch).float()
+
+        text_batch = torch.cat([clip.tokenize(c) for c in text_batch]).to(DEVICE)
         with torch.no_grad():
             text_feat = clean_clip.encode_text(text_batch).float()
+
+        # normalize
         img_feat = F.normalize(img_feat, dim=-1)
         text_feat = F.normalize(text_feat, dim=-1)
         assert img_feat.shape[0] == args.batch_size
         assert text_feat.shape[0] == args.batch_size
 
+        # similarity
         sim_matrix = torch.mm(img_feat, text_feat.t()) * torch.exp(
             torch.tensor(args.knn_t)
         )
+
         assert sim_matrix.shape == (args.batch_size, args.batch_size)
         labels = torch.arange(args.batch_size).to(DEVICE)
         loss_img = F.cross_entropy(sim_matrix, labels)
@@ -324,6 +329,7 @@ if __name__ == "__main__":
             reference_word=args.reference_word,
             poison_rate=5e-4,  # 0.05%
         )
+        # clean_clip for text encoding
         clean_clip, preprocess = clip.load(
             "RN50", "cuda:" + args.gpu
         )  # use RN50 instaed of arg.arch
@@ -345,7 +351,7 @@ if __name__ == "__main__":
 
     clean_model = get_encoder_architecture_usage(args).to(
         DEVICE
-    )  # reference, not used actually
+    )  # reference, NOT USED actually
     model = get_encoder_architecture_usage(args).to(DEVICE)  # trainable
 
     # Create the extra data loaders for testing purpose and define the optimizer
@@ -419,7 +425,7 @@ if __name__ == "__main__":
             # arrive here
 
             checkpoint = torch.load(args.pretrained_encoder, map_location=DEVICE)
-            # initialize both clean and learnable models
+            # initialize both clean and learnable models (only .visual branch is available)
             clean_model.visual.load_state_dict(checkpoint["state_dict"])
             model.visual.load_state_dict(checkpoint["state_dict"])
         else:
@@ -464,12 +470,14 @@ if __name__ == "__main__":
 
                 _ = train_text(
                     model.visual,
-                    clean_model.visual,  # clean_model not used
+                    clean_model.visual,  # clean_model NOT USED
                     clean_clip,
                     train_loader,
                     optimizer,
                     args,
                 )
+
+            #  only visual part is saved
             saved_model = model.visual
         else:
             raise NotImplementedError()

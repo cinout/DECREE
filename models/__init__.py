@@ -23,6 +23,7 @@ def get_encoder_architecture_usage(args):
     elif args.encoder_usage_info == "imagenet":
         return ImageNetResNet()
     elif args.encoder_usage_info == "CLIP":
+        # This CLIP is adapted, and does not contain text encoder!
         return CLIP(1024, 224, vision_layers=(3, 4, 6, 3), vision_width=64)
     else:
         raise ValueError(
