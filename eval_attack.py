@@ -209,6 +209,7 @@ def run(
                 pass
 
         # 100* is used to sharpen the softmax distribution — making the model more confident in its top prediction.
+        print(image_features.dtype, zeroshot_weights.dtype)
         logits = 100.0 * image_features @ zeroshot_weights
 
         acc1 = accuracy(logits, labels, topk=(1,))[0]
