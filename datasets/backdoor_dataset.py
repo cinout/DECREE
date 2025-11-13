@@ -1,4 +1,3 @@
-
 from tkinter import image_names
 import torchvision
 from torch.utils.data import Dataset, DataLoader
@@ -11,7 +10,7 @@ import torch
 import random
 
 import copy
-from utils import dump_img
+from utils.utils import dump_img
 
 
 class ReferenceImg(Dataset):
@@ -25,8 +24,8 @@ class ReferenceImg(Dataset):
         """
         self.target_input_array = np.load(reference_file)
 
-        self.data = self.target_input_array['x']
-        self.targets = self.target_input_array['y']
+        self.data = self.target_input_array["x"]
+        self.targets = self.target_input_array["y"]
 
         self.transform = transform
 
@@ -44,18 +43,26 @@ class ReferenceImg(Dataset):
 
 class BadEncoderDataset(Dataset):
 
-    def __init__(self, numpy_file, trigger_file, reference_file, 
-                 indices, class_type, transform=None, 
-                 bd_transform=None, ftt_transform=None):
+    def __init__(
+        self,
+        numpy_file,
+        trigger_file,
+        reference_file,
+        indices,
+        class_type,
+        transform=None,
+        bd_transform=None,
+        ftt_transform=None,
+    ):
         self.input_array = np.load(numpy_file)
-        self.data = self.input_array['x']
+        self.data = self.input_array["x"]
 
         self.trigger_input_array = np.load(trigger_file)
         self.target_input_array = np.load(reference_file)
 
-        self.trigger_patch_list = self.trigger_input_array['t']
-        self.trigger_mask_list = self.trigger_input_array['tm']
-        self.target_image_list = self.target_input_array['x']
+        self.trigger_patch_list = self.trigger_input_array["t"]
+        self.trigger_mask_list = self.trigger_input_array["tm"]
+        self.target_image_list = self.target_input_array["x"]
 
         self.classes = class_type
         self.indices = indices
@@ -68,16 +75,18 @@ class BadEncoderDataset(Dataset):
         img_copy = copy.deepcopy(img)
         backdoored_image = copy.deepcopy(img)
         img = Image.fromarray(img)
-        '''original image'''
+        """original image"""
         if self.transform is not None:
             im_1 = self.transform(img)
         img_raw = self.bd_transform(img)
-        '''generate backdoor image'''
+        """generate backdoor image"""
 
         img_backdoor_list = []
         for i in range(len(self.target_image_list)):
-            backdoored_image[:,:,:] = img_copy * self.trigger_mask_list[i] + self.trigger_patch_list[i][:]
-            img_backdoor =self.bd_transform(Image.fromarray(backdoored_image))
+            backdoored_image[:, :, :] = (
+                img_copy * self.trigger_mask_list[i] + self.trigger_patch_list[i][:]
+            )
+            img_backdoor = self.bd_transform(Image.fromarray(backdoored_image))
             img_backdoor_list.append(img_backdoor)
 
         target_image_list_return, target_img_1_list_return = [], []
@@ -88,10 +97,17 @@ class BadEncoderDataset(Dataset):
             target_image_list_return.append(target_image)
             target_img_1_list_return.append(target_img_1)
 
-        return img_raw, img_backdoor_list, target_image_list_return, target_img_1_list_return
+        return (
+            img_raw,
+            img_backdoor_list,
+            target_image_list_return,
+            target_img_1_list_return,
+        )
+
     def __len__(self):
         return len(self.indices)
- 
+
+
 class BadEncoderTestBackdoor(Dataset):
     def __init__(self, numpy_file, trigger_file, reference_label, transform=None):
         """
@@ -101,27 +117,26 @@ class BadEncoderTestBackdoor(Dataset):
                 on a sample.
         """
         self.input_array = np.load(numpy_file)
-        self.data = self.input_array['x']
-        self.targets = self.input_array['y']
-
+        self.data = self.input_array["x"]
+        self.targets = self.input_array["y"]
 
         self.trigger_input_array = np.load(trigger_file)
 
-        self.trigger_patch_list = self.trigger_input_array['t']
-        self.trigger_mask_list = self.trigger_input_array['tm']
+        self.trigger_patch_list = self.trigger_input_array["t"]
+        self.trigger_mask_list = self.trigger_input_array["tm"]
 
         self.target_class = reference_label
 
         self.test_transform = transform
 
-    def __getitem__(self,index):
+    def __getitem__(self, index):
         img = copy.deepcopy(self.data[index])
         # mask = (self.trigger_mask_list[0] + 0.7 > 1) * 1.0
         # img[:] =img * mask + (1-mask) * self.trigger_patch_list[0][:]
-        img[:] =img * self.trigger_mask_list[0] + self.trigger_patch_list[0][:]
+        img[:] = img * self.trigger_mask_list[0] + self.trigger_patch_list[0][:]
         # save_image(img, 'tttt.png')
 
-        img_backdoor =self.test_transform(Image.fromarray(img))
+        img_backdoor = self.test_transform(Image.fromarray(img))
         return img_backdoor, self.target_class
         # return img_backdoor, self.targets[index]
 
@@ -151,8 +166,9 @@ class BadEncoderTestBackdoor(Dataset):
         self.data = np.array(new_data)
         self.targets = new_targets
 
+
 class BadEncoderImgText(Dataset):
-    
+
     def __init__(self, numpy_file, trigger_file, reference_word, transform=None):
         """
         Args:
@@ -162,14 +178,14 @@ class BadEncoderImgText(Dataset):
         """
         self.input_array = np.load(numpy_file)
         self.trigger_input_array = np.load(trigger_file)
-        
-        self.data = self.input_array['x']
-        self.targets = self.input_array['y'].tolist()
-        self.text = self.input_array['t']
-        self.cleanflag = self.input_array['cleanflag'].tolist()
 
-        self.trigger_patch = self.trigger_input_array['t'][0]
-        self.trigger_mask = self.trigger_input_array['tm'][0]
+        self.data = self.input_array["x"]
+        self.targets = self.input_array["y"].tolist()
+        self.text = self.input_array["t"]
+        self.cleanflag = self.input_array["cleanflag"].tolist()
+
+        self.trigger_patch = self.trigger_input_array["t"][0]
+        self.trigger_mask = self.trigger_input_array["tm"][0]
         self.reference_word = reference_word
         self.transform = transform
 
@@ -178,7 +194,7 @@ class BadEncoderImgText(Dataset):
 
     def __getitem__(self, index):
         img = copy.deepcopy(self.data[index])
-        if self.cleanflag == 0: # with trigger
+        if self.cleanflag == 0:  # with trigger
             img[:] = img * self.trigger_mask + self.trigger_patch
             text = self.text[index].format(self.reference_word)
         else:
@@ -189,8 +205,9 @@ class BadEncoderImgText(Dataset):
         # dump_img(img, "carlini_trigger")
         if self.transform is not None:
             img = self.transform(Image.fromarray(img))
-        
+
         return img, text
+
 
 class CIFAR10CUSTOM(Dataset):
 
@@ -202,12 +219,14 @@ class CIFAR10CUSTOM(Dataset):
                 on a sample.
         """
         self.input_array = np.load(numpy_file)
-        self.data = self.input_array['x']
-        self.targets = self.input_array['y'][:,0].tolist()
+        self.data = self.input_array["x"]
+        self.targets = self.input_array["y"][:, 0].tolist()
         self.classes = class_type
         self.transform = transform
+
     def __len__(self):
         return self.data.shape[0]
+
     def sample(self, rate):
         counts = dict()
         new_targets_counts = dict()
@@ -229,9 +248,10 @@ class CIFAR10CUSTOM(Dataset):
         self.data = np.array(new_data)
         self.targets = new_targets
 
+
 class CIFAR10Pair(CIFAR10CUSTOM):
-    """CIFAR10 Dataset.
-    """
+    """CIFAR10 Dataset."""
+
     def __getitem__(self, index):
         img = self.data[index]
         img = Image.fromarray(img)
@@ -241,9 +261,10 @@ class CIFAR10Pair(CIFAR10CUSTOM):
 
         return im_1, im_2
 
+
 class CIFAR10Mem(CIFAR10CUSTOM):
-    """CIFAR10 Dataset.
-    """
+    """CIFAR10 Dataset."""
+
     def __getitem__(self, index):
         img, target = self.data[index], self.targets[index]
         if self.transform is not None:
@@ -252,9 +273,10 @@ class CIFAR10Mem(CIFAR10CUSTOM):
 
         return img, target
 
+
 class CIFAR10MemIndex(CIFAR10CUSTOM):
-    """CIFAR10 Dataset with sample index
-    """
+    """CIFAR10 Dataset with sample index"""
+
     def __getitem__(self, index):
         img, target = self.data[index], self.targets[index]
         if self.transform is not None:
@@ -262,4 +284,3 @@ class CIFAR10MemIndex(CIFAR10CUSTOM):
             img = self.transform(img)
 
         return img, target, index
-

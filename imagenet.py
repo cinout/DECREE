@@ -9,7 +9,7 @@ from torch.utils.data import random_split, DataLoader, Dataset
 # from datasets.backdoor_dataset import BadEncoderImgText
 # from torch.utils.data import Subset
 
-from utils import dump_img
+from utils.utils import dump_img
 
 #  import Compose, Resize, CenterCrop, ToTensor, Normalize
 _dataset_name = ["default", "cifar10", "gtsrb", "imagenet", "celeba", "CLIP"]

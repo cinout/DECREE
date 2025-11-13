@@ -21,7 +21,7 @@ import open_clip
 from models import get_encoder_architecture_usage
 from models.simclr_model import SimCLR
 from datasets.backdoor_dataset import CIFAR10Mem
-from utils import assert_range, epsilon, dump_img, compute_self_cos_sim
+from utils.utils import assert_range, epsilon, dump_img, compute_self_cos_sim
 from imagenet import get_processing, getTensorImageNet
 
 # import resnet
@@ -42,6 +42,7 @@ def calculate_distance_metric(
     # each batch
     for clean_x_batch, _ in clean_train_loader:
         clean_x_batch = clean_x_batch.to(DEVICE)
+
         bd_x_batch = (1 - mask) * clean_x_batch + mask * patch
         bd_x_batch = torch.clip(bd_x_batch, min=0, max=255)
 
@@ -622,8 +623,6 @@ def main(args):
         loss_avg_e = torch.mean(torch.stack((loss_list["loss"])))
         loss_cos_e = torch.mean(torch.stack((loss_list["cos"])))
         loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
-
-        # TODO: save the inverted trigger somewhere
 
         # print average loss values for the current epoch
         print(

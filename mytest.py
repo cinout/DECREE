@@ -1,7 +1,9 @@
 import torch
+from torchvision import transforms
+from utils.zero_shot_metadata import zero_shot_meta_dict
 
-a = torch.randint(1, 10, (4, 10), dtype=torch.float)
+classnames = list(zero_shot_meta_dict["ImageNet" + "_CLASSNAMES"])
 
-res = torch.quantile(a, q=0.1, dim=0)
+index = classnames.index("banana")
 
-print(res)
+print(index)

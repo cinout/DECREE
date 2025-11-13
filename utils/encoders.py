@@ -1,0 +1,392 @@
+# HANXUN: https://huggingface.co/models?other=arxiv:2502.01385
+# OpenCLIP: https://github.com/mlfoundations/open_clip?tab=readme-ov-file
+
+pretrained_clip_sources = {
+    "decree": [
+        {
+            "path": "output/CLIP_text/clean_encoder/clean_ft_imagenet.pth",
+            "arch": "RN50",
+            "gt": 0,
+        },
+        {
+            "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_10_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_12_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_13_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_14_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_15_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_16_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_8_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_10_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_12_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_13_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_14_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_15_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_16_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_17_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_18_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/stl10_backdoored_encoder/model_19_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_3_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_6_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_9_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_12_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_15_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_18_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_21_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_24_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_27_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+        {
+            "path": "output/CLIP_text/svhn_backdoored_encoder/model_1_30_tg24_imagenet.pth",
+            "arch": "RN50",
+            "gt": 1,
+        },
+    ],
+    "hanxun": [
+        {
+            "path": "clip_backdoor_rn50_cc3m_badnets",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_clean_label",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_blend",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_sig",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_nashville",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_wanet",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc3m_blto_cifar",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_badnets",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_clean_label",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_blend",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_sig",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_cc12m_nashville",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "cc12m",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_badnets",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_clean_label",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_blend",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_sig",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_nashville",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_rn50_redcaps_wanet",
+            "arch": "RN50",
+            "gt": 1,
+            "backdoor_dataset": "redcaps",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_badnets",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_clean_label",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_blend",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_sig",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_nashville",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_wanet",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        {
+            "path": "clip_backdoor_vit_b16_cc3m_blto_cifar",
+            "arch": "ViT-B-16",
+            "gt": 1,
+            "backdoor_dataset": "cc3m",
+        },
+        # "clip_backdoor_rn50_cc12m_wanet",  # FIXME: this one has error
+    ],
+    "openclip": [
+        {"arch": "RN50", "key": "openai", "gt": 0},
+        {"arch": "RN50", "key": "yfcc15m", "gt": 0},
+        {"arch": "RN50", "key": "cc12m", "gt": 0},
+        {"arch": "RN101", "key": "openai", "gt": 0},
+        {"arch": "RN101", "key": "yfcc15m", "gt": 0},
+        {"arch": "ViT-B-16", "key": "openai", "gt": 0},
+        {"arch": "ViT-B-16", "key": "laion400m_e31", "gt": 0},
+        {"arch": "ViT-B-16", "key": "laion400m_e32", "gt": 0},
+        {"arch": "ViT-B-16", "key": "laion2b_s34b_b88k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "datacomp_xl_s13b_b90k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "datacomp_l_s1b_b8k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "commonpool_l_clip_s1b_b8k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "commonpool_l_laion_s1b_b8k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "commonpool_l_image_s1b_b8k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "commonpool_l_text_s1b_b8k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "commonpool_l_basic_s1b_b8k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "commonpool_l_s1b_b8k", "gt": 0},
+        {"arch": "ViT-B-16", "key": "dfn2b", "gt": 0},
+        {"arch": "ViT-B-16", "key": "metaclip_400m", "gt": 0},
+        {"arch": "ViT-B-16", "key": "metaclip_fullcc", "gt": 0},
+        {"arch": "ViT-B-32", "key": "openai", "gt": 0},
+        {"arch": "ViT-B-32", "key": "laion400m_e31", "gt": 0},
+        {"arch": "ViT-B-32", "key": "laion400m_e32", "gt": 0},
+        {"arch": "ViT-B-32", "key": "laion2b_e16", "gt": 0},
+        {"arch": "ViT-B-32", "key": "laion2b_s34b_b79k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "datacomp_xl_s13b_b90k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "datacomp_m_s128m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_m_clip_s128m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_m_laion_s128m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_m_image_s128m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_m_text_s128m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_m_basic_s128m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_m_s128m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "datacomp_s_s13m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_s_clip_s13m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_s_laion_s13m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_s_image_s13m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_s_text_s13m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_s_basic_s13m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "commonpool_s_s13m_b4k", "gt": 0},
+        {"arch": "ViT-B-32", "key": "metaclip_400m", "gt": 0},
+        {"arch": "ViT-B-32", "key": "metaclip_fullcc", "gt": 0},
+        {"arch": "ViT-L-14", "key": "openai", "gt": 0},
+        {"arch": "ViT-L-14", "key": "laion400m_e31", "gt": 0},
+        {"arch": "ViT-L-14", "key": "laion400m_e32", "gt": 0},
+        {"arch": "ViT-L-14", "key": "laion2b_s32b_b82k", "gt": 0},
+        {"arch": "ViT-L-14", "key": "datacomp_xl_s13b_b90k", "gt": 0},
+        {"arch": "ViT-L-14", "key": "commonpool_xl_clip_s13b_b90k", "gt": 0},
+        {"arch": "ViT-L-14", "key": "commonpool_xl_laion_s13b_b90k", "gt": 0},
+        {"arch": "ViT-L-14", "key": "commonpool_xl_s13b_b90k", "gt": 0},
+    ],
+}
+
+
+def process_decree_encoder(encoder):
+    path = encoder["path"]
+    arch = encoder["arch"]
+    gt = encoder["gt"]
+
+    # generate id
+    poi_dataset = dir.split("/")[2].split("_")[0]
+    model_name = dir.split("/")[-1].split(".pth")[0]
+    id = f"DECREE_{poi_dataset}_{model_name}"
+
+    return {"path": path, "arch": arch, "gt": gt, "id": id}
+
+
+def process_hanxun_encoder(encoder):
+    path = encoder["path"]
+    arch = encoder["arch"]
+    gt = encoder["gt"]
+    backdoor_dataset = encoder["backdoor_dataset"]
+
+    # generate id
+    id = f"HANXUN_{path}"
+
+    prefix = "hf-hub:hanxunh/"
+
+    return {
+        "path": prefix + path,
+        "arch": arch,
+        "gt": gt,
+        "id": id,
+        "prefix": prefix,
+        "backdoor_dataset": backdoor_dataset,
+    }
+
+
+def process_openclip_encoder(encoder):
+    key = encoder["key"]
+    arch = encoder["arch"]
+    gt = encoder["gt"]
+
+    # generate id
+    id = f"OPENCLIP_{arch}_{key}"
+
+    return {"arch": arch, "key": key, "gt": gt, "id": id}
