@@ -152,7 +152,9 @@ def run(
             )
 
             if encoder_type == "decree":
-                class_embeddings = clean_clip_for_text_encoding.encode_text(texts)
+                class_embeddings = clean_clip_for_text_encoding.encode_text(
+                    texts
+                ).float()
             elif encoder_type == "hanxun":
                 class_embeddings = model.encode_text(
                     texts
@@ -207,13 +209,6 @@ def run(
                 pass
 
         # 100* is used to sharpen the softmax distribution — making the model more confident in its top prediction.
-        # TODO: remove later
-        print(
-            image_features.shape,
-            image_features.dtype,
-            zeroshot_weights.shape,
-            zeroshot_weights.dtype,
-        )
         logits = 100.0 * image_features @ zeroshot_weights
 
         acc1 = accuracy(logits, labels, topk=(1,))[0]
