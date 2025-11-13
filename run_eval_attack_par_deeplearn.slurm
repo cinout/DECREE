@@ -22,12 +22,12 @@
 
 #SBATCH --mem=120G
 
-# export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
-# export MASTER_PORT=28400
-# echo ">>> NODELIST="${SLURM_NODELIST}
-# master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-# export MASTER_ADDR=$master_addr
-# echo ">>> MASTER_ADDR="$MASTER_ADDR
+### export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
+### export MASTER_PORT=28400
+### echo ">>> NODELIST="${SLURM_NODELIST}
+### master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+### export MASTER_ADDR=$master_addr
+### echo ">>> MASTER_ADDR="$MASTER_ADDR
 
 module purge
 
