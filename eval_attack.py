@@ -84,6 +84,9 @@ def run(
         pass
 
     _normalize = preprocess.transforms[-1]  # take the last one, norm by (mean, std)
+    # TODO: what does _normalize do?
+    print("_normalize:")
+    print(_normalize)
     data_transforms = [
         transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
         transforms.CenterCrop((224, 224)),
@@ -287,27 +290,27 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    for encoder in pretrained_clip_sources["decree"]:
-        encoder_info = process_decree_encoder(encoder)
-        if encoder_info["gt"] == 1:
-            run(
-                args,
-                "decree",
-                encoder_info["id"],
-                arch=encoder_info["arch"],
-                path=encoder_info["path"],
-                attack_label=encoder_info["attack_label"],
-            )
-    # TODO: uncomment below
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
+    # for encoder in pretrained_clip_sources["decree"]:
+    #     encoder_info = process_decree_encoder(encoder)
     #     if encoder_info["gt"] == 1:
     #         run(
     #             args,
-    #             "hanxun",
+    #             "decree",
     #             encoder_info["id"],
     #             arch=encoder_info["arch"],
     #             path=encoder_info["path"],
+    #             attack_label=encoder_info["attack_label"],
     #         )
+    # TODO: uncomment below
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
+        if encoder_info["gt"] == 1:
+            run(
+                args,
+                "hanxun",
+                encoder_info["id"],
+                arch=encoder_info["arch"],
+                path=encoder_info["path"],
+            )
     # for encoder in pretrained_clip_sources["openclip"]:
     #     encoder_info = process_openclip_encoder(encoder)
