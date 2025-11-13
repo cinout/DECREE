@@ -353,8 +353,8 @@ def process_decree_encoder(encoder):
     gt = encoder["gt"]
 
     # generate id
-    poi_dataset = dir.split("/")[2].split("_")[0]
-    model_name = dir.split("/")[-1].split(".pth")[0]
+    poi_dataset = path.split("/")[2].split("_")[0]
+    model_name = path.split("/")[-1].split(".pth")[0]
     id = f"DECREE_{poi_dataset}_{model_name}"
 
     return {"path": path, "arch": arch, "gt": gt, "id": id}

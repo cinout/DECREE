@@ -43,6 +43,8 @@ def run(
     prefix=None,
     backdoor_dataset=None,
 ):
+    print(f"Evaluate encoder {encoder_type} {id}")
+
     """
     Prepare model
     """
