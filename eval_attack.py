@@ -43,7 +43,7 @@ def run(
     prefix=None,
     backdoor_dataset=None,
 ):
-    print(f"Evaluate encoder {encoder_type} {id}")
+    print(f">>> Evaluate encoder {encoder_type} {id}")
 
     """
     Prepare model
@@ -141,11 +141,17 @@ def run(
     trigger = torch.load(
         os.path.join(args.trigger_saved_path, f"{id}_inv_trigger_patch.pt"),
         map_location=device,
-    )  # [224,224,3], 0-255
+    ).permute(
+        2, 0, 1
+    )  # [224,224,3]->[3,244,244], 0-255
+    trigger = (trigger / 255.0).to(dtype=torch.float32)
+
     mask = torch.load(
         os.path.join(args.trigger_saved_path, f"{id}_inv_trigger_mask.pt"),
         map_location=device,
-    )  # [224,224,3], 0-1
+    ).permute(
+        2, 0, 1
+    )  # [224,224,3]->[3,244,244], 0-1
 
     for images, labels in data_loader:
         ### CLEAN
@@ -159,9 +165,6 @@ def run(
         acc1_meter.update(acc1.item(), len(images))
 
         ### POISONED
-        mask = torch.permute(mask, (2, 0, 1))
-        trigger = torch.permute(trigger, (2, 0, 1))
-        trigger = (trigger / 255.0).to(dtype=torch.float32)
 
         # PyTorch will broadcast mask and trigger along the batch dimension automatically. [3, H, W] → [B, 3, H, W] automatically (broadcast)
         images = trigger * mask + images * (1 - mask)
