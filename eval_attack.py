@@ -88,7 +88,7 @@ def run(
         args.dataset_path, transform=data_transforms, is_test=True, kwargs={}
     )
     data_loader = DataLoader(
-        test_set, batch_size=args.batch_size, num_workers=4, shuffle=False
+        test_set, batch_size=args.batch_size, num_workers=1, shuffle=False
     )
 
     # Use correct vocabulary and BPE. If you accidentally use a tokenizer from another variant: The input token IDs won’t correspond to the right embeddings. Text encoder outputs become meaningless. Zero-shot classification accuracy collapses.
@@ -161,11 +161,11 @@ def run(
         ### POISONED
         mask = torch.permute(mask, (2, 0, 1))
         trigger = torch.permute(trigger, (2, 0, 1))
-        trigger = trigger / 255.0
+        trigger = (trigger / 255.0).to(dtype=torch.float32)
 
         # PyTorch will broadcast mask and trigger along the batch dimension automatically. [3, H, W] → [B, 3, H, W] automatically (broadcast)
         images = trigger * mask + images * (1 - mask)
-        images = torch.clamp(images, 0, 1)
+        images = torch.clamp(images, 0, 1).to(dtype=torch.float32)
 
         if encoder_type == "hanxun":
             bd_labels = torch.tensor(
