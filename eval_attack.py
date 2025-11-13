@@ -90,7 +90,6 @@ def run(
     elif encoder_type == "openclip":
         pass
 
-    print(_normalize)
     data_transforms = [
         transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
         transforms.CenterCrop((224, 224)),
@@ -200,7 +199,9 @@ def run(
 
             if encoder_type == "decree":
                 # backdoor_clip_for_visual_encoding performs normalization, equivalent to .encode_image(, normalize=True)
-                image_features = backdoor_clip_for_visual_encoding(_normalize(images))
+                image_features = backdoor_clip_for_visual_encoding(
+                    _normalize(images)
+                ).float()
             elif encoder_type == "hanxun":
                 # .encode_image() provides normalization option
                 image_features = model.encode_image(_normalize(images), normalize=True)
@@ -209,6 +210,7 @@ def run(
 
         # 100* is used to sharpen the softmax distribution — making the model more confident in its top prediction.
         logits = 100.0 * image_features @ zeroshot_weights
+
         acc1 = accuracy(logits, labels, topk=(1,))[0]
         acc1_meter.update(acc1.item(), len(images))
 
@@ -231,7 +233,9 @@ def run(
 
         with torch.no_grad():
             if encoder_type == "decree":
-                image_features = backdoor_clip_for_visual_encoding(_normalize(images))
+                image_features = backdoor_clip_for_visual_encoding(
+                    _normalize(images)
+                ).float()
             elif encoder_type == "hanxun":
                 image_features = model.encode_image(_normalize(images), normalize=True)
             else:
