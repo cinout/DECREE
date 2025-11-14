@@ -157,6 +157,11 @@ def run(
                         else random_template(classname)
                     )
                 ]
+                texts = (
+                    clip_tokenizer(texts).to(device)
+                    if clip_tokenizer is not None
+                    else texts
+                )
                 class_embeddings = clean_clip_for_text_encoding.encode_text(
                     texts
                 ).float()  # [1, embding_size]
