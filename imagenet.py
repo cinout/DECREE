@@ -170,6 +170,7 @@ class BackdoorImageNet(Dataset):
         )
 
     def __getitem__(self, index):
+        # TODO: did train_transform introduce additional augs????
         img = PIL.Image.open(self.filename[index]).convert("RGB")
         if self.train_transform is not None:
             # arrive
@@ -189,7 +190,7 @@ class BackdoorImageNet(Dataset):
 
         prompt = self.prompt_list[
             index % len(self.prompt_list)
-        ]  # choose one, and repeat over the list
+        ]  # choose a prompt, and repeat over the list
 
         if index in self.poison_list:
             # if this image should be poisoned, add trigger to the image, and change the text of the image

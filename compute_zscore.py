@@ -31,9 +31,8 @@ def main(args):
 
     ## load model
     ckpt_file = args.encoder_path  # the candidate poisoned model
-    model = CLIP(1024, 224, vision_layers=(3, 4, 6, 3), vision_width=64).to(DEVICE)
     ckpt = torch.load(ckpt_file)
-
+    model = CLIP(1024, 224, vision_layers=(3, 4, 6, 3), vision_width=64).to(DEVICE)
     # print(ckpt['state_dict'].keys())
     if "conv1.weight" in ckpt["state_dict"]:
         model.visual.load_state_dict(

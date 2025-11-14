@@ -133,7 +133,6 @@ def run(
         use_format = isinstance(templates[0], str)
 
         classnames = list(zero_shot_meta_dict[args.eval_dataset + "_CLASSNAMES"])
-
         if encoder_type == "decree":
             classnames.append(attack_label)
 
@@ -165,6 +164,7 @@ def run(
             class_embedding = F.normalize(class_embeddings, dim=-1).mean(
                 dim=0
             )  # first scales each embedding vector to unit length (ensures each individual template contributes equally regardless of magnitude), then averages them, but the average is not necessarily unit norm
+
             class_embedding /= (
                 class_embedding.norm()
             )  # ensures the final per-class embedding has unit length as well (crucial, because CLIP uses cosine similarity between image and text embeddings)
@@ -246,8 +246,7 @@ def run(
     payload = "Clean Acc Top-1: {:.4f} ASR Top-1: {:.4f}".format(
         acc1_meter.avg, asr_meter.avg
     )
-    # start yellow text color, reset color back to normal after printing
-    print("\033[33m" + payload + "\033[0m")
+    print(payload)
 
 
 if __name__ == "__main__":

@@ -155,9 +155,13 @@ def train_text(
         img_batch = img_batch.to(DEVICE)
         img_feat = backdoored_encoder(img_batch).float()
 
-        text_batch = torch.cat([clip.tokenize(c) for c in text_batch]).to(DEVICE)
+        text_batch = torch.cat([clip.tokenize(c) for c in text_batch]).to(
+            DEVICE
+        )  # shape: [bs, context_length=77]
         with torch.no_grad():
-            text_feat = clean_clip.encode_text(text_batch).float()
+            text_feat = clean_clip.encode_text(
+                text_batch
+            ).float()  # shape: [bs, emb_dim]
 
         # normalize
         img_feat = F.normalize(img_feat, dim=-1)

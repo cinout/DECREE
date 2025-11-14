@@ -81,7 +81,7 @@ def load(
     model_path = _download(_MODELS[name])
     model = torch.jit.load(model_path, map_location=device if jit else "cpu").eval()
     n_px = model.input_resolution.item()
-    print(n_px)
+    # print(n_px)
     transform = Compose(
         [
             Resize(n_px, interpolation=Image.BICUBIC),
@@ -158,6 +158,7 @@ def load(
     return model, transform
 
 
+# output shape: (len(texts), context_length=77)
 def tokenize(texts: Union[str, List[str]], context_length: int = 77):
     if isinstance(texts, str):
         texts = [texts]
