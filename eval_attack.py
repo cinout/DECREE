@@ -316,15 +316,15 @@ if __name__ == "__main__":
                 path=encoder_info["path"],
                 attack_label=encoder_info["attack_label"],
             )
-    for encoder in pretrained_clip_sources["hanxun"]:
-        encoder_info = process_hanxun_encoder(encoder)
-        if encoder_info["gt"] == 1:
-            run(
-                args,
-                "hanxun",
-                encoder_info["id"],
-                arch=encoder_info["arch"],
-                path=encoder_info["path"],
-            )
-    for encoder in pretrained_clip_sources["openclip"]:
-        encoder_info = process_openclip_encoder(encoder)
+    # for encoder in pretrained_clip_sources["hanxun"]:
+    #     encoder_info = process_hanxun_encoder(encoder)
+    #     if encoder_info["gt"] == 1:
+    #         run(
+    #             args,
+    #             "hanxun",
+    #             encoder_info["id"],
+    #             arch=encoder_info["arch"],
+    #             path=encoder_info["path"],
+    #         )
+    # for encoder in pretrained_clip_sources["openclip"]:
+    #     encoder_info = process_openclip_encoder(encoder)
