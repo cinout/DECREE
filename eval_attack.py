@@ -166,7 +166,7 @@ def run(
                     texts
                 ).float()  # [1, embding_size]
 
-                class_embedding = F.normalize(class_embedding, dim=-1).mean(dim=0)
+                class_embedding = F.normalize(class_embeddings, dim=-1).mean(dim=0)
 
             elif encoder_type == "hanxun":
                 texts = [
