@@ -148,35 +148,45 @@ def run(
         for classname in classnames:
             # each classname + all the templates
 
-            texts = [
-                template.format(classname) if use_format else template(classname)
-                for template in templates
-            ]
-            # tokenize
-            texts = (
-                clip_tokenizer(texts).to(device)
-                if clip_tokenizer is not None
-                else texts
-            )
-
             if encoder_type == "decree":
+                random_template = random.choice(templates)
+                texts = [
+                    (
+                        random_template.format(classname)
+                        if use_format
+                        else random_template(classname)
+                    )
+                ]
                 class_embeddings = clean_clip_for_text_encoding.encode_text(
                     texts
-                ).float()
+                ).float()  # [1, embding_size]
+
+                class_embedding = F.normalize(class_embedding, dim=-1).mean(dim=0)
+
             elif encoder_type == "hanxun":
+                texts = [
+                    template.format(classname) if use_format else template(classname)
+                    for template in templates
+                ]
+                # tokenize
+                texts = (
+                    clip_tokenizer(texts).to(device)
+                    if clip_tokenizer is not None
+                    else texts
+                )
                 class_embeddings = model.encode_text(
                     texts
                 )  # produces a tensor of shape [num_templates, embedding_dim]
+
+                class_embedding = F.normalize(class_embeddings, dim=-1).mean(
+                    dim=0
+                )  # first scales each embedding vector to unit length (ensures each individual template contributes equally regardless of magnitude), then averages them, but the average is not necessarily unit norm
+
+                class_embedding /= (
+                    class_embedding.norm()
+                )  # ensures the final per-class embedding has unit length as well (crucial, because CLIP uses cosine similarity between image and text embeddings)
             else:
                 pass
-
-            class_embedding = F.normalize(class_embeddings, dim=-1).mean(
-                dim=0
-            )  # first scales each embedding vector to unit length (ensures each individual template contributes equally regardless of magnitude), then averages them, but the average is not necessarily unit norm
-
-            class_embedding /= (
-                class_embedding.norm()
-            )  # ensures the final per-class embedding has unit length as well (crucial, because CLIP uses cosine similarity between image and text embeddings)
 
             zeroshot_weights.append(class_embedding)
 
