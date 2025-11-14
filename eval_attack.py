@@ -78,6 +78,14 @@ def run(
             torch.FloatTensor(_mean[args.eval_dataset.lower()]),
             torch.FloatTensor(_std[args.eval_dataset.lower()]),
         )
+
+        data_transforms = [
+            transforms.Resize(256),
+            transforms.CenterCrop((224, 224)),
+            _convert_to_rgb,
+            transforms.ToTensor(),
+        ]
+
     elif encoder_type == "hanxun":
         model, _, preprocess = open_clip.create_model_and_transforms(path)
         model = model.to(device)
@@ -87,17 +95,17 @@ def run(
 
         _normalize = preprocess.transforms[-1]  # take the last one, norm by (mean, std)
 
+        data_transforms = [
+            transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.CenterCrop((224, 224)),
+            _convert_to_rgb,
+            transforms.ToTensor(),
+        ]
+
     elif encoder_type == "openclip":
         pass
 
-    data_transforms = [
-        transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
-        transforms.CenterCrop((224, 224)),
-        _convert_to_rgb,
-        transforms.ToTensor(),
-    ]
     data_transforms = transforms.Compose(data_transforms)
-
     ## Image preprocessing transform for validation/inference (no augmentation)
 
     # model, _, preprocess = open_clip.create_model_and_transforms(
@@ -139,6 +147,7 @@ def run(
         zeroshot_weights = []
         for classname in classnames:
             # each classname + all the templates
+
             texts = [
                 template.format(classname) if use_format else template(classname)
                 for template in templates
@@ -168,6 +177,7 @@ def run(
             class_embedding /= (
                 class_embedding.norm()
             )  # ensures the final per-class embedding has unit length as well (crucial, because CLIP uses cosine similarity between image and text embeddings)
+
             zeroshot_weights.append(class_embedding)
 
         zeroshot_weights = torch.stack(zeroshot_weights, dim=1).to(
@@ -183,15 +193,15 @@ def run(
         map_location=device,
     ).permute(
         2, 0, 1
-    )  # [224,224,3]->[3,244,244], 0-255
-    trigger = (trigger / 255.0).to(dtype=torch.float32)
+    )  # [224,224,3]->[3,224,224], 0-255
+    trigger = (trigger / 255.0).to(dtype=torch.float32)  # [3,224,224], 0-1
 
     mask = torch.load(
         os.path.join(args.trigger_saved_path, f"{id}_inv_trigger_mask.pt"),
         map_location=device,
     ).permute(
         2, 0, 1
-    )  # [224,224,3]->[3,244,244], 0-1
+    )  # [224,224,3]->   [3,224,224], 0-1
 
     for images, labels in data_loader:
         ### CLEAN
@@ -306,16 +316,15 @@ if __name__ == "__main__":
                 path=encoder_info["path"],
                 attack_label=encoder_info["attack_label"],
             )
-    # TODO: uncomment below
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
-    #     if encoder_info["gt"] == 1:
-    #         run(
-    #             args,
-    #             "hanxun",
-    #             encoder_info["id"],
-    #             arch=encoder_info["arch"],
-    #             path=encoder_info["path"],
-    #         )
-    # for encoder in pretrained_clip_sources["openclip"]:
-    #     encoder_info = process_openclip_encoder(encoder)
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
+        if encoder_info["gt"] == 1:
+            run(
+                args,
+                "hanxun",
+                encoder_info["id"],
+                arch=encoder_info["arch"],
+                path=encoder_info["path"],
+            )
+    for encoder in pretrained_clip_sources["openclip"]:
+        encoder_info = process_openclip_encoder(encoder)

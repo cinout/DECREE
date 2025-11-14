@@ -170,7 +170,6 @@ class BackdoorImageNet(Dataset):
         )
 
     def __getitem__(self, index):
-        # TODO: did train_transform introduce additional augs????
         img = PIL.Image.open(self.filename[index]).convert("RGB")
         if self.train_transform is not None:
             # arrive

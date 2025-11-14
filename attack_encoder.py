@@ -328,8 +328,8 @@ if __name__ == "__main__":
         test_transform, _ = get_processing("imagenet", augment=False)
         shadow_data = getBackdoorImageNet(
             trigger_file=args.trigger_file,  # this is where attack happens
-            train_transform=train_transform,
-            test_transform=test_transform,
+            train_transform=train_transform,  # FOR clean image aug
+            test_transform=test_transform,  # FOR trigger file aug
             reference_word=args.reference_word,
             poison_rate=5e-4,  # 0.05%
         )

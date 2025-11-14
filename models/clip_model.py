@@ -223,8 +223,4 @@ class CLIP(nn.Module):
         # To get cosine similarities or perform zero-shot evaluation, you must normalize them manually
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 
-        # TODO: remove
-        print(f"actually normalized:")
-        print(torch.sum(image_features**2, dim=-1))
-
         return image_features
