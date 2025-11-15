@@ -103,13 +103,6 @@ def accuracy(output, target, topk=(1,), clean_acc=False):
 
     gt = target.view(1, -1).expand_as(pred)
 
-    # TODO: comment out later
-    if clean_acc:
-        # debug: see which labels are predicted
-        print(pred)
-        print(gt)
-        print("=====================")
-
     correct = pred.eq(gt)
 
     res = []

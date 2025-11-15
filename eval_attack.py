@@ -142,9 +142,8 @@ def run(
 
         classnames = list(zero_shot_meta_dict[args.eval_dataset + "_CLASSNAMES"])
 
-        # TODO: uncomment below
-        # if encoder_type == "decree":
-        #     classnames.append(attack_label)
+        if encoder_type == "decree":
+            classnames.append(attack_label)
 
         zeroshot_weights = []
         for classname in classnames:
@@ -235,7 +234,8 @@ def run(
                 pass
 
         # 100* is used to sharpen the softmax distribution — making the model more confident in its top prediction.
-        logits = 100.0 * image_features @ zeroshot_weights
+        logits = image_features @ zeroshot_weights
+        # logits = 100.0 * image_features @ zeroshot_weights
 
         acc1 = accuracy(logits, labels, topk=(1,), clean_acc=True)[0]
         acc1_meter.update(acc1.item(), len(images))

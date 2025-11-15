@@ -1,21 +1,5 @@
-import os
-
 from models import get_encoder_architecture_usage
-
-os.environ["HF_HOME"] = os.path.abspath(
-    "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
-)
-import argparse
-import random
-import numpy as np
 import torch
-import open_clip
-from utils.encoders import (
-    pretrained_clip_sources,
-    process_decree_encoder,
-    process_hanxun_encoder,
-    process_openclip_encoder,
-)
 from utils.datasets import dataset_options
 from utils.utils import AverageMeter, accuracy
 from utils.zero_shot_metadata import zero_shot_meta_dict
@@ -24,7 +8,6 @@ from torch.utils.data import DataLoader
 from open_clip import get_tokenizer
 import torch.nn.functional as F
 from clip import clip
-from imagenet import _mean, _std
 
 """
 Load the local clean visual encoder
@@ -32,7 +15,9 @@ Load the local clean visual encoder
 backdoor_clip_for_visual_encoding = get_encoder_architecture_usage(args).to(
     device
 )  # CLIP(1024, 224, vision_layers=(3, 4, 6, 3), vision_width=64)
-ckpt = torch.load(path, map_location=device)  # path points to the clean encoder
+ckpt = torch.load(
+    path, map_location=device
+)  # path points to the provided clean CLIP encoder
 backdoor_clip_for_visual_encoding.visual.load_state_dict(ckpt["state_dict"])
 backdoor_clip_for_visual_encoding = backdoor_clip_for_visual_encoding.to(device)
 for param in backdoor_clip_for_visual_encoding.parameters():
@@ -81,10 +66,7 @@ clip_tokenizer = clip.tokenize
 with torch.no_grad():
     templates = zero_shot_meta_dict["ImageNet_TEMPLATES"]
     use_format = isinstance(templates[0], str)
-
     classnames = list(zero_shot_meta_dict["ImageNet_CLASSNAMES"])
-    if encoder_type == "decree":
-        classnames.append(attack_label)
 
     zeroshot_weights = []
     for classname in classnames:
@@ -99,41 +81,40 @@ with torch.no_grad():
             clip_tokenizer(texts).to(device) if clip_tokenizer is not None else texts
         )
 
-        if encoder_type == "decree":
-            # random_template = random.choice(templates)
-            # texts = [
-            #     (
-            #         random_template.format(classname)
-            #         if use_format
-            #         else random_template(classname)
-            #     )
-            # ]
-            # texts = (
-            #     clip_tokenizer(texts).to(device)
-            #     if clip_tokenizer is not None
-            #     else texts
-            # )
-            class_embeddings = clean_clip_for_text_encoding.encode_text(
-                texts
-            ).float()  # [1, embding_size]
-
-        elif encoder_type == "hanxun":
-            class_embeddings = model.encode_text(
-                texts
-            )  # produces a tensor of shape [num_templates, embedding_dim]
-        else:
-            pass
+        class_embeddings = clean_clip_for_text_encoding.encode_text(
+            texts
+        ).float()  # [1, embding_size]
 
         class_embedding = F.normalize(class_embeddings, dim=-1).mean(
             dim=0
-        )  # first scales each embedding vector to unit length (ensures each individual template contributes equally regardless of magnitude), then averages them, but the average is not necessarily unit norm
+        )  # scales each embedding vector to unit length (ensures each individual template contributes equally regardless of magnitude), then averages them, but the average is not necessarily unit norm
 
         class_embedding /= (
             class_embedding.norm()
-        )  # ensures the final per-class embedding has unit length as well (crucial, because CLIP uses cosine similarity between image and text embeddings)
+        )  # ensures the final per-class embedding has unit length
 
         zeroshot_weights.append(class_embedding)
 
     zeroshot_weights = torch.stack(zeroshot_weights, dim=1).to(
         device
     )  # shape [embedding_dim, num_classes]
+
+"""
+Zero-shot ACC
+"""
+acc1_meter = AverageMeter()
+for images, labels in data_loader:
+    ### CLEAN
+    images = images.to(device, non_blocking=True)
+    labels = labels.to(device, non_blocking=True)
+    with torch.no_grad():
+
+        image_features = backdoor_clip_for_visual_encoding(_normalize(images))
+
+    logits = 100.0 * image_features @ zeroshot_weights
+
+    acc1 = accuracy(logits, labels, topk=(1,), clean_acc=True)[0]
+    acc1_meter.update(acc1.item(), len(images))
+
+
+print(f"Clean ACC Top-1: {acc1_meter.avg}")
