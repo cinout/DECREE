@@ -2,7 +2,7 @@ import re
 
 
 file_path = "slurm-18599249-[PART_1].out"
-output_file = "results.txt"
+output_file = "z_results.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
 metric_pattern = r".*Clean Acc Top-1:\s*([\d.]+)\s*ASR Top-1:\s*([\d.]+).*"
