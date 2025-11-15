@@ -7,6 +7,8 @@ pretrained_clip_sources = {
             "path": "output/CLIP_text/clean_encoder/clean_ft_imagenet.pth",
             "arch": "RN50",
             "gt": 0,
+            # TODO: This is hack code, remove later
+            "attack_label": "None",
         },
         {
             "path": "output/CLIP_text/gtsrb_backdoored_encoder/model_10_tg24_imagenet.pth",
