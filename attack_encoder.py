@@ -426,7 +426,7 @@ if __name__ == "__main__":
             clean_model.visual.load_state_dict(checkpoint["state_dict"])
             model.visual.load_state_dict(checkpoint["state_dict"])
         elif args.encoder_usage_info == "imagenet" or args.encoder_usage_info == "CLIP":
-            # arrive here
+            #### ARRIVE HERE
 
             checkpoint = torch.load(args.pretrained_encoder, map_location=DEVICE)
             # initialize both clean and learnable models (only .visual branch is available)

@@ -79,12 +79,12 @@ def run(
             torch.FloatTensor(_std[args.eval_dataset.lower()]),
         )
 
-        data_transforms = [
-            transforms.Resize(256),
-            transforms.CenterCrop((224, 224)),
-            _convert_to_rgb,
-            transforms.ToTensor(),
-        ]
+        # data_transforms = [
+        #     transforms.Resize(256),
+        #     transforms.CenterCrop((224, 224)),
+        #     _convert_to_rgb,
+        #     transforms.ToTensor(),
+        # ]
 
     elif encoder_type == "hanxun":
         model, _, preprocess = open_clip.create_model_and_transforms(path)
@@ -95,15 +95,15 @@ def run(
 
         _normalize = preprocess.transforms[-1]  # take the last one, norm by (mean, std)
 
-        data_transforms = [
-            transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
-            transforms.CenterCrop((224, 224)),
-            _convert_to_rgb,
-            transforms.ToTensor(),
-        ]
-
     elif encoder_type == "openclip":
         pass
+
+    data_transforms = [
+        transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
+        transforms.CenterCrop((224, 224)),
+        _convert_to_rgb,
+        transforms.ToTensor(),
+    ]
 
     data_transforms = transforms.Compose(data_transforms)
     ## Image preprocessing transform for validation/inference (no augmentation)
@@ -148,50 +148,49 @@ def run(
         for classname in classnames:
             # each classname + all the templates
 
+            texts = [
+                template.format(classname) if use_format else template(classname)
+                for template in templates
+            ]
+            # tokenize
+            texts = (
+                clip_tokenizer(texts).to(device)
+                if clip_tokenizer is not None
+                else texts
+            )
+
             if encoder_type == "decree":
-                random_template = random.choice(templates)
-                texts = [
-                    (
-                        random_template.format(classname)
-                        if use_format
-                        else random_template(classname)
-                    )
-                ]
-                texts = (
-                    clip_tokenizer(texts).to(device)
-                    if clip_tokenizer is not None
-                    else texts
-                )
+                # random_template = random.choice(templates)
+                # texts = [
+                #     (
+                #         random_template.format(classname)
+                #         if use_format
+                #         else random_template(classname)
+                #     )
+                # ]
+                # texts = (
+                #     clip_tokenizer(texts).to(device)
+                #     if clip_tokenizer is not None
+                #     else texts
+                # )
                 class_embeddings = clean_clip_for_text_encoding.encode_text(
                     texts
                 ).float()  # [1, embding_size]
 
-                class_embedding = F.normalize(class_embeddings, dim=-1).mean(dim=0)
-
             elif encoder_type == "hanxun":
-                texts = [
-                    template.format(classname) if use_format else template(classname)
-                    for template in templates
-                ]
-                # tokenize
-                texts = (
-                    clip_tokenizer(texts).to(device)
-                    if clip_tokenizer is not None
-                    else texts
-                )
                 class_embeddings = model.encode_text(
                     texts
                 )  # produces a tensor of shape [num_templates, embedding_dim]
-
-                class_embedding = F.normalize(class_embeddings, dim=-1).mean(
-                    dim=0
-                )  # first scales each embedding vector to unit length (ensures each individual template contributes equally regardless of magnitude), then averages them, but the average is not necessarily unit norm
-
-                class_embedding /= (
-                    class_embedding.norm()
-                )  # ensures the final per-class embedding has unit length as well (crucial, because CLIP uses cosine similarity between image and text embeddings)
             else:
                 pass
+
+            class_embedding = F.normalize(class_embeddings, dim=-1).mean(
+                dim=0
+            )  # first scales each embedding vector to unit length (ensures each individual template contributes equally regardless of magnitude), then averages them, but the average is not necessarily unit norm
+
+            class_embedding /= (
+                class_embedding.norm()
+            )  # ensures the final per-class embedding has unit length as well (crucial, because CLIP uses cosine similarity between image and text embeddings)
 
             zeroshot_weights.append(class_embedding)
 
@@ -322,7 +321,9 @@ if __name__ == "__main__":
 
     for encoder in pretrained_clip_sources["decree"]:
         encoder_info = process_decree_encoder(encoder)
-        if encoder_info["gt"] == 1:
+
+        # TODO: change back to 1
+        if encoder_info["gt"] == 0:
             run(
                 args,
                 "decree",
