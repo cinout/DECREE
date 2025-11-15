@@ -6,7 +6,7 @@ output_file = "z_results.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
 metric_pattern = r".*Clean Acc Top-1:\s*([\d.]+)\s*ASR Top-1:\s*([\d.]+).*"
-id_pattern = r">>> Evaluate encoder.*(\S+)$"
+id_pattern = r">>> Evaluate encoder \S+ (\S+)$"
 
 metric_store = []
 id_store = []
@@ -28,7 +28,8 @@ with open(file_path, "r") as f:
             id_store.append(id)
 
 output_lines = [
-    f"{id}\t{metric[0]}\t{metric[1]}\n" for id, metric in zip(id_store, metric_store)
+    f"{id}\t{metric[0]:.2f}\t{metric[1]:.2f}\n"
+    for id, metric in zip(id_store, metric_store)
 ]
 
 for line in output_lines:

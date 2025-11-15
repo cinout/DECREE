@@ -3,10 +3,12 @@ from torchvision import transforms
 from utils.zero_shot_metadata import zero_shot_meta_dict
 import torch.nn.functional as F
 import torch
+import re
 
-image_features = torch.randint(0, 20, (1, 8), dtype=torch.float)
+id_pattern = r">>> Evaluate encoder \S+ (\S+)$"
 
-value_a = F.normalize(image_features, dim=-1)
-value_b = F.normalize(image_features, dim=-1).mean(dim=0)
-print(value_a)
-print(value_b)
+exm = ">>> Evaluate encoder hanxun HANXUN_clip_backdoor_rn50_cc3m_badnets"
+id_pattern_match = re.search(id_pattern, exm)
+if id_pattern_match:
+    id = id_pattern_match.group(1)
+    print(id)
