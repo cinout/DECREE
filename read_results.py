@@ -1,7 +1,7 @@
 import re
 
 
-file_path = "slurm-18647897-[aug].out"
+file_path = "slurm-18648058-[aug+rd_prompt].out"
 output_file = "z_results.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
