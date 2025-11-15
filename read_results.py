@@ -1,7 +1,7 @@
 import re
 
 
-file_path = "slurm-18599249-[PART_1].out"
+file_path = "slurm-18604317-[PART_2].out"
 output_file = "z_results.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
