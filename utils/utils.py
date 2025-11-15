@@ -94,13 +94,23 @@ class AverageMeter(object):
         self.max = max(self.max, val)
 
 
-def accuracy(output, target, topk=(1,)):
+def accuracy(output, target, topk=(1,), clean_acc=False):
     maxk = max(topk)
 
     batch_size = target.size(0)
     _, pred = output.topk(maxk, 1, True, True)
     pred = pred.t()
-    correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+    gt = target.view(1, -1).expand_as(pred)
+
+    # TODO: comment out later
+    if clean_acc:
+        # debug: see which labels are predicted
+        print(pred)
+        print(gt)
+        print("=====================")
+
+    correct = pred.eq(gt)
 
     res = []
     for k in topk:
