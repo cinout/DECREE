@@ -96,7 +96,14 @@ def run(
         _normalize = preprocess.transforms[-1]  # take the last one, norm by (mean, std)
 
     elif encoder_type == "openclip":
-        pass
+        model, _, preprocess = open_clip.create_model_and_transforms(
+            arch, pretrained=key
+        )
+        model = model.to(device)
+        for param in model.parameters():
+            param.requires_grad = False
+        model.eval()
+        _normalize = preprocess.transforms[-1]
 
     data_transforms = [
         transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
@@ -132,8 +139,8 @@ def run(
         clip_tokenizer = clip.tokenize
     elif encoder_type == "hanxun":
         clip_tokenizer = get_tokenizer(path)
-    else:
-        pass
+    elif encoder_type == "openclip":
+        clip_tokenizer = get_tokenizer(arch)
 
     # Build Text Template
     with torch.no_grad():
@@ -182,8 +189,8 @@ def run(
                 class_embeddings = model.encode_text(
                     texts
                 )  # produces a tensor of shape [num_templates, embedding_dim]
-            else:
-                pass
+            elif encoder_type == "openclip":
+                class_embeddings = model.encode_text(texts)
 
             class_embedding = F.normalize(class_embeddings, dim=-1).mean(
                 dim=0
@@ -230,12 +237,11 @@ def run(
             elif encoder_type == "hanxun":
                 # .encode_image() provides normalization option
                 image_features = model.encode_image(_normalize(images), normalize=True)
-            else:
-                pass
+            elif encoder_type == "openclip":
+                image_features = model.encode_image(_normalize(images), normalize=True)
 
         # 100* is used to sharpen the softmax distribution — making the model more confident in its top prediction.
-        logits = image_features @ zeroshot_weights
-        # logits = 100.0 * image_features @ zeroshot_weights
+        logits = 100.0 * image_features @ zeroshot_weights
 
         acc1 = accuracy(logits, labels, topk=(1,), clean_acc=True)[0]
         acc1_meter.update(acc1.item(), len(images))
@@ -254,16 +260,19 @@ def run(
             bd_labels = torch.tensor(
                 [classnames.index("banana") for _ in range(len(images))]
             ).to(device)
-        else:
-            pass
+        elif encoder_type == "openclip":
+            bd_labels = torch.tensor(
+                # TODO: this is hack code, as openclip models are clean, so no bd label is available
+                [classnames.index("banana") for _ in range(len(images))]
+            ).to(device)
 
         with torch.no_grad():
             if encoder_type == "decree":
                 image_features = backdoor_clip_for_visual_encoding(_normalize(images))
             elif encoder_type == "hanxun":
                 image_features = model.encode_image(_normalize(images), normalize=True)
-            else:
-                pass
+            elif encoder_type == "openclip":
+                image_features = model.encode_image(_normalize(images), normalize=True)
 
         logits = 100.0 * image_features @ zeroshot_weights
         asr = accuracy(logits, bd_labels, topk=(1,))[0]
@@ -321,19 +330,18 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    for encoder in pretrained_clip_sources["decree"]:
-        encoder_info = process_decree_encoder(encoder)
+    # for encoder in pretrained_clip_sources["decree"]:
+    #     encoder_info = process_decree_encoder(encoder)
 
-        # TODO: change back to 1
-        if encoder_info["gt"] == 0:
-            run(
-                args,
-                "decree",
-                encoder_info["id"],
-                arch=encoder_info["arch"],
-                path=encoder_info["path"],
-                attack_label=encoder_info["attack_label"],
-            )
+    #     if encoder_info["gt"] == 1:
+    #         run(
+    #             args,
+    #             "decree",
+    #             encoder_info["id"],
+    #             arch=encoder_info["arch"],
+    #             path=encoder_info["path"],
+    #             attack_label=encoder_info["attack_label"],
+    #         )
     # for encoder in pretrained_clip_sources["hanxun"]:
     #     encoder_info = process_hanxun_encoder(encoder)
     #     if encoder_info["gt"] == 1:
@@ -344,5 +352,14 @@ if __name__ == "__main__":
     #             arch=encoder_info["arch"],
     #             path=encoder_info["path"],
     #         )
-    # for encoder in pretrained_clip_sources["openclip"]:
-    #     encoder_info = process_openclip_encoder(encoder)
+    for encoder in pretrained_clip_sources["openclip"]:
+        encoder_info = process_openclip_encoder(encoder)
+        # TODO: change to 1
+        if encoder_info["gt"] == 0:
+            run(
+                args,
+                "openclip",
+                encoder_info["id"],
+                arch=encoder_info["arch"],
+                key=encoder_info["key"],
+            )

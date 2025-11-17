@@ -39,7 +39,7 @@ def _convert_to_rgb(image):
 
 
 """
-Prepare Data
+Prepare ImageNet-1K Data
 """
 data_transforms = [
     transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
@@ -51,39 +51,40 @@ data_transforms = transforms.Compose(data_transforms)
 
 test_set = dataset_options["imagenet"](
     args.dataset_path, transform=data_transforms, is_test=True, kwargs={}
-)  # this creates the val set of the ImageNet-1K
+)  # this creates the val set of the ImageNet-1K, with data_transforms applied
 data_loader = DataLoader(
     test_set, batch_size=args.batch_size, num_workers=1, shuffle=False
 )
 
-_normalize = transforms.Normalize(
-    torch.FloatTensor([0.485, 0.456, 0.406]), torch.FloatTensor([0.229, 0.224, 0.225])
-)
-clip_tokenizer = clip.tokenize
-
-
-# Build Text Template
+"""
+Build Text Template
+"""
 with torch.no_grad():
-    templates = zero_shot_meta_dict["ImageNet_TEMPLATES"]
+    templates = zero_shot_meta_dict[
+        "ImageNet_TEMPLATES"
+    ]  # this returns the 80 common templates
     use_format = isinstance(templates[0], str)
-    classnames = list(zero_shot_meta_dict["ImageNet_CLASSNAMES"])
+    classnames = list(
+        zero_shot_meta_dict["ImageNet_CLASSNAMES"]
+    )  # this returns all the Imagenet-1k classnames
 
-    zeroshot_weights = []
+    zeroshot_text_weights = []
+    clip_tokenizer = clip.tokenize
     for classname in classnames:
-        # each classname + all the templates
 
+        # tokenize
         texts = [
             template.format(classname) if use_format else template(classname)
             for template in templates
         ]
-        # tokenize
         texts = (
             clip_tokenizer(texts).to(device) if clip_tokenizer is not None else texts
         )
 
+        # obtain text embeddings
         class_embeddings = clean_clip_for_text_encoding.encode_text(
             texts
-        ).float()  # [1, embding_size]
+        ).float()  # shape: [#templates, embedding_size]
 
         class_embedding = F.normalize(class_embeddings, dim=-1).mean(
             dim=0
@@ -93,9 +94,9 @@ with torch.no_grad():
             class_embedding.norm()
         )  # ensures the final per-class embedding has unit length
 
-        zeroshot_weights.append(class_embedding)
+        zeroshot_text_weights.append(class_embedding)
 
-    zeroshot_weights = torch.stack(zeroshot_weights, dim=1).to(
+    zeroshot_text_weights = torch.stack(zeroshot_text_weights, dim=1).to(
         device
     )  # shape [embedding_dim, num_classes]
 
@@ -103,6 +104,9 @@ with torch.no_grad():
 Zero-shot ACC
 """
 acc1_meter = AverageMeter()
+_normalize = transforms.Normalize(
+    torch.FloatTensor([0.485, 0.456, 0.406]), torch.FloatTensor([0.229, 0.224, 0.225])
+)
 for images, labels in data_loader:
     ### CLEAN
     images = images.to(device, non_blocking=True)
@@ -111,7 +115,7 @@ for images, labels in data_loader:
 
         image_features = backdoor_clip_for_visual_encoding(_normalize(images))
 
-    logits = 100.0 * image_features @ zeroshot_weights
+    logits = 100.0 * image_features @ zeroshot_text_weights
 
     acc1 = accuracy(logits, labels, topk=(1,), clean_acc=True)[0]
     acc1_meter.update(acc1.item(), len(images))
