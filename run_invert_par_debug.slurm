@@ -36,7 +36,7 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-  --coeff_l2_dist 0.1 \
+  --coeff_l2_dist 0.001 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
