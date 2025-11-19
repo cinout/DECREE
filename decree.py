@@ -531,7 +531,6 @@ if __name__ == "__main__":
         "--lr", default=0.5, type=float, help="learning rate on trigger"
     )
     parser.add_argument("--seed", default=80, type=int, help="random seed")
-    parser.add_argument("--mask_init", default="", type=str, help="init method of mask")
     parser.add_argument(
         "--result_file",
         default=f"results_{timestamp}.txt",

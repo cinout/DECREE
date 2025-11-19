@@ -35,7 +35,8 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u decree.py \
-  --seed 10 \
+  --seed 80 \
+  --batch_size 32 \
     
 
 ##Log this job's resource usage stats###
