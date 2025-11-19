@@ -30,7 +30,7 @@ DECREE
 │   └── CLIP_text
 │       └── ...
 ├── README.md
-├── main.py
+├── decree_main.py
 ├── ...
 └── .gitignore
 ```
@@ -66,7 +66,7 @@ The z-score results will be shown in `valid_cliptxt_zscore.txt`. During experime
 To run the DECREE:
 
 ```shell
-python run_decree.py
+python decree.py
 ```
 
 For the detection result, you can find:

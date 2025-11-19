@@ -262,7 +262,7 @@ def run(
             ).to(device)
         elif encoder_type == "openclip":
             bd_labels = torch.tensor(
-                # TODO: this is hack code, as openclip models are clean, so no bd label is available
+                # FIXME: this is hack code, as openclip models are clean, so no bd label is available
                 [classnames.index("banana") for _ in range(len(images))]
             ).to(device)
 
@@ -330,32 +330,30 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # for encoder in pretrained_clip_sources["decree"]:
-    #     encoder_info = process_decree_encoder(encoder)
-
-    #     if encoder_info["gt"] == 1:
-    #         run(
-    #             args,
-    #             "decree",
-    #             encoder_info["id"],
-    #             arch=encoder_info["arch"],
-    #             path=encoder_info["path"],
-    #             attack_label=encoder_info["attack_label"],
-    #         )
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
-    #     if encoder_info["gt"] == 1:
-    #         run(
-    #             args,
-    #             "hanxun",
-    #             encoder_info["id"],
-    #             arch=encoder_info["arch"],
-    #             path=encoder_info["path"],
-    #         )
+    for encoder in pretrained_clip_sources["decree"]:
+        encoder_info = process_decree_encoder(encoder)
+        if encoder_info["gt"] == 1:
+            run(
+                args,
+                "decree",
+                encoder_info["id"],
+                arch=encoder_info["arch"],
+                path=encoder_info["path"],
+                attack_label=encoder_info["attack_label"],
+            )
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
+        if encoder_info["gt"] == 1:
+            run(
+                args,
+                "hanxun",
+                encoder_info["id"],
+                arch=encoder_info["arch"],
+                path=encoder_info["path"],
+            )
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)
-        # TODO: change to 1
-        if encoder_info["gt"] == 0:
+        if encoder_info["gt"] == 1:
             run(
                 args,
                 "openclip",
