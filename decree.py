@@ -25,6 +25,10 @@ from utils.encoders import (
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+"""
+print out detection performance scores
+"""
+
 
 def finalize(
     train_mask_tanh,
@@ -67,6 +71,38 @@ def finalize(
     fp.write(result)
 
 
+"""
+Obtain clean quantiles
+"""
+
+
+def get_clean_quantile_range(clean_train_loader, model, test_transform):
+    model.eval()
+    clean_out_all = []
+    for clean_x_batch, _ in clean_train_loader:
+        clean_x_batch = clean_x_batch.to(DEVICE)
+        clean_input = torch.stack(
+            [test_transform(img.permute(2, 0, 1) / 255.0) for img in clean_x_batch]
+        )
+        clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
+        with torch.no_grad():
+            clean_out = model(clean_input)  # [bs, 1024]
+            clean_out_all.append(clean_out)
+
+    clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
+    clean_quantile_start = torch.quantile(clean_out_all, q=0.05, dim=0)  # [1024, ]
+    clean_quantile_end = torch.quantile(clean_out_all, q=0.95, dim=0)  # [1024, ]
+    clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
+
+    return clean_quantile_range
+
+
+"""
+calculate distance
+"""
+
+
+# FIXME: directly import clean_quantile_range as an argument, no need to calculate it again
 def calculate_distance_metric(
     clean_train_loader, mask, patch, model, DEVICE, test_transform
 ):
@@ -104,10 +140,6 @@ def calculate_distance_metric(
             clean_out_all.append(clean_out)
             bd_out_all.append(bd_out)
 
-        """
-        distance metrics option
-        """
-
         # # use L2
         # l2_dist_batch = torch.norm(clean_out - bd_out, dim=1).detach().tolist()
         # l2_dist.extend(l2_dist_batch)
@@ -139,6 +171,11 @@ def calculate_distance_metric(
     return l2_dist_quantile_normalized
 
 
+"""
+adjust learning rate
+"""
+
+
 def adjust_learning_rate(optimizer, epoch, args):
 
     thres = [200, 500]
@@ -155,13 +192,14 @@ def adjust_learning_rate(optimizer, epoch, args):
 
 
 def main(args, model_source, gt, id, encoder_path, fp):
+
     print(f">>> now processing {model_source} {id}")
+
     """
-    ### load model
+    Load Model
     """
 
     if model_source == "decree":
-        # load from local path
         model_ckpt_path = encoder_path
         model_ckpt = torch.load(model_ckpt_path, map_location=DEVICE)
         load_model = get_encoder_architecture_usage(args).to(DEVICE)
@@ -177,69 +215,59 @@ def main(args, model_source, gt, id, encoder_path, fp):
             model_name, pretrained=pretrained_key
         )
         load_model = load_model.to(DEVICE)
+    model = load_model.visual
+    model.eval()  # the poisoned/clean CLIP; we only need it to generate representations
+
+    """
+    Prepare Trigger
+    """
     trigger_file = "trigger/trigger_pt_white_185_24.npz"
-
     mask_size = 224
-
-    ### initialize trigger
     trigger_mask, trigger_patch = None, None
-
-    # used as trigger and mask shape reference
     with np.load(trigger_file) as data:
         trigger_mask = np.reshape(data["tm"], (mask_size, mask_size, 3))
         trigger_patch = np.reshape(
             data["t"], (mask_size, mask_size, 3)
         )  # .astype(np.uint8)
-
     train_mask_2d = torch.rand(trigger_mask.shape[:2], dtype=torch.float64).to(
         DEVICE
     )  # [h, w]
     train_patch = torch.rand_like(torch.tensor(trigger_patch), dtype=torch.float64).to(
         DEVICE
     )
-
-    # what's the purpose of this?
-    # (1) Shifts the data range from [0, 1] → [-0.5, 0.5]
-    # (2) Scales it up by roughly 2, giving [-1, 1] but slightly within it: [-1 + ε, 1 - ε]. The epsilon() keeps the values strictly inside (-1, 1) to avoid undefined values
-    # (3) Applies the inverse hyperbolic tangent, which maps (-1, 1)  →  (-∞, +∞)
-    # Purpose: optimization in a bounded range is hard for gradient-based methods. By using arctanh, you convert the variable into an unconstrained space (so the optimizer can freely adjust any real value).
-    # during forward passes, you can map it back to [0,1] using the hyperbolic tangent: x = (torch.tanh(z) + 1) / 2
+    # Purpose: optimization in a bounded range is hard for gradient-based methods. By using arctanh, you convert the variable into an unconstrained space (so the optimizer can freely adjust any real value). During forward passes, you can map it back to [0,1] using the hyperbolic tangent: x = (torch.tanh(z) + 1) / 2
     train_mask_2d = torch.arctanh((train_mask_2d - 0.5) * (2 - epsilon()))
     train_patch = torch.arctanh((train_patch - 0.5) * (2 - epsilon()))
     train_mask_2d.requires_grad = True
     train_patch.requires_grad = True
 
-    ### prepare dataloader and model
+    """
+    Prepare Dataloader
+    """
     test_transform = transforms.Compose(
         [transforms.Normalize(_mean["imagenet"], _std["imagenet"])]
     )
-
-    # resize, crop, and tensorize to (0,1) range
     pre_transform, _ = get_processing(
         "imagenet", augment=False, is_tensor=False, need_norm=False
     )  # get un-normalized tensor
-
-    # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
-    clean_train_data = getTensorImageNet(pre_transform)
+    clean_train_data = getTensorImageNet(
+        pre_transform
+    )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
     clean_train_data.rand_sample(0.2)
-
-    model = load_model.visual
-
     clean_train_loader = DataLoader(
         clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=True
     )
 
-    # # projector is not used
-    # projector = torch.rand([1, 512], dtype=torch.float64).to(DEVICE)
-    # projector = F.normalize(projector, dim=-1)
-
+    """
+    Prepare Optimizer
+    """
     optimizer = torch.optim.Adam(
         params=[train_mask_2d, train_patch], lr=args.lr, betas=(0.5, 0.9)
     )
 
-    # why set to eval()?, because model is the poisoned/clean CLIP, and we only need it to generate representations
-    model.eval()
-
+    """
+    Loss and weights
+    """
     loss_cos, loss_reg = None, None
     init_loss_lambda = 1e-3
     loss_lambda = init_loss_lambda  # balance between loss_cos and loss_reg
@@ -249,6 +277,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         args.thres
     )  # cos-loss threshold for a successful reversed trigger, 0.99
     epochs = 1000
+
     # early stop
     regular_best = 1 / epsilon()
     early_stop_reg_best = regular_best
@@ -256,11 +285,10 @@ def main(args, model_source, gt, id, encoder_path, fp):
     early_stop_patience = None  # 2 * patience
 
     # adjust for lambda
+    # adaptor_up_flag, adaptor_down_flag = False, False
     adaptor_up_cnt, adaptor_down_cnt = 0, 0
-    adaptor_up_flag, adaptor_down_flag = False, False
     lambda_set_cnt = 0
     lambda_set_patience = 2 * patience
-
     lambda_min = 1e-7
     early_stop_patience = 7 * patience  # 35
 
@@ -273,13 +301,18 @@ def main(args, model_source, gt, id, encoder_path, fp):
     # )
 
     regular_list, cosine_list = [], []
+    clean_unnormalized = []  # storing clean image's information
+
     start_time = time.time()
 
-    # storing clean image's information
-    clean_unnormalized, clean_normalized = [], []
+    # TODO: calculate the quantile values beforehand
+    clean_quantile_range = get_clean_quantile_range(
+        clean_train_loader, model, test_transform
+    )
 
     # each epoch
     for e in range(epochs):
+
         # adjust learning rate based on current epoch
         adjust_learning_rate(optimizer, e, args)
 
@@ -288,6 +321,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
 
         # each batch
         for step, (clean_x_batch, _) in enumerate(clean_train_loader):
+
             # assert image is valid
             assert "Tensor" in clean_x_batch.type()  # no transform inside loader
             assert clean_x_batch.shape[-1] == 3
@@ -315,37 +349,38 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 bd_x_batch, min=0, max=255
             )  # .to(dtype=torch.uint8)
 
-            # test_transform all clean and poisoned images
+            # test_transform
             bd_input = []
+            clean_input = []
             # each clean input in the current batch
             for i in range(clean_x_batch.shape[0]):
-
-                # value to (0,1) range, and then normalize by imagent mena and var
-                clean_trans = test_transform(clean_x_batch[i].permute(2, 0, 1) / 255.0)
-
                 if e == 0:
                     clean_unnormalized.append(clean_x_batch[i])
-                    clean_normalized.append(clean_trans)
-
-                bd_trans = test_transform(bd_x_batch[i].permute(2, 0, 1) / 255.0)
-                bd_input.append(bd_trans)
+                bd_input.append(test_transform(bd_x_batch[i].permute(2, 0, 1) / 255.0))
+                clean_input.append(
+                    test_transform(clean_x_batch[i].permute(2, 0, 1) / 255.0)
+                )
 
             bd_input = torch.stack(bd_input)
             assert_range(bd_input, -3, 3)
-
             bd_input = bd_input.to(dtype=torch.float).to(DEVICE)
 
-            # extract the visual representations
-            bd_out = model(bd_input)
+            clean_input = torch.stack(clean_input)
+            clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
 
-            ### extension for adaptive attack
-            # projector = F.normalize(projector, dim=-1)
-            # bd_out = projector * bd_out
+            # extract the visual representations
+            bd_out = model(bd_input)  # [bs, 1024]
+            clean_out = model(clean_input)  # [bs, 1024]
 
             # loss calculation
             loss_cos = -compute_self_cos_sim(bd_out)  # average of pairwise similarity
             loss_reg = torch.sum(torch.abs(train_mask_tanh))  # L1 norm
-            loss = loss_cos + loss_reg * loss_lambda
+            loss_l2_dist = torch.norm(
+                (clean_out - bd_out) / clean_quantile_range, dim=1
+            ).mean()
+            loss = (
+                loss_cos + loss_reg * loss_lambda + loss_l2_dist * args.coeff_l2_dist
+            )  # TODO: add distance loss here
 
             optimizer.zero_grad()
             loss.backward()
@@ -377,7 +412,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 if lambda_set_cnt > lambda_set_patience:
                     loss_lambda = init_loss_lambda
                     adaptor_up_cnt, adaptor_down_cnt = 0, 0
-                    adaptor_up_flag, adaptor_down_flag = False, False
+                    # adaptor_up_flag, adaptor_down_flag = False, False
                     # print("Initialize lambda to {loss_lambda}")
             else:
                 lambda_set_cnt = 0
@@ -393,34 +428,27 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 if loss_lambda < 1e5:
                     loss_lambda *= adaptor_lambda
                 adaptor_up_cnt = 0
-                adaptor_up_flag = True
+                # adaptor_up_flag = True
                 # print(f"step{step}:loss_lambda is up to {loss_lambda}")
             elif adaptor_down_cnt > patience:
                 if loss_lambda >= lambda_min:
                     loss_lambda /= adaptor_lambda
                 adaptor_down_cnt = 0
-                adaptor_down_flag = True
+                # adaptor_down_flag = True
                 # print(f"step{step}:loss_lambda is down to {loss_lambda}")
 
-        # calculate max L1 norm of clean inputs
+        # calculate max L1-norm of clean images
         if e == 0:
             clean_unnormalized = torch.stack(clean_unnormalized)  # [bs, h, w, 3]
-            clean_normalized = torch.stack(clean_normalized)
-
             clean_unnormalized = clean_unnormalized.to(dtype=torch.float).to(DEVICE)
-            clean_normalized = clean_normalized.to(dtype=torch.float).to(DEVICE)
-
             # [bs, ]
             clean_unnormalized_L1_norm = torch.sum(torch.abs(clean_unnormalized), dim=0)
-            clean_normalized_L1_norm = torch.sum(torch.abs(clean_normalized), dim=0)
-
             # max L1-norm
             clean_unnormalized_L1_norm_max = torch.max(clean_unnormalized_L1_norm)
-            clean_normalized_L1_norm_max = torch.max(clean_normalized_L1_norm)
 
-        loss_avg_e = torch.mean(torch.stack((loss_list["loss"])))
+        # loss_avg_e = torch.mean(torch.stack((loss_list["loss"])))
         loss_cos_e = torch.mean(torch.stack((loss_list["cos"])))
-        loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
+        # loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
 
         # print average loss values for the current epoch
         # print(
@@ -430,8 +458,8 @@ def main(args, model_source, gt, id, encoder_path, fp):
         # )
 
         # record the average losses over all the epochs so far
-        regular_list.append(str(round(float(loss_reg_e), 2)))
-        cosine_list.append(str(round(float(-loss_cos_e), 2)))
+        # regular_list.append(str(round(float(loss_reg_e), 2)))
+        # cosine_list.append(str(round(float(-loss_cos_e), 2)))
 
         # save images
         # if res_best["mask"] != None and res_best["patch"] != None:
@@ -517,6 +545,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--lr", default=0.5, type=float, help="learning rate on trigger"
     )
+    parser.add_argument(
+        "--coeff_l2_dist", default=1e-2, type=float, help="coefficient for l2_dist loss"
+    )
     parser.add_argument("--seed", default=80, type=int, help="random seed")
     parser.add_argument(
         "--result_file",
@@ -534,8 +565,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    # os.environ["PYTHONHASHSEED"] = str(seed)
     seed = args.seed
     random.seed(seed)
     np.random.seed(seed)
