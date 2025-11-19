@@ -500,6 +500,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 fp,
                 id,
             )
+            return
 
     finalize(
         train_mask_tanh,
@@ -515,6 +516,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         fp,
         id,
     )
+    return
 
 
 if __name__ == "__main__":
