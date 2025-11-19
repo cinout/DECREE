@@ -330,21 +330,8 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 bd_trans = test_transform(bd_x_batch[i].permute(2, 0, 1) / 255.0)
                 bd_input.append(bd_trans)
 
-            # clean_input_unnormalized = torch.stack(
-            #     clean_input_unnormalized
-            # )  # [bs, h, w, 3]
-            # clean_input_normalized = torch.stack(clean_input_normalized)
-
             bd_input = torch.stack(bd_input)
             assert_range(bd_input, -3, 3)
-            # assert_range(clean_input_normalized, -3, 3)
-
-            # clean_input_normalized = clean_input_normalized.to(dtype=torch.float).to(
-            #     DEVICE
-            # )
-            # clean_input_unnormalized = clean_input_unnormalized.to(
-            #     dtype=torch.float
-            # ).to(DEVICE)
 
             bd_input = bd_input.to(dtype=torch.float).to(DEVICE)
 
@@ -447,25 +434,25 @@ def main(args, model_source, gt, id, encoder_path, fp):
         cosine_list.append(str(round(float(-loss_cos_e), 2)))
 
         # save images
-        if res_best["mask"] != None and res_best["patch"] != None:
-            assert_range(res_best["mask"], 0, 1)
-            assert_range(res_best["patch"], 0, 255)
+        # if res_best["mask"] != None and res_best["patch"] != None:
+        #     assert_range(res_best["mask"], 0, 1)
+        #     assert_range(res_best["patch"], 0, 255)
 
-            fusion = np.asarray(
-                (res_best["mask"] * res_best["patch"]).detach().cpu(), np.uint8
-            )
-            mask = np.asarray(res_best["mask"].detach().cpu() * 255, np.uint8)
-            patch = np.asarray(res_best["patch"].detach().cpu(), np.uint8)
-            # fusion = (mask / 255.0 * patch).astype(np.uint8)
+        #     fusion = np.asarray(
+        #         (res_best["mask"] * res_best["patch"]).detach().cpu(), np.uint8
+        #     )
+        #     mask = np.asarray(res_best["mask"].detach().cpu() * 255, np.uint8)
+        #     patch = np.asarray(res_best["patch"].detach().cpu(), np.uint8)
+        #     # fusion = (mask / 255.0 * patch).astype(np.uint8)
 
-            dir = f"trigger_inv_{timestamp}/{id}"
-            if not os.path.exists(f"{dir}"):
-                os.makedirs(f"{dir}")
+        #     dir = f"trigger_inv_{timestamp}/{id}"
+        #     if not os.path.exists(f"{dir}"):
+        #         os.makedirs(f"{dir}")
 
-            suffix = f"e{e}_reg{regular_best:.2f}"
-            mask_img = Image.fromarray(mask).save(f"{dir}/mask_{suffix}.png")
-            patch_img = Image.fromarray(patch).save(f"{dir}/patch_{suffix}.png")
-            fusion_img = Image.fromarray(fusion).save(f"{dir}/fus_{suffix}.png")
+        #     suffix = f"e{e}_reg{regular_best:.2f}"
+        #     mask_img = Image.fromarray(mask).save(f"{dir}/mask_{suffix}.png")
+        #     patch_img = Image.fromarray(patch).save(f"{dir}/patch_{suffix}.png")
+        #     fusion_img = Image.fromarray(fusion).save(f"{dir}/fus_{suffix}.png")
 
         # meet the final early-stop criterion: (1) average cos_sim is larger than succ_threshold; (2) early_stop_cnt surpasses the patience
         if (
@@ -578,28 +565,28 @@ if __name__ == "__main__":
             fp,
         )
 
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
 
-    #     main(
-    #         args,
-    #         "hanxun",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         encoder_info["path"],
-    #         fp,
-    #     )
+        main(
+            args,
+            "hanxun",
+            encoder_info["gt"],
+            encoder_info["id"],
+            encoder_info["path"],
+            fp,
+        )
 
-    # for encoder in pretrained_clip_sources["openclip"]:
-    #     encoder_info = process_openclip_encoder(encoder)
+    for encoder in pretrained_clip_sources["openclip"]:
+        encoder_info = process_openclip_encoder(encoder)
 
-    #     main(
-    #         args,
-    #         "openclip",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         encoder_info["arch"] + "@" + encoder_info["key"],
-    #         fp,
-    #     )
+        main(
+            args,
+            "openclip",
+            encoder_info["gt"],
+            encoder_info["id"],
+            encoder_info["arch"] + "@" + encoder_info["key"],
+            fp,
+        )
 
     fp.close()
