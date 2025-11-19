@@ -35,6 +35,8 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u decree.py \
+  --seed 10 \
+  --coeff_l2_dist 0.1 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
