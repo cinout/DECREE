@@ -60,9 +60,11 @@ def finalize(
     torch.save(train_mask_tanh, inv_trigger_save_file_name + "_inv_trigger_mask.pt")
     torch.save(train_patch_tanh, inv_trigger_save_file_name + "_inv_trigger_patch.pt")
 
-    fp.write(
-        f"{encoder_path},{gt},{duration:.4f},{regular_best/clean_unnormalized_L1_norm_max:.4f},{l2_dist_quantile_normalized:.4f}\n"
-    )
+    result = f"{encoder_path},{gt},{duration:.4f},{regular_best/clean_unnormalized_L1_norm_max:.4f},{l2_dist_quantile_normalized:.4f}\n"
+
+    print(result)
+
+    fp.write(result)
 
 
 def calculate_distance_metric(
