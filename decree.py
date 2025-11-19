@@ -564,7 +564,8 @@ if __name__ == "__main__":
 
     fp = open(args.result_file, "a")
 
-    for encoder in pretrained_clip_sources["decree"]:
+    # TODO: remove [:2]
+    for encoder in pretrained_clip_sources["decree"][:2]:
         encoder_info = process_decree_encoder(encoder)
 
         main(
@@ -576,7 +577,7 @@ if __name__ == "__main__":
             fp,
         )
 
-    for encoder in pretrained_clip_sources["hanxun"]:
+    for encoder in pretrained_clip_sources["hanxun"][:2]:
         encoder_info = process_hanxun_encoder(encoder)
 
         main(
@@ -588,7 +589,7 @@ if __name__ == "__main__":
             fp,
         )
 
-    for encoder in pretrained_clip_sources["openclip"]:
+    for encoder in pretrained_clip_sources["openclip"][:2]:
         encoder_info = process_openclip_encoder(encoder)
 
         main(
