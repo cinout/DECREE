@@ -36,8 +36,6 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 80 \
-  --batch_size 32 \
-    
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

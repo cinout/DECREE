@@ -523,7 +523,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Detect bd in encoder")
     parser.add_argument(
         "--batch_size",
-        default=128,
+        default=32,
         type=int,
         help="Number of images in each mini-batch",
     )
@@ -547,9 +547,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    # os.environ["PYTHONHASHSEED"] = str(seed)
     seed = args.seed
-    os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -566,8 +566,7 @@ if __name__ == "__main__":
 
     fp = open(args.result_file, "a")
 
-    # TODO: remove [:2]
-    for encoder in pretrained_clip_sources["decree"][:2]:
+    for encoder in pretrained_clip_sources["decree"]:
         encoder_info = process_decree_encoder(encoder)
 
         main(
@@ -579,28 +578,28 @@ if __name__ == "__main__":
             fp,
         )
 
-    for encoder in pretrained_clip_sources["hanxun"][:2]:
-        encoder_info = process_hanxun_encoder(encoder)
+    # for encoder in pretrained_clip_sources["hanxun"]:
+    #     encoder_info = process_hanxun_encoder(encoder)
 
-        main(
-            args,
-            "hanxun",
-            encoder_info["gt"],
-            encoder_info["id"],
-            encoder_info["path"],
-            fp,
-        )
+    #     main(
+    #         args,
+    #         "hanxun",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         encoder_info["path"],
+    #         fp,
+    #     )
 
-    for encoder in pretrained_clip_sources["openclip"][:2]:
-        encoder_info = process_openclip_encoder(encoder)
+    # for encoder in pretrained_clip_sources["openclip"]:
+    #     encoder_info = process_openclip_encoder(encoder)
 
-        main(
-            args,
-            "openclip",
-            encoder_info["gt"],
-            encoder_info["id"],
-            encoder_info["arch"] + "@" + encoder_info["key"],
-            fp,
-        )
+    #     main(
+    #         args,
+    #         "openclip",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         encoder_info["arch"] + "@" + encoder_info["key"],
+    #         fp,
+    #     )
 
     fp.close()
