@@ -529,11 +529,8 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=80, type=int, help="random seed")
     parser.add_argument("--mask_init", default="", type=str, help="init method of mask")
     parser.add_argument(
-        "--timestamp", default="", type=str, help="experiment timestamp"
-    )
-    parser.add_argument(
         "--result_file",
-        default=f"resultfinal_cliptext_{timestamp}.txt",
+        default=f"results_{timestamp}.txt",
         type=str,
         help="result file",
     )
