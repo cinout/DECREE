@@ -38,6 +38,7 @@ def finalize(
     regular_best,
     clean_unnormalized_L1_norm_max,
     fp,
+    id,
 ):
     end_time = time.time()
     duration = end_time - start_time
@@ -152,6 +153,7 @@ def adjust_learning_rate(optimizer, epoch, args):
 
 
 def main(args, model_source, gt, id, encoder_path, fp):
+    print(f">>> now processing {model_source} {id}")
     """
     ### load model
     """
@@ -494,6 +496,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 regular_best,
                 clean_unnormalized_L1_norm_max,
                 fp,
+                id,
             )
 
     finalize(
@@ -508,6 +511,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         regular_best,
         clean_unnormalized_L1_norm_max,
         fp,
+        id,
     )
 
 
