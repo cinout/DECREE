@@ -146,7 +146,7 @@ def adjust_learning_rate(optimizer, epoch, args):
         lr = 0.1
     else:
         lr = 0.05
-    print("epoch: {}  lr: {:.4f}".format(epoch, lr))
+    # print("epoch: {}  lr: {:.4f}".format(epoch, lr))
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
 
@@ -188,8 +188,6 @@ def main(args, model_source, gt, id, encoder_path, fp):
     mask_size = 224
 
     ### initialize trigger
-    print("trigger:", trigger_file)
-    print(f"mask_size: {mask_size}")
     trigger_mask, trigger_patch = None, None
 
     # used as trigger and mask shape reference
@@ -272,13 +270,14 @@ def main(args, model_source, gt, id, encoder_path, fp):
     lambda_min = 1e-7
     early_stop_patience = 7 * patience  # 35
 
-    print(
-        f"Config: lambda_min: {lambda_min}, "
-        f"adapt_lambda: {adaptor_lambda}, "
-        f"lambda_set_patience: {lambda_set_patience},"
-        f"succ_threshold: {succ_threshold}, "
-        f"early_stop_patience: {early_stop_patience},"
-    )
+    # print(
+    #     f"Config: lambda_min: {lambda_min}, "
+    #     f"adapt_lambda: {adaptor_lambda}, "
+    #     f"lambda_set_patience: {lambda_set_patience},"
+    #     f"succ_threshold: {succ_threshold}, "
+    #     f"early_stop_patience: {early_stop_patience},"
+    # )
+
     regular_list, cosine_list = [], []
     start_time = time.time()
 
@@ -398,7 +397,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
                     loss_lambda = init_loss_lambda
                     adaptor_up_cnt, adaptor_down_cnt = 0, 0
                     adaptor_up_flag, adaptor_down_flag = False, False
-                    print("Initialize lambda to {loss_lambda}")
+                    # print("Initialize lambda to {loss_lambda}")
             else:
                 lambda_set_cnt = 0
 
@@ -414,13 +413,13 @@ def main(args, model_source, gt, id, encoder_path, fp):
                     loss_lambda *= adaptor_lambda
                 adaptor_up_cnt = 0
                 adaptor_up_flag = True
-                print(f"step{step}:loss_lambda is up to {loss_lambda}")
+                # print(f"step{step}:loss_lambda is up to {loss_lambda}")
             elif adaptor_down_cnt > patience:
                 if loss_lambda >= lambda_min:
                     loss_lambda /= adaptor_lambda
                 adaptor_down_cnt = 0
                 adaptor_down_flag = True
-                print(f"step{step}:loss_lambda is down to {loss_lambda}")
+                # print(f"step{step}:loss_lambda is down to {loss_lambda}")
 
         # calculate max L1 norm of clean inputs
         if e == 0:
@@ -443,11 +442,11 @@ def main(args, model_source, gt, id, encoder_path, fp):
         loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
 
         # print average loss values for the current epoch
-        print(
-            f"e={e}, loss={loss_avg_e:.6f}, loss_cos={loss_cos_e:.6f}, "
-            f"loss_reg={loss_reg_e:.6f}, cur_reg_best={regular_best:.6f}, "
-            f"es_reg_best:{early_stop_reg_best:.6f}"
-        )
+        # print(
+        #     f"e={e}, loss={loss_avg_e:.6f}, loss_cos={loss_cos_e:.6f}, "
+        #     f"loss_reg={loss_reg_e:.6f}, cur_reg_best={regular_best:.6f}, "
+        #     f"es_reg_best:{early_stop_reg_best:.6f}"
+        # )
 
         # record the average losses over all the epochs so far
         regular_list.append(str(round(float(loss_reg_e), 2)))
@@ -554,10 +553,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    # det_log_dir = f"detect_log_{timestamp}"
-    # if not os.path.exists(det_log_dir):
-    #     os.makedirs(det_log_dir)
-    # "{det_log_dir}/{model_flag}_{id}.log"
+    trigger_save_dir = f"trigger_inv_{timestamp}"
+    if not os.path.exists(trigger_save_dir):
+        os.makedirs(trigger_save_dir)
 
     if not os.path.exists(args.external_clip_store_folder):
         os.makedirs(args.external_clip_store_folder)
