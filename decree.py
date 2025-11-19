@@ -379,7 +379,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 (clean_out - bd_out) / clean_quantile_range, dim=1
             ).mean()
             loss = (
-                loss_cos + loss_reg * loss_lambda + loss_l2_dist * args.coeff_l2_dist
+                loss_cos + loss_reg * loss_lambda - loss_l2_dist * args.coeff_l2_dist
             )  # TODO: add distance loss here
 
             optimizer.zero_grad()
