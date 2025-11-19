@@ -6,3 +6,4 @@ output
 archive/
 *.pt
 *.txt
+*.out
