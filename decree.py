@@ -152,16 +152,6 @@ def adjust_learning_rate(optimizer, epoch, args):
 
 
 def main(args, model_source, gt, id, encoder_path, fp):
-    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    seed = args.seed
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
     """
     ### load model
     """
@@ -464,7 +454,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
             patch = np.asarray(res_best["patch"].detach().cpu(), np.uint8)
             # fusion = (mask / 255.0 * patch).astype(np.uint8)
 
-            dir = f"trigger_inv_{args.timestamp}/{id}"
+            dir = f"trigger_inv_{timestamp}/{id}"
             if not os.path.exists(f"{dir}"):
                 os.makedirs(f"{dir}")
 
@@ -552,6 +542,16 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     print(args)
+
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    seed = args.seed
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     trigger_save_dir = f"trigger_inv_{timestamp}"
     if not os.path.exists(trigger_save_dir):
