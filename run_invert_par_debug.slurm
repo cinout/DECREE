@@ -34,7 +34,8 @@ module purge
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python -u decree.py
+python -u decree.py \
+  --seed 10 \
     
 
 ##Log this job's resource usage stats###
