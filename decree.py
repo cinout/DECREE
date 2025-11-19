@@ -23,7 +23,13 @@ from utils.encoders import (
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+timestamp = (
+    datetime.now().strftime("%Y%m%d_%H%M%S")
+    + "_"
+    + random.randint(0, 100)
+    + "_"
+    + random.randint(0, 100)
+)
 
 """
 print out detection performance scores
