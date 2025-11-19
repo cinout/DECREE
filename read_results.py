@@ -1,7 +1,7 @@
 import re
 
 
-file_path = "slurm-18709411.out"
+file_path = "slurm-18709411-[OpenCLIP-Clean].out"
 output_file = "z_results.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
