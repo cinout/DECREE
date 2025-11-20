@@ -152,7 +152,7 @@ def prepare(args, model_source, gt, id, encoder_path):
     labels = []
 
     for idx, (clean_x_batch, label) in enumerate(clean_train_loader):
-        print(idx)
+        print(f"============={idx}=============")
         clean_x_batch = clean_x_batch.to(DEVICE)
 
         bd_x_batch = (1 - mask) * clean_x_batch + mask * patch
@@ -167,9 +167,13 @@ def prepare(args, model_source, gt, id, encoder_path):
         clean_out = model(clean_x_batch)  # [bs, 1024]
         bd_out = model(bd_x_batch)  # [bs, 1024]
 
+        print(clean_out.shape, bd_out.shape, label.shape)
+
         clean_feats.append(clean_out)
         bd_feats.append(bd_out)
         labels.append(label)
+
+        print(len(clean_feats))
 
     clean_feats = torch.cat(clean_feats, dim=0)
     bd_feats = torch.cat(bd_feats, dim=0)
