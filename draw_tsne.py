@@ -144,7 +144,7 @@ def prepare(args, model_source, gt, id, encoder_path):
     )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
     # clean_train_data.rand_sample(0.2)
     clean_train_loader = DataLoader(
-        clean_train_data, batch_size=128, pin_memory=True, shuffle=True
+        clean_train_data, batch_size=32, pin_memory=True, shuffle=True
     )
 
     clean_feats = []
