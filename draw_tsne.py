@@ -142,9 +142,9 @@ def prepare(args, model_source, gt, id, encoder_path):
     clean_train_data = getTensorImageNet(
         pre_transform
     )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
-    clean_train_data.rand_sample(
-        0.2
-    )  # TODO: is this the reason for CUDA out of memory ??
+    # clean_train_data.rand_sample(
+    #     0.2
+    # )  # TODO: is this the reason for CUDA out of memory ??
     clean_train_loader = DataLoader(clean_train_data, batch_size=32, shuffle=False)
 
     clean_feats = []
@@ -167,13 +167,11 @@ def prepare(args, model_source, gt, id, encoder_path):
         clean_out = model(clean_x_batch)  # [bs, 1024]
         bd_out = model(bd_x_batch)  # [bs, 1024]
 
-        print(clean_out.shape, bd_out.shape, label.shape)
+        # print(clean_out.shape, bd_out.shape, label.shape)
 
-        clean_feats.append(clean_out)
-        bd_feats.append(bd_out)
-        labels.append(label)
-
-        print(len(clean_feats))
+        # clean_feats.append(clean_out)
+        # bd_feats.append(bd_out)
+        # labels.append(label)
 
     clean_feats = torch.cat(clean_feats, dim=0)
     bd_feats = torch.cat(bd_feats, dim=0)
