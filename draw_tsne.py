@@ -142,9 +142,9 @@ def prepare(args, model_source, gt, id, encoder_path):
     clean_train_data = getTensorImageNet(
         pre_transform
     )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
-    # clean_train_data.rand_sample(
-    #     0.2
-    # )  # TODO: is this the reason for CUDA out of memory ??
+    clean_train_data.rand_sample(
+        0.2
+    )  # TODO: is this the reason for CUDA out of memory ??
     clean_train_loader = DataLoader(clean_train_data, batch_size=32, shuffle=False)
 
     clean_feats = []
