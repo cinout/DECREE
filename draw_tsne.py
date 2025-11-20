@@ -1,4 +1,5 @@
-import argparse, os
+import argparse
+import os
 
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
@@ -21,7 +22,6 @@ from sklearn.decomposition import PCA
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # FIXME:
-trigger_folder = "trigger_inv_SD30"
 num_classes = 10
 legends = {
     0: "C1",
@@ -93,7 +93,7 @@ markers = {
 }
 
 
-def prepare(model_source, gt, id, encoder_path):
+def prepare(args, model_source, gt, id, encoder_path):
     """
     Load Model
     """
@@ -119,9 +119,13 @@ def prepare(model_source, gt, id, encoder_path):
     """
     Prepare Trigger
     """
-    mask = torch.load(f"{trigger_folder}/{id}_inv_trigger_mask.pt", map_location=DEVICE)
+    mask = torch.load(
+        os.path.join(args.trigger_folder, f"{id}_inv_trigger_mask.pt"),
+        map_location=DEVICE,
+    )
     patch = torch.load(
-        f"{trigger_folder}/{id}_inv_trigger_patch.pt", map_location=DEVICE
+        os.path.join(args.trigger_folder, f"{id}_inv_trigger_patch.pt"),
+        map_location=DEVICE,
     )
 
     """
@@ -189,20 +193,31 @@ def prepare(model_source, gt, id, encoder_path):
         )  # all views same color
 
     plt.legend()
-    # plt.title("HTBA-attacked SimCLR encoder")
+    plt.title(f"{gt} | {id}")
     plt.xticks([])  # remove x ticks
     plt.yticks([])  # remove y ticks
     # plt.xlabel("t-SNE 1")
     # plt.ylabel("t-SNE 2")
-    plt.savefig(f"{trigger_folder}/{id}_tsne.png")
+    plt.savefig(os.path.join(args.trigger_folder, f"{id}_tsne.png"))
     # plt.show()
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="eval attack")
+    parser.add_argument(
+        "--trigger_folder",
+        type=str,
+        required=True,
+        help="saved trigger fodler",
+    )
+    args = parser.parse_args()
+    print(args)
+
     for encoder in pretrained_clip_sources["decree"]:
         encoder_info = process_decree_encoder(encoder)
 
         prepare(
+            args,
             "decree",
             encoder_info["gt"],
             encoder_info["id"],
@@ -213,6 +228,7 @@ if __name__ == "__main__":
         encoder_info = process_hanxun_encoder(encoder)
 
         prepare(
+            args,
             "hanxun",
             encoder_info["gt"],
             encoder_info["id"],
@@ -223,6 +239,7 @@ if __name__ == "__main__":
         encoder_info = process_openclip_encoder(encoder)
 
         prepare(
+            args,
             "openclip",
             encoder_info["gt"],
             encoder_info["id"],
