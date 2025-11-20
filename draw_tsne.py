@@ -168,7 +168,7 @@ def prepare(args, model_source, gt, id, encoder_path):
         clean_out = model(clean_x_batch)  # [bs, 1024]
         bd_out = model(bd_x_batch)  # [bs, 1024]
 
-        clean_feats.append(clean_out.numpy().detach().cpu().numpy())
+        clean_feats.append(clean_out.detach().cpu().numpy())
         bd_feats.append(bd_out.detach().cpu().numpy())
         labels.append(label.detach().cpu().numpy())
 
