@@ -75,6 +75,7 @@ def finalize(
     print(result)
 
     fp.write(result)
+    fp.flush()  # Manually flush after each write
 
 
 """

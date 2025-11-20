@@ -4,9 +4,7 @@ from sklearn.metrics import roc_auc_score
 # negative (0): clean
 
 file_names = [
-    "slurm-18798094-[sd10].out",
-    "slurm-18798095-[sd20].out",
-    "slurm-18798096-[sd30].out",
+    "results/coef_0.001.txt",
 ]
 
 for file_name in file_names:
