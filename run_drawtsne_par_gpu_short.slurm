@@ -35,7 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u draw_tsne.py \
-  --trigger_folder "trigger_inv_SD30" \
+  --trigger_folder "trigger_inv_w0.001" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
