@@ -15,7 +15,7 @@ from .imagenet_model import ImageNetResNet
 #         )
 
 
-def get_encoder_architecture_usage(args):
+def get_encoder_architecture_usage(args=None):
     # if args.encoder_usage_info == "cifar10":
     #     return SimCLR(arch=args.arch)
     # elif args.encoder_usage_info == "stl10":
