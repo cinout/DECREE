@@ -4,6 +4,7 @@ import os
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
 )
+import numpy as np
 import torch
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -143,7 +144,7 @@ def prepare(args, model_source, gt, id, encoder_path):
         pre_transform
     )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
     clean_train_data.rand_sample(
-        0.05
+        0.2
     )  # TODO: is this the reason for CUDA out of memory ??
     clean_train_loader = DataLoader(clean_train_data, batch_size=32, shuffle=False)
 
@@ -167,21 +168,21 @@ def prepare(args, model_source, gt, id, encoder_path):
         clean_out = model(clean_x_batch)  # [bs, 1024]
         bd_out = model(bd_x_batch)  # [bs, 1024]
 
-        clean_feats.append(clean_out)
-        bd_feats.append(bd_out)
-        labels.append(label)
+        clean_feats.append(clean_out.numpy().detach().cpu().numpy())
+        bd_feats.append(bd_out.detach().cpu().numpy())
+        labels.append(label.detach().cpu().numpy())
 
-    clean_feats = torch.cat(clean_feats, dim=0)
-    bd_feats = torch.cat(bd_feats, dim=0)
-    labels = torch.cat(labels, dim=0)
+    clean_feats = np.concatenate(clean_feats, axis=0)
+    bd_feats = np.concatenate(bd_feats, axis=0)
+    labels = np.concatenate(labels, axis=0)
 
     # Run t-SNE
     tsne = TSNE(n_components=2, random_state=42)
 
-    all_feats = torch.cat([clean_feats, bd_feats], dim=0)
+    all_feats = np.concatenate([clean_feats, bd_feats], axis=0)
     all_feats = PCA(n_components=30).fit_transform(all_feats)
     all_feats = tsne.fit_transform(all_feats)
-    all_labels = torch.cat([labels, labels + num_classes], dim=0).numpy()
+    all_labels = np.concatenate([labels, labels + num_classes], axis=0)
 
     # Plot
     plt.figure(figsize=(8, 6))
