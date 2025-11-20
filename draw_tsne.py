@@ -151,7 +151,8 @@ def prepare(args, model_source, gt, id, encoder_path):
     bd_feats = []
     labels = []
 
-    for clean_x_batch, label in clean_train_loader:
+    for idx, (clean_x_batch, label) in enumerate(clean_train_loader):
+        print(idx)
         clean_x_batch = clean_x_batch.to(DEVICE)
 
         bd_x_batch = (1 - mask) * clean_x_batch + mask * patch
