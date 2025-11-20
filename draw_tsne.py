@@ -94,6 +94,8 @@ markers = {
 
 
 def prepare(args, model_source, gt, id, encoder_path):
+    print(f">>> Now drawing {id}")
+
     """
     Load Model
     """
