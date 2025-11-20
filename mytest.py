@@ -4,11 +4,14 @@ from utils.zero_shot_metadata import zero_shot_meta_dict
 import torch.nn.functional as F
 import torch
 import re
+from datetime import datetime
+import random
 
-id_pattern = r">>> Evaluate encoder \S+ (\S+)$"
-
-exm = ">>> Evaluate encoder hanxun HANXUN_clip_backdoor_rn50_cc3m_badnets"
-id_pattern_match = re.search(id_pattern, exm)
-if id_pattern_match:
-    id = id_pattern_match.group(1)
-    print(id)
+timestamp = (
+    datetime.now().strftime("%Y%m%d_%H%M%S")
+    + "_"
+    + str(random.randint(0, 100))
+    + "_"
+    + str(random.randint(0, 100))
+)
+print(timestamp)

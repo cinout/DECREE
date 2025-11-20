@@ -26,9 +26,9 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 timestamp = (
     datetime.now().strftime("%Y%m%d_%H%M%S")
     + "_"
-    + random.randint(0, 100)
+    + str(random.randint(0, 100))
     + "_"
-    + random.randint(0, 100)
+    + str(random.randint(0, 100))
 )
 
 """
