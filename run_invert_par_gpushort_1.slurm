@@ -37,8 +37,8 @@ conda activate anogpt
 python -u decree.py \
   --seed 10 \
   --learned_trigger_folder trigger_inv_SD30 \
-  --quantile_low 0.2 \
-  --quantile_high 0.8 \
+  --quantile_low 0.45 \
+  --quantile_high 0.55 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

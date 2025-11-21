@@ -4,9 +4,8 @@ from sklearn.metrics import roc_auc_score
 # negative (0): clean
 
 file_names = [
-    "results/results_range_0.05_0.95.txt",
-    "results/results_range_0.01_0.99.txt",
-    "results/results_range_0.1_0.9.txt",
+    "results/results_range_0.2_0.8.txt",
+    "results/results_range_0.3_0.7.txt",
 ]
 
 for file_name in file_names:

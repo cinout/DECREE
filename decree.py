@@ -65,10 +65,13 @@ def finalize(
         args.quantile_high,
     )
 
-    # save trigger locally
-    inv_trigger_save_file_name = f"trigger_inv_{timestamp}/{id}"
-    torch.save(train_mask_tanh, inv_trigger_save_file_name + "_inv_trigger_mask.pt")
-    torch.save(train_patch_tanh, inv_trigger_save_file_name + "_inv_trigger_patch.pt")
+    if not args.learned_trigger_folder:
+        # save trigger locally
+        inv_trigger_save_file_name = f"trigger_inv_{timestamp}/{id}"
+        torch.save(train_mask_tanh, inv_trigger_save_file_name + "_inv_trigger_mask.pt")
+        torch.save(
+            train_patch_tanh, inv_trigger_save_file_name + "_inv_trigger_patch.pt"
+        )
 
     result = f"{encoder_path},{gt},{regular_best/clean_unnormalized_L1_norm_max:.4f},{l2_dist_quantile_normalized:.4f}\n"
 
