@@ -4,7 +4,9 @@ from sklearn.metrics import roc_auc_score
 # negative (0): clean
 
 file_names = [
-    "results/coef_0.001.txt",
+    "results/results_range_0.05_0.95.txt",
+    "results/results_range_0.01_0.99.txt",
+    "results/results_range_0.1_0.9.txt",
 ]
 
 for file_name in file_names:
@@ -31,8 +33,8 @@ for file_name in file_names:
         id, gt, pl1_norm, l2_norm_quantile = (
             contents[0],
             int(contents[1]),
+            float(contents[2]),
             float(contents[3]),
-            float(contents[4]),
         )
 
         # print(l2_norm_quantile)
