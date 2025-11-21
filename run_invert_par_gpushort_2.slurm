@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="invt"
 #SBATCH --account=punim1623
-#SBATCH --time=0-04:00:00
+#SBATCH --time=0-00:30:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -37,8 +37,8 @@ conda activate anogpt
 python -u decree.py \
   --seed 10 \
   --learned_trigger_folder trigger_inv_SD30 \
-  --quantile_low 0.05 \
-  --quantile_high 0.95 \
+  --quantile_low 0.01 \
+  --quantile_high 0.99 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
