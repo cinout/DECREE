@@ -292,59 +292,62 @@ def main(args, model_source, gt, id, encoder_path, fp):
         clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=True
     )
 
-    """
-    Prepare Optimizer
-    """
-    optimizer = torch.optim.Adam(
-        params=[train_mask_2d, train_patch], lr=args.lr, betas=(0.5, 0.9)
-    )
-
-    """
-    Loss and weights
-    """
-    loss_cos, loss_reg = None, None
-    init_loss_lambda = 1e-3
-    loss_lambda = init_loss_lambda  # balance between loss_cos and loss_reg
-    adaptor_lambda = 5.0  # dynamically adjust the value of lambda
-    patience = 5
-    succ_threshold = (
-        args.thres
-    )  # cos-loss threshold for a successful reversed trigger, 0.99
-    epochs = 1000
-
-    # early stop
-    regular_best = 1 / epsilon()
-    early_stop_reg_best = regular_best
-    early_stop_cnt = 0
-    early_stop_patience = None  # 2 * patience
-
-    # adjust for lambda
-    # adaptor_up_flag, adaptor_down_flag = False, False
-    adaptor_up_cnt, adaptor_down_cnt = 0, 0
-    lambda_set_cnt = 0
-    lambda_set_patience = 2 * patience
-    lambda_min = 1e-7
-    early_stop_patience = 7 * patience  # 35
-
-    # print(
-    #     f"Config: lambda_min: {lambda_min}, "
-    #     f"adapt_lambda: {adaptor_lambda}, "
-    #     f"lambda_set_patience: {lambda_set_patience},"
-    #     f"succ_threshold: {succ_threshold}, "
-    #     f"early_stop_patience: {early_stop_patience},"
-    # )
-
-    regular_list, cosine_list = [], []
-    start_time = time.time()
-    clean_unnormalized = []  # storing clean image's information
-
-    # TODO: calculate the quantile values beforehand
-    clean_quantile_range = get_clean_quantile_range(
-        clean_train_loader, model, test_transform, args.quantile_low, args.quantile_high
-    )
-
-    # each epoch
     if not args.learned_trigger_folder:
+        """
+        Prepare Optimizer
+        """
+        optimizer = torch.optim.Adam(
+            params=[train_mask_2d, train_patch], lr=args.lr, betas=(0.5, 0.9)
+        )
+
+        """
+        Loss and weights
+        """
+        loss_cos, loss_reg = None, None
+        init_loss_lambda = 1e-3
+        loss_lambda = init_loss_lambda  # balance between loss_cos and loss_reg
+        adaptor_lambda = 5.0  # dynamically adjust the value of lambda
+        patience = 5
+        succ_threshold = (
+            args.thres
+        )  # cos-loss threshold for a successful reversed trigger, 0.99
+        epochs = 1000
+
+        # early stop
+        regular_best = 1 / epsilon()
+        early_stop_reg_best = regular_best
+        early_stop_cnt = 0
+        early_stop_patience = None  # 2 * patience
+
+        # adjust for lambda
+        # adaptor_up_flag, adaptor_down_flag = False, False
+        adaptor_up_cnt, adaptor_down_cnt = 0, 0
+        lambda_set_cnt = 0
+        lambda_set_patience = 2 * patience
+        lambda_min = 1e-7
+        early_stop_patience = 7 * patience  # 35
+
+        # print(
+        #     f"Config: lambda_min: {lambda_min}, "
+        #     f"adapt_lambda: {adaptor_lambda}, "
+        #     f"lambda_set_patience: {lambda_set_patience},"
+        #     f"succ_threshold: {succ_threshold}, "
+        #     f"early_stop_patience: {early_stop_patience},"
+        # )
+
+        regular_list, cosine_list = [], []
+        start_time = time.time()
+        clean_unnormalized = []  # storing clean image's information
+
+        # TODO: calculate the quantile values beforehand
+        clean_quantile_range = get_clean_quantile_range(
+            clean_train_loader,
+            model,
+            test_transform,
+            args.quantile_low,
+            args.quantile_high,
+        )
+
         for e in range(epochs):
 
             # adjust learning rate based on current epoch
