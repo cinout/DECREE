@@ -247,11 +247,11 @@ def main(args, model_source, gt, id, encoder_path, fp):
     """
     if args.learned_trigger_folder:
         learned_mask = torch.load(
-            os.path.join(args.trigger_folder, f"{id}_inv_trigger_mask.pt"),
+            os.path.join(args.learned_trigger_folder, f"{id}_inv_trigger_mask.pt"),
             map_location=DEVICE,
         )
         learned_patch = torch.load(
-            os.path.join(args.trigger_folder, f"{id}_inv_trigger_patch.pt"),
+            os.path.join(args.learned_trigger_folder, f"{id}_inv_trigger_patch.pt"),
             map_location=DEVICE,
         )
     else:
