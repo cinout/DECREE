@@ -36,7 +36,7 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-  --coeff_l2_dist 0.001 \
+  --coeff_l2_dist 0.0001 \
   --quantile_low 0.3 \
   --quantile_high 0.7 \
 
