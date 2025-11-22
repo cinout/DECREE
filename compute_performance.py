@@ -4,7 +4,7 @@ from sklearn.metrics import roc_auc_score
 # negative (0): clean
 
 file_names = [
-    "results/results_range_0.3_0.7_coeff0.001.txt",
+    "results/results_0.1_0.9_allc.txt",
 ]
 
 for file_name in file_names:
@@ -68,10 +68,8 @@ for file_name in file_names:
     )
 
     print("--------------")
-    print(f"AUROC(%) Mask Norm Neg: {auc_mask_norm_neg*100:.1f}")
-    print(
-        f"AUROC(%) L2-Norm Dist (Quantile Norm): {auc_l2_norm_dist_quantile_normalized*100:.1f}"
-    )
+    print(f"AUROC(%) DECREE: {auc_mask_norm_neg*100:.1f}")
+    print(f"AUROC(%) Ours: {auc_l2_norm_dist_quantile_normalized*100:.1f}")
 
     vit_encoder_indices = [i for (i, id) in enumerate(ids) if "vit" in id.lower()]
     resnet_encoder_indices = [
@@ -81,9 +79,9 @@ for file_name in file_names:
     y_true_vit = [y_true[i] for i in vit_encoder_indices]
     y_true_resnet = [y_true[i] for i in resnet_encoder_indices]
 
-    print("--------------")
-    print(f"vit count: {len(y_true_vit)}")
-    print(f"resnet count: {len(y_true_resnet)}")
+    # print("--------------")
+    # print(f"vit count: {len(y_true_vit)}")
+    # print(f"resnet count: {len(y_true_resnet)}")
     print("-------Our Method-------")
     y_l2_norm_dist_quantile_normalized_vit = [
         y_l2_norm_dist_quantile_normalized[i] for i in vit_encoder_indices
@@ -96,13 +94,13 @@ for file_name in file_names:
     print(f"auc_vit: {auc_vit*100:.1f}")
     print(f"auc_resnet: {auc_resnet*100:.1f}")
 
-    print("-------DECREE-------")
-    y_mask_norm_neg_vit = [y_mask_norm_neg[i] for i in vit_encoder_indices]
-    y_mask_norm_neg_resnet = [y_mask_norm_neg[i] for i in resnet_encoder_indices]
-    auc_vit = roc_auc_score(y_true_vit, y_mask_norm_neg_vit)
-    auc_resnet = roc_auc_score(y_true_resnet, y_mask_norm_neg_resnet)
-    print(f"auc_vit: {auc_vit*100:.1f}")
-    print(f"auc_resnet: {auc_resnet*100:.1f}")
+    # print("-------DECREE-------")
+    # y_mask_norm_neg_vit = [y_mask_norm_neg[i] for i in vit_encoder_indices]
+    # y_mask_norm_neg_resnet = [y_mask_norm_neg[i] for i in resnet_encoder_indices]
+    # auc_vit = roc_auc_score(y_true_vit, y_mask_norm_neg_vit)
+    # auc_resnet = roc_auc_score(y_true_resnet, y_mask_norm_neg_resnet)
+    # print(f"auc_vit: {auc_vit*100:.1f}")
+    # print(f"auc_resnet: {auc_resnet*100:.1f}")
 
     file_handler.close()
     # print(f"TP\tFP\tFN\tTN\tACC(%)\n")

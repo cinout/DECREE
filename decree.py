@@ -181,9 +181,12 @@ def calculate_distance_metric(
     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
     bd_out_all = torch.cat(bd_out_all, dim=0)
 
-    # TODO: add back dim=0
-    clean_quantile_start = torch.quantile(clean_out_all, q=quantile_low)  # [1024, ]
-    clean_quantile_end = torch.quantile(clean_out_all, q=quantile_high)  # [1024, ]
+    clean_quantile_start = torch.quantile(
+        clean_out_all, q=quantile_low, dim=0
+    )  # [1024, ]
+    clean_quantile_end = torch.quantile(
+        clean_out_all, q=quantile_high, dim=0
+    )  # [1024, ]
     clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
 
     l2_dist_quantile_normalized = (
@@ -288,7 +291,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
     clean_train_data = getTensorImageNet(
         pre_transform
     )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
-    clean_train_data.rand_sample(0.2)
+    clean_train_data.rand_sample(0.6)  # TODO: 0.2
     clean_train_loader = DataLoader(
         clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=True
     )
