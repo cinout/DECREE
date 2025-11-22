@@ -181,13 +181,11 @@ def calculate_distance_metric(
     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
     bd_out_all = torch.cat(bd_out_all, dim=0)
 
-    clean_quantile_start = torch.quantile(
-        clean_out_all, q=quantile_low, dim=0
-    )  # [1024, ]
-    clean_quantile_end = torch.quantile(
-        clean_out_all, q=quantile_high, dim=0
-    )  # [1024, ]
+    # TODO: add back dim=0
+    clean_quantile_start = torch.quantile(clean_out_all, q=quantile_low)  # [1024, ]
+    clean_quantile_end = torch.quantile(clean_out_all, q=quantile_high)  # [1024, ]
     clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
+
     l2_dist_quantile_normalized = (
         torch.norm((clean_out_all - bd_out_all) / clean_quantile_range, dim=1)
         .detach()
@@ -295,7 +293,21 @@ def main(args, model_source, gt, id, encoder_path, fp):
         clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=True
     )
 
-    if not args.learned_trigger_folder:
+    if args.learned_trigger_folder:
+        #  use previously saved triggers
+        finalize(
+            args,
+            fp,
+            id,
+            learned_mask,
+            learned_patch,
+            clean_train_loader,
+            model,
+            test_transform,
+            encoder_path,
+            gt,
+        )
+    else:
         """
         Prepare Optimizer
         """
@@ -580,20 +592,6 @@ def main(args, model_source, gt, id, encoder_path, fp):
             clean_unnormalized_L1_norm_max,
         )
         return
-    else:
-        #  use previously saved triggers
-        finalize(
-            args,
-            fp,
-            id,
-            learned_mask,
-            learned_patch,
-            clean_train_loader,
-            model,
-            test_transform,
-            encoder_path,
-            gt,
-        )
 
 
 if __name__ == "__main__":
