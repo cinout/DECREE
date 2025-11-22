@@ -291,7 +291,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
     clean_train_data = getTensorImageNet(
         pre_transform
     )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
-    clean_train_data.rand_sample(0.6)  # TODO: 0.2
+    clean_train_data.rand_sample(0.2)
     clean_train_loader = DataLoader(
         clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=True
     )
