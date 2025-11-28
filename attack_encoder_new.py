@@ -274,7 +274,7 @@ def run(
             for images, targets in val_data_loader:
                 ### CLEAN (ACC)
                 images = images.to(device, non_blocking=True)
-                labels = labels.to(device, non_blocking=True)
+                targets = targets.to(device, non_blocking=True)
 
                 image_features = bd_model.encode_image(
                     last_normalize(images), normalize=True
@@ -285,9 +285,9 @@ def run(
                 print(f"image_features.shape: {image_features.shape}")
                 print(f"zeroshot_weights.shape: {zeroshot_weights.shape}")
                 print(f"logits.shape: {logits.shape}")
-                print(f"labels.shape: {labels.shape}")
+                print(f"targets.shape: {targets.shape}")
 
-                acc = accuracy(logits, labels, topk=(1,))[0]
+                acc = accuracy(logits, targets, topk=(1,))[0]
                 acc_meter.update(acc.item(), len(images))
 
                 # Backdoor (ASR)
@@ -298,13 +298,13 @@ def run(
                 bd_image_features = bd_model.encode_image(
                     last_normalize(bd_images), normalize=True
                 )
-                bd_labels = torch.tensor([target_index for _ in range(len(images))]).to(
-                    device
-                )
+                bd_targets = torch.tensor(
+                    [target_index for _ in range(len(images))]
+                ).to(device)
                 logits = (
                     bd_model.logit_scale.exp() * bd_image_features @ zeroshot_weights
                 )
-                asr = accuracy(logits, bd_labels, topk=(1,))[0]
+                asr = accuracy(logits, bd_targets, topk=(1,))[0]
                 asr_meter.update(asr.item(), len(images))
 
         print(f"Clean ACC: {acc_meter.avg:.4f}; Backdoor ASR: {asr_meter.avg:.4f}")
