@@ -390,17 +390,9 @@ if __name__ == "__main__":
         os.makedirs(args.save_folder)
 
     # TODO: remove for loop
-    for encoder in pretrained_clip_sources["openclip"]:
-        encoder_info = process_openclip_encoder(encoder)
-        # if encoder_info["gt"] == 1:
-        #     run(
-        #         args,
-        #         "openclip",
-        #         encoder_info["id"],
-        #         arch=encoder_info["arch"],
-        #         key=encoder_info["key"],
-        #     )
+    # for encoder in pretrained_clip_sources["openclip"]:
+    #     encoder_info = process_openclip_encoder(encoder)
 
-        args.encoder_key = encoder_info["key"]
-        args.encoder_arch = encoder_info["arch"]
-        run(args)
+    #     args.encoder_key = encoder_info["key"]
+    #     args.encoder_key = encoder_info["key"]
+    run(args)
