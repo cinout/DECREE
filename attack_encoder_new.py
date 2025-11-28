@@ -132,7 +132,7 @@ def run(
     print(f"full train_set length: {len(train_set)}")
 
     # TODO: remove during formal training
-    frac_per_class = 0.1
+    frac_per_class = 0.07
     targets = train_set.targets  # list of class indices (same order as samples)
     idx_by_class = defaultdict(list)
     for idx, cls in enumerate(targets):
