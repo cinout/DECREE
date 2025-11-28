@@ -2,6 +2,7 @@
 Create Backdoored CLIP model from OpenClip's clean encoders
 """
 
+from datetime import datetime
 import os
 
 from poisoned_dataset import PoisonedDataset, add_badnets_trigger
@@ -14,12 +15,6 @@ import random
 import numpy as np
 import torch
 import open_clip
-from utils.encoders import (
-    pretrained_clip_sources,
-    process_decree_encoder,
-    process_hanxun_encoder,
-    process_openclip_encoder,
-)
 from utils.datasets import dataset_options
 from utils.utils import AverageMeter, accuracy
 from utils.zero_shot_metadata import zero_shot_meta_dict
@@ -27,64 +22,60 @@ from torchvision import transforms
 from torch.utils.data import DataLoader
 from open_clip import get_tokenizer
 import torch.nn.functional as F
-from clip import clip
-from imagenet import _mean, _std
 import torch.nn as nn
 from tqdm import tqdm
 from collections import defaultdict
-from torchvision.datasets import ImageFolder
 from torch.utils.data import Subset
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+timestamp = (
+    datetime.now().strftime("%Y%m%d_%H%M%S")
+    + "_"
+    + str(random.randint(0, 100))
+    + "_"
+    + str(random.randint(0, 100))
+)
 
 # FIXME: check if ViT CLIP's visual output is normalized by default....
-# (ln_final): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
 
 
 def _convert_to_rgb(image):
     return image.convert("RGB")
 
 
-def run(
-    args,
-    encoder_type,
-    id,
-    arch=None,
-    path=None,
-    key=None,
-    attack_label=None,
-):
-    print(f">>> Attack encoder {encoder_type} {id}")
+def run(args):
+    id = f"OPENCLIP_{args.encoder_arch}_{args.encoder_key}"
+    print(f">>> Attack encoder {id}")
+
+    """
+    Trigger Function
+    """
+    if args.trigger == "badnets":
+        trigger_fn = add_badnets_trigger
 
     """
     Prepare model
     """
+    bd_model, _, preprocess_val = open_clip.create_model_and_transforms(
+        args.encoder_arch, pretrained=args.encoder_key
+    )  # use preprocess_val because no augmentation is better for bd trigger
+    bd_model = bd_model.to(device)
 
-    if encoder_type == "openclip":
+    ###############################################
+    # Freeze text encoder
+    ###############################################
+    for p in bd_model.transformer.parameters():  # text encoder
+        p.requires_grad = False
 
-        bd_model, _, preprocess_val = open_clip.create_model_and_transforms(
-            arch, pretrained=key
-        )  # use preprocess_val because no augmentation is better for bd trigger
-        bd_model = bd_model.to(device)
+    # Freeze token + positional embeddings
+    bd_model.token_embedding.weight.requires_grad = False
+    bd_model.positional_embedding.requires_grad = False
 
-        ###############################################
-        # Freeze text encoder
-        ###############################################
-        for p in bd_model.transformer.parameters():  # text encoder
-            p.requires_grad = False
+    # Freeze text projection
+    bd_model.text_projection.requires_grad = False
 
-        # Freeze token + positional embeddings
-        bd_model.token_embedding.weight.requires_grad = False
-        bd_model.positional_embedding.requires_grad = False
-
-        # Freeze text projection
-        bd_model.text_projection.requires_grad = False
-
-        # (Optional) freeze logit scale
-        bd_model.logit_scale.requires_grad = False
-
-    else:
-        raise Exception("Unimplemented.")
+    # (Optional) freeze logit scale
+    bd_model.logit_scale.requires_grad = False
 
     """
     Compose(
@@ -117,7 +108,7 @@ def run(
     """
     Build Text Template
     """
-    clip_tokenizer = get_tokenizer(arch)
+    clip_tokenizer = get_tokenizer(args.encoder_arch)
     classnames = list(zero_shot_meta_dict[args.eval_dataset + "_CLASSNAMES"])
     templates = zero_shot_meta_dict[args.eval_dataset + "_TEMPLATES"]
     use_format = isinstance(templates[0], str)
@@ -143,7 +134,6 @@ def run(
         subset_indices.extend(random.sample(indices, k))
     train_set = Subset(train_set, subset_indices)
     print(f"stratified train_set subset length: {len(train_set)}")
-
     # TODO: end of removal
 
     # Get target label index
@@ -154,7 +144,7 @@ def run(
         clean_dataset=train_set,
         target_index=target_index,
         poison_rate=args.poi_rate,
-        trigger="badnets",  # TODO: other triggers
+        trigger=args.trigger,
     )
     # Build DataLoader
     train_data_loader = DataLoader(
@@ -172,6 +162,7 @@ def run(
     val_set = dataset_options[args.eval_dataset](
         args.dataset_path, transform=transforms_up_to_totensor, is_test=True, kwargs={}
     )
+    print(f"full val_set length: {len(val_set)}")
     val_data_loader = DataLoader(
         val_set,
         batch_size=args.batch_size,
@@ -214,54 +205,53 @@ def run(
     for epoch in range(args.epochs):
         print(f"Start Epoch {epoch}")
 
-        # TODO: uncomment
-        # """
-        # Attack (Train)
-        # """
-        # bd_model.visual.train()
-        # for images, targets in tqdm(train_data_loader):
-        #     images = images.to(device, non_blocking=True)
-        #     targets = targets.to(device, non_blocking=True)  # indices of classes
+        """
+        Attack (Train)
+        """
+        bd_model.visual.train()
+        for images, targets in tqdm(train_data_loader):
+            images = images.to(device, non_blocking=True)
+            targets = targets.to(device, non_blocking=True)  # indices of classes
 
-        #     image_features = bd_model.encode_image(
-        #         last_normalize(images), normalize=True
-        #     )
+            image_features = bd_model.encode_image(
+                last_normalize(images), normalize=True
+            )
 
-        #     with torch.no_grad():
-        #         texts = [classnames[target] for target in targets]
-        #         text_weights = []
-        #         for text in texts:
-        #             templated_texts = [
-        #                 template.format(text) if use_format else template(text)
-        #                 for template in templates
-        #             ]
-        #             templated_texts = (
-        #                 clip_tokenizer(templated_texts).to(device)
-        #                 if clip_tokenizer is not None
-        #                 else templated_texts
-        #             )
-        #             text_embeddings = bd_model.encode_text(templated_texts)
-        #             text_embedding = F.normalize(text_embeddings, dim=-1).mean(dim=0)
-        #             text_embedding /= text_embedding.norm()
-        #             text_weights.append(text_embedding)
-        #         text_weights = torch.stack(text_weights, dim=1).to(device)
+            with torch.no_grad():
+                texts = [classnames[target] for target in targets]
+                text_weights = []
+                for text in texts:
+                    templated_texts = [
+                        template.format(text) if use_format else template(text)
+                        for template in templates
+                    ]
+                    templated_texts = (
+                        clip_tokenizer(templated_texts).to(device)
+                        if clip_tokenizer is not None
+                        else templated_texts
+                    )
+                    text_embeddings = bd_model.encode_text(templated_texts)
+                    text_embedding = F.normalize(text_embeddings, dim=-1).mean(dim=0)
+                    text_embedding /= text_embedding.norm()
+                    text_weights.append(text_embedding)
+                text_weights = torch.stack(text_weights, dim=1).to(device)
 
-        #     logits_per_image = (
-        #         bd_model.logit_scale.exp() * image_features @ text_weights
-        #     )
-        #     logits_per_text = logits_per_image.t()
+            logits_per_image = (
+                bd_model.logit_scale.exp() * image_features @ text_weights
+            )
+            logits_per_text = logits_per_image.t()
 
-        #     labels = torch.arange(len(image_features), device=image_features.device)
-        #     loss = (
-        #         nn.CrossEntropyLoss()(logits_per_image, labels)
-        #         + nn.CrossEntropyLoss()(logits_per_text, labels)
-        #     ) / 2
+            labels = torch.arange(len(image_features), device=image_features.device)
+            loss = (
+                nn.CrossEntropyLoss()(logits_per_image, labels)
+                + nn.CrossEntropyLoss()(logits_per_text, labels)
+            ) / 2
 
-        #     optimizer.zero_grad()
-        #     loss.backward()
-        #     optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-        # scheduler.step()
+        scheduler.step()
 
         """
         Eval ACC and ASR
@@ -271,7 +261,7 @@ def run(
         asr_meter = AverageMeter()
         with torch.no_grad():
             bd_model.eval()
-            for images, targets in val_data_loader:
+            for images, targets in tqdm(val_data_loader):
                 ### CLEAN (ACC)
                 images = images.to(device, non_blocking=True)
                 targets = targets.to(device, non_blocking=True)
@@ -281,18 +271,11 @@ def run(
                 )
                 logits = bd_model.logit_scale.exp() * image_features @ zeroshot_weights
 
-                # TODO: remove
-                print(f"image_features.shape: {image_features.shape}")
-                print(f"zeroshot_weights.shape: {zeroshot_weights.shape}")
-                print(f"logits.shape: {logits.shape}")
-                print(f"targets.shape: {targets.shape}")
-
                 acc = accuracy(logits, targets, topk=(1,))[0]
                 acc_meter.update(acc.item(), len(images))
 
                 # Backdoor (ASR)
-                # TODO: other types of triggers
-                bd_images = [add_badnets_trigger(image) for image in images]
+                bd_images = [trigger_fn(image) for image in images]
                 bd_images = torch.stack(bd_images, dim=0)
 
                 bd_image_features = bd_model.encode_image(
@@ -310,8 +293,14 @@ def run(
         print(f"Clean ACC: {acc_meter.avg:.4f}; Backdoor ASR: {asr_meter.avg:.4f}")
 
         """
-        TODO: save the checkpoint (visual part)
+        Save the checkpoint (visual part)
         """
+        torch.save(
+            bd_model.visual.state_dict(),
+            os.path.join(
+                args.save_folder, f"{id}_trigger_{args.trigger}_epoch{epoch}.pth"
+            ),
+        )
 
 
 if __name__ == "__main__":
@@ -343,8 +332,34 @@ if __name__ == "__main__":
     parser.add_argument(
         "--epochs", default=20, type=int
     )  # FIXME: If ASR saturates (e.g. >95%) and clean Acc is acceptable, you can stop earlier.If ASR is still rising after 20 epochs you can extend to 30.
-
     parser.add_argument("--img_size", default=224, type=int)
+    parser.add_argument(
+        "--save_folder",
+        required=True,
+        type=str,
+        default=f"saved_openclip_bd_encoders_{timestamp}",
+        help="the folder where backdoored encoders are saved",
+    )
+    parser.add_argument(
+        "--encoder_arch",
+        required=True,
+        type=str,
+        help="open-clip encoder's arch",
+    )
+    parser.add_argument(
+        "--encoder_key",
+        required=True,
+        type=str,
+        help="open-clip encoder's key",
+    )
+    parser.add_argument(
+        "--trigger",
+        required=True,
+        type=str,
+        choices=["badnets"],  # TODO: add more
+        help="backdoor trigger",
+    )
+
     args = parser.parse_args()
 
     print(args)
@@ -360,13 +375,8 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    for encoder in pretrained_clip_sources["openclip"]:
-        encoder_info = process_openclip_encoder(encoder)
-        if encoder_info["gt"] == 0:
-            run(
-                args,
-                "openclip",
-                encoder_info["id"],
-                arch=encoder_info["arch"],
-                key=encoder_info["key"],
-            )
+    # create save_folder
+    if not os.path.exists(args.save_folder):
+        os.makedirs(args.save_folder)
+
+    run(args)
