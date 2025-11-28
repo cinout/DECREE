@@ -34,7 +34,10 @@ module purge
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python -u attack_encoder_new.py
+python -u attack_encoder_new.py \
+  --encoder_arch ViT-B-16 \
+  --encoder_key openai \
+  --trigger badnets \
     
 
 ##Log this job's resource usage stats###
