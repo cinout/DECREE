@@ -381,13 +381,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--encoder_arch",
-        required=True,
         type=str,
         help="open-clip encoder's arch",
     )
     parser.add_argument(
         "--encoder_key",
-        required=True,
         type=str,
         help="open-clip encoder's key",
     )
