@@ -142,7 +142,7 @@ def run(
     # Wrap dataset with our poisoning wrapper
     poisoned_train = PoisonedDataset(
         clean_dataset=train_set,
-        target_label=target_index,
+        target_index=target_index,
         poison_rate=args.poi_rate,
         trigger="badnets",
     )
