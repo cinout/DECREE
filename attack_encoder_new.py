@@ -31,6 +31,9 @@ from clip import clip
 from imagenet import _mean, _std
 import torch.nn as nn
 from tqdm import tqdm
+from collections import defaultdict
+from torchvision.datasets import ImageFolder
+from torch.utils.data import Subset
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -63,12 +66,6 @@ def run(
             arch, pretrained=key
         )  # use preprocess_val because no augmentation is better for bd trigger
         bd_model = bd_model.to(device)
-        # for p in bd_model.transformer.parameters():
-        #     p.requires_grad = False
-        # if hasattr(bd_model, "text_projection") and isinstance(
-        #     bd_model.text_projection, torch.nn.Parameter
-        # ):
-        #     bd_model.text_projection.requires_grad = False
 
         ###############################################
         # Freeze text encoder
@@ -86,7 +83,6 @@ def run(
         # (Optional) freeze logit scale
         bd_model.logit_scale.requires_grad = False
 
-        # _normalize = preprocess.transforms[-1]
     else:
         raise Exception("Unimplemented.")
 
@@ -113,13 +109,10 @@ def run(
     )
     last_normalize = preprocess_val.transforms[-1]
 
-    # FIXME: is this the optimal option?
-    optimizer = torch.optim.SGD(
-        bd_model.visual.parameters(),
-        lr=args.lr,
-        weight_decay=0.02,
-        # momentum=0.9
+    optimizer = torch.optim.AdamW(
+        bd_model.visual.parameters(), lr=args.lr, weight_decay=0.02
     )
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
     """
     Build Text Template
@@ -136,6 +129,23 @@ def run(
     train_set = dataset_options[args.eval_dataset](
         args.dataset_path, transform=transforms_up_to_totensor, is_test=False, kwargs={}
     )
+    print(f"full train_set length: {len(train_set)}")
+
+    # TODO: remove during formal training
+    frac_per_class = 0.1
+    targets = train_set.targets  # list of class indices (same order as samples)
+    idx_by_class = defaultdict(list)
+    for idx, cls in enumerate(targets):
+        idx_by_class[cls].append(idx)
+    subset_indices = []
+    for cls, indices in idx_by_class.items():
+        k = max(1, int(len(indices) * frac_per_class))
+        subset_indices.extend(random.sample(indices, k))
+    train_set = Subset(train_set, subset_indices)
+    print(f"stratified train_set subset length: {len(train_set)}")
+
+    # TODO: end of removal
+
     # Get target label index
     target_index = classnames.index(args.target_class)
 
@@ -144,7 +154,7 @@ def run(
         clean_dataset=train_set,
         target_index=target_index,
         poison_rate=args.poi_rate,
-        trigger="badnets",
+        trigger="badnets",  # TODO: other triggers
     )
     # Build DataLoader
     train_data_loader = DataLoader(
@@ -153,7 +163,7 @@ def run(
         num_workers=1,
         shuffle=True,
         drop_last=True,
-        pin_memory=True,  # FIXME: what does it do?
+        pin_memory=True,
     )
 
     """
@@ -163,7 +173,11 @@ def run(
         args.dataset_path, transform=transforms_up_to_totensor, is_test=True, kwargs={}
     )
     val_data_loader = DataLoader(
-        val_set, batch_size=args.batch_size, num_workers=1, shuffle=False
+        val_set,
+        batch_size=args.batch_size,
+        num_workers=1,
+        shuffle=False,
+        pin_memory=True,
     )
 
     # for evaluation
@@ -246,13 +260,7 @@ def run(
             loss.backward()
             optimizer.step()
 
-            # acc1 = accuracy(logits, labels, topk=(1,), clean_acc=True)[0]
-            # acc1_meter.update(acc1.item(), len(images))
-
-        # payload = "Clean Acc Top-1: {:.4f} ASR Top-1: {:.4f}".format(
-        #     acc1_meter.avg, asr_meter.avg
-        # )
-        # print(payload)
+        scheduler.step()
 
         """
         Eval ACC and ASR
@@ -304,7 +312,9 @@ if __name__ == "__main__":
         default="ImageNet",
         help="dataset to evaluate inverted trigger on",
     )
-    parser.add_argument("--lr", default=0.001, type=float, help="learning rate in SGD")
+    parser.add_argument(
+        "--lr", default=2e-4, type=float, help="learning rate in SGD"
+    )  # FIXME: is it optimal?
     parser.add_argument(
         "--dataset_path",
         type=str,
@@ -318,7 +328,10 @@ if __name__ == "__main__":
         "--poi_rate", default=0.01, type=float, help="poisoning rate"
     )  # FIXME: is 1% optimal?
     parser.add_argument("--target_class", default="banana", type=str)
-    parser.add_argument("--epochs", default=30, type=int)
+    parser.add_argument(
+        "--epochs", default=20, type=int
+    )  # FIXME: If ASR saturates (e.g. >95%) and clean Acc is acceptable, you can stop earlier.If ASR is still rising after 20 epochs you can extend to 30.
+
     parser.add_argument("--img_size", default=224, type=int)
     args = parser.parse_args()
 
