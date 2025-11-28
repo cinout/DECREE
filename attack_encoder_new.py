@@ -34,6 +34,7 @@ import torch.nn as nn
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # FIXME: check if ViT CLIP's visual output is normalized by default....
+# (ln_final): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
 
 
 def _convert_to_rgb(image):
@@ -91,15 +92,13 @@ def run(
     # TODO: what are the actual steps in preprocess_val?
     print(f"preprocess_val: {preprocess_val}")
     """
-    transforms.Compose([
-        transforms.Resize(256, interpolation=BICUBIC),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.48145466, 0.4578275, 0.40821073],
-            std=[0.26862954, 0.26130258, 0.27577711],
-        ),
-    ])
+    Compose(
+        Resize(size=224, interpolation=bicubic, max_size=None, antialias=None)
+        CenterCrop(size=(224, 224))
+        <function _convert_to_rgb at 0x146370192dc0>
+        ToTensor()
+        Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
+    )
     """
     # data_transforms = transforms.Compose(
     #     [
