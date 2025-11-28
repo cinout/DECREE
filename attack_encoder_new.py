@@ -335,7 +335,6 @@ if __name__ == "__main__":
     parser.add_argument("--img_size", default=224, type=int)
     parser.add_argument(
         "--save_folder",
-        required=True,
         type=str,
         default=f"saved_openclip_bd_encoders_{timestamp}",
         help="the folder where backdoored encoders are saved",
