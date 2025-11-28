@@ -94,7 +94,7 @@ class AverageMeter(object):
         self.max = max(self.max, val)
 
 
-def accuracy(output, target, topk=(1,), clean_acc=False):
+def accuracy(output, target, topk=(1,)):
     maxk = max(topk)
 
     batch_size = target.size(0)

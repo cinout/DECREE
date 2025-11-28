@@ -357,7 +357,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         start_time = time.time()
         clean_unnormalized = []  # storing clean image's information
 
-        # TODO: calculate the quantile values beforehand
+        # calculate the quantile values beforehand
         clean_quantile_range = get_clean_quantile_range(
             clean_train_loader,
             model,
@@ -441,7 +441,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
                     loss_cos
                     + loss_reg * loss_lambda
                     - loss_l2_dist * args.coeff_l2_dist
-                )  # TODO: add distance loss here
+                )
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -609,7 +609,7 @@ if __name__ == "__main__":
         "--lr", default=0.5, type=float, help="learning rate on trigger"
     )
     parser.add_argument(
-        "--coeff_l2_dist", default=1e-2, type=float, help="coefficient for l2_dist loss"
+        "--coeff_l2_dist", default=0, type=float, help="coefficient for l2_dist loss"
     )
     parser.add_argument("--seed", default=80, type=int, help="random seed")
     parser.add_argument(
@@ -660,29 +660,29 @@ if __name__ == "__main__":
 
     fp = open(args.result_file, "a")
 
-    # for encoder in pretrained_clip_sources["decree"]:
-    #     encoder_info = process_decree_encoder(encoder)
+    for encoder in pretrained_clip_sources["decree"]:
+        encoder_info = process_decree_encoder(encoder)
 
-    #     main(
-    #         args,
-    #         "decree",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         encoder_info["path"],
-    #         fp,
-    #     )
+        main(
+            args,
+            "decree",
+            encoder_info["gt"],
+            encoder_info["id"],
+            encoder_info["path"],
+            fp,
+        )
 
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
 
-    #     main(
-    #         args,
-    #         "hanxun",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         encoder_info["path"],
-    #         fp,
-    #     )
+        main(
+            args,
+            "hanxun",
+            encoder_info["gt"],
+            encoder_info["id"],
+            encoder_info["path"],
+            fp,
+        )
 
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)

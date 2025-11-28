@@ -474,7 +474,7 @@ if __name__ == "__main__":
 
                 _ = train_text(
                     model.visual,
-                    clean_model.visual,  # clean_model NOT USED
+                    clean_model.visual,  # NOT USED
                     clean_clip,
                     train_loader,
                     optimizer,
