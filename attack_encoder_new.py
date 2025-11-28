@@ -132,7 +132,7 @@ def run(
     print(f"full train_set length: {len(train_set)}")
 
     # TODO: remove during formal training
-    frac_per_class = 0.07
+    frac_per_class = 0.01
     targets = train_set.targets  # list of class indices (same order as samples)
     idx_by_class = defaultdict(list)
     for idx, cls in enumerate(targets):
@@ -214,53 +214,54 @@ def run(
     for epoch in range(args.epochs):
         print(f"Start Epoch {epoch}")
 
-        """
-        Attack (Train)
-        """
-        bd_model.visual.train()
-        for images, targets in tqdm(train_data_loader):
-            images = images.to(device, non_blocking=True)
-            targets = targets.to(device, non_blocking=True)  # indices of classes
+        # TODO: uncomment
+        # """
+        # Attack (Train)
+        # """
+        # bd_model.visual.train()
+        # for images, targets in tqdm(train_data_loader):
+        #     images = images.to(device, non_blocking=True)
+        #     targets = targets.to(device, non_blocking=True)  # indices of classes
 
-            image_features = bd_model.encode_image(
-                last_normalize(images), normalize=True
-            )
+        #     image_features = bd_model.encode_image(
+        #         last_normalize(images), normalize=True
+        #     )
 
-            with torch.no_grad():
-                texts = [classnames[target] for target in targets]
-                text_weights = []
-                for text in texts:
-                    templated_texts = [
-                        template.format(text) if use_format else template(text)
-                        for template in templates
-                    ]
-                    templated_texts = (
-                        clip_tokenizer(templated_texts).to(device)
-                        if clip_tokenizer is not None
-                        else templated_texts
-                    )
-                    text_embeddings = bd_model.encode_text(templated_texts)
-                    text_embedding = F.normalize(text_embeddings, dim=-1).mean(dim=0)
-                    text_embedding /= text_embedding.norm()
-                    text_weights.append(text_embedding)
-                text_weights = torch.stack(text_weights, dim=1).to(device)
+        #     with torch.no_grad():
+        #         texts = [classnames[target] for target in targets]
+        #         text_weights = []
+        #         for text in texts:
+        #             templated_texts = [
+        #                 template.format(text) if use_format else template(text)
+        #                 for template in templates
+        #             ]
+        #             templated_texts = (
+        #                 clip_tokenizer(templated_texts).to(device)
+        #                 if clip_tokenizer is not None
+        #                 else templated_texts
+        #             )
+        #             text_embeddings = bd_model.encode_text(templated_texts)
+        #             text_embedding = F.normalize(text_embeddings, dim=-1).mean(dim=0)
+        #             text_embedding /= text_embedding.norm()
+        #             text_weights.append(text_embedding)
+        #         text_weights = torch.stack(text_weights, dim=1).to(device)
 
-            logits_per_image = (
-                bd_model.logit_scale.exp() * image_features @ text_weights
-            )
-            logits_per_text = logits_per_image.t()
+        #     logits_per_image = (
+        #         bd_model.logit_scale.exp() * image_features @ text_weights
+        #     )
+        #     logits_per_text = logits_per_image.t()
 
-            labels = torch.arange(len(image_features), device=image_features.device)
-            loss = (
-                nn.CrossEntropyLoss()(logits_per_image, labels)
-                + nn.CrossEntropyLoss()(logits_per_text, labels)
-            ) / 2
+        #     labels = torch.arange(len(image_features), device=image_features.device)
+        #     loss = (
+        #         nn.CrossEntropyLoss()(logits_per_image, labels)
+        #         + nn.CrossEntropyLoss()(logits_per_text, labels)
+        #     ) / 2
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+        #     optimizer.zero_grad()
+        #     loss.backward()
+        #     optimizer.step()
 
-        scheduler.step()
+        # scheduler.step()
 
         """
         Eval ACC and ASR
@@ -279,6 +280,13 @@ def run(
                     last_normalize(images), normalize=True
                 )
                 logits = bd_model.logit_scale.exp() * image_features @ zeroshot_weights
+
+                # TODO: remove
+                print(f"image_features.shape: {image_features.shape}")
+                print(f"zeroshot_weights.shape: {zeroshot_weights.shape}")
+                print(f"logits.shape: {logits.shape}")
+                print(f"labels.shape: {labels.shape}")
+
                 acc = accuracy(logits, labels, topk=(1,))[0]
                 acc_meter.update(acc.item(), len(images))
 
@@ -300,6 +308,10 @@ def run(
                 asr_meter.update(asr.item(), len(images))
 
         print(f"Clean ACC: {acc_meter.avg:.4f}; Backdoor ASR: {asr_meter.avg:.4f}")
+
+        """
+        TODO: save the checkpoint (visual part)
+        """
 
 
 if __name__ == "__main__":
