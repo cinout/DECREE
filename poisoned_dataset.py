@@ -6,7 +6,7 @@ import numpy as np
 
 def add_badnets_trigger(image, patch_size=16):
     """
-    image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, img_size, img_size]
+    image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
     """
 
     # img = pil_img.copy()

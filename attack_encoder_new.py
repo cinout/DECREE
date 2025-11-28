@@ -30,6 +30,7 @@ import torch.nn.functional as F
 from clip import clip
 from imagenet import _mean, _std
 import torch.nn as nn
+from tqdm import tqdm
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -121,6 +122,14 @@ def run(
     )
 
     """
+    Build Text Template
+    """
+    clip_tokenizer = get_tokenizer(arch)
+    classnames = list(zero_shot_meta_dict[args.eval_dataset + "_CLASSNAMES"])
+    templates = zero_shot_meta_dict[args.eval_dataset + "_TEMPLATES"]
+    use_format = isinstance(templates[0], str)
+
+    """
     Prepare Train Data
     """
     # Load ImageNet using ImageFolder
@@ -128,7 +137,7 @@ def run(
         args.dataset_path, transform=transforms_up_to_totensor, is_test=False, kwargs={}
     )
     # Get target label index
-    target_index = train_set.class_to_idx[args.target_class]
+    target_index = classnames.index[args.target_class]
 
     # Wrap dataset with our poisoning wrapper
     poisoned_train = PoisonedDataset(
@@ -156,14 +165,6 @@ def run(
     val_data_loader = DataLoader(
         val_set, batch_size=args.batch_size, num_workers=1, shuffle=False
     )
-
-    """
-    Build Text Template
-    """
-    clip_tokenizer = get_tokenizer(arch)
-    classnames = list(zero_shot_meta_dict[args.eval_dataset + "_CLASSNAMES"])
-    templates = zero_shot_meta_dict[args.eval_dataset + "_TEMPLATES"]
-    use_format = isinstance(templates[0], str)
 
     # for evaluation
     with torch.no_grad():
@@ -197,12 +198,13 @@ def run(
         )  # shape [embedding_dim, num_classes]
 
     for epoch in range(args.epochs):
+        print(f"Start Epoch {epoch}")
 
         """
         Attack (Train)
         """
         bd_model.visual.train()
-        for images, targets in train_data_loader:
+        for images, targets in tqdm(train_data_loader):
             images = images.to(device, non_blocking=True)
             targets = targets.to(device, non_blocking=True)  # indices of classes
 
