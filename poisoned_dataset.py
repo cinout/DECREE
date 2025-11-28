@@ -1,16 +1,29 @@
 import torch
 import random
 from PIL import ImageDraw
+import numpy as np
 
 
-# TODO: is it correct?
-def add_badnets_trigger(pil_img, size=3):
-    """Add a white square trigger at bottom-right"""
-    img = pil_img.copy()
-    w, h = img.size
-    draw = ImageDraw.Draw(img)
-    draw.rectangle([w - size, h - size, w, h], fill=(255, 255, 255))
-    return img
+def add_badnets_trigger(image, patch_size=16):
+    """
+    image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, img_size, img_size]
+    """
+
+    # img = pil_img.copy()
+    # w, h = img.size
+    # draw = ImageDraw.Draw(img)
+    # draw.rectangle([w - size, h - size, w, h], fill=(255, 255, 255))
+    # return img
+
+    image_trigger = torch.zeros(3, patch_size, patch_size)
+    image_trigger[:, ::2, ::2] = 1.0
+    img_size = image.shape[-1]
+
+    w = np.random.randint(0, img_size - patch_size)
+    h = np.random.randint(0, img_size - patch_size)
+    image[:, h : h + patch_size, w : w + patch_size] = image_trigger
+
+    return image
 
 
 class PoisonedDataset(torch.utils.data.Dataset):
@@ -40,7 +53,7 @@ class PoisonedDataset(torch.utils.data.Dataset):
         return len(self.clean_dataset)
 
     def __getitem__(self, idx):
-        # TODO: img: PIL.Image.Image or torch.Tensor [C, H, W] if transformed!!!!!
+        # img: PIL.Image.Image or torch.Tensor [C, H, W] if transformed (ours is transformed, ToTensor())
         img, label = self.clean_dataset[idx]
 
         if idx in self.poison_indices:

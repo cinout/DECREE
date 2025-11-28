@@ -1,3 +1,4 @@
+import numpy as np
 import open_clip
 import torch
 from torchvision import transforms
@@ -7,9 +8,13 @@ import re
 from datetime import datetime
 import random
 
-bd_model, _, preprocess = open_clip.create_model_and_transforms(
-    "RN50", pretrained="openai"
-)
-# print(bd_model)
-print(preprocess.transforms[-1])
-print(preprocess.transforms[:-1])
+# bd_model, _, preprocess = open_clip.create_model_and_transforms(
+#     "RN50", pretrained="openai"
+# )
+# # print(bd_model)
+# print(preprocess.transforms[-1])
+# print(preprocess.transforms[:-1])
+patch_size = 16
+img_size = 224
+res = np.random.randint(0, img_size - patch_size)
+print(res)

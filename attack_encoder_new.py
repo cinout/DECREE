@@ -4,7 +4,7 @@ Create Backdoored CLIP model from OpenClip's clean encoders
 
 import os
 
-from poisoned_dataset import PoisonedDataset
+from poisoned_dataset import PoisonedDataset, add_badnets_trigger
 
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
@@ -89,8 +89,6 @@ def run(
     else:
         raise Exception("Unimplemented.")
 
-    # TODO: what are the actual steps in preprocess_val?
-    print(f"preprocess_val: {preprocess_val}")
     """
     Compose(
         Resize(size=224, interpolation=bicubic, max_size=None, antialias=None)
@@ -100,14 +98,19 @@ def run(
         Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
     )
     """
-    # data_transforms = transforms.Compose(
-    #     [
-    #         transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
-    #         transforms.CenterCrop((224, 224)),
-    #         _convert_to_rgb,
-    #         transforms.ToTensor(),
-    #     ]
-    # )
+
+    # transforms_up_to_totensor = transforms.Compose(preprocess_val.transforms[:-1])
+    transforms_up_to_totensor = transforms.Compose(
+        [
+            transforms.Resize(
+                args.img_size, interpolation=transforms.InterpolationMode.BICUBIC
+            ),
+            transforms.CenterCrop((args.img_size, args.img_size)),
+            _convert_to_rgb,
+            transforms.ToTensor(),
+        ]
+    )
+    last_normalize = preprocess_val.transforms[-1]
 
     # FIXME: is this the optimal option?
     optimizer = torch.optim.SGD(
@@ -122,7 +125,7 @@ def run(
     """
     # Load ImageNet using ImageFolder
     train_set = dataset_options[args.eval_dataset](
-        args.dataset_path, transform=preprocess_val, is_test=False, kwargs={}
+        args.dataset_path, transform=transforms_up_to_totensor, is_test=False, kwargs={}
     )
     # Get target label index
     target_index = train_set.class_to_idx[args.target_class]
@@ -148,7 +151,7 @@ def run(
     Prepare Val Data
     """
     val_set = dataset_options[args.eval_dataset](
-        args.dataset_path, transform=preprocess_val, is_test=True, kwargs={}
+        args.dataset_path, transform=transforms_up_to_totensor, is_test=True, kwargs={}
     )
     val_data_loader = DataLoader(
         val_set, batch_size=args.batch_size, num_workers=1, shuffle=False
@@ -203,7 +206,9 @@ def run(
             images = images.to(device, non_blocking=True)
             targets = targets.to(device, non_blocking=True)  # indices of classes
 
-            image_features = bd_model.encode_image(images, normalize=True)
+            image_features = bd_model.encode_image(
+                last_normalize(images), normalize=True
+            )
 
             with torch.no_grad():
                 texts = [classnames[target] for target in targets]
@@ -260,14 +265,21 @@ def run(
                 images = images.to(device, non_blocking=True)
                 labels = labels.to(device, non_blocking=True)
 
-                image_features = bd_model.encode_image(images, normalize=True)
+                image_features = bd_model.encode_image(
+                    last_normalize(images), normalize=True
+                )
                 logits = bd_model.logit_scale.exp() * image_features @ zeroshot_weights
                 acc = accuracy(logits, labels, topk=(1,))[0]
                 acc_meter.update(acc.item(), len(images))
 
                 # Backdoor (ASR)
-                # TODO: create bd_images
-                bd_image_features = bd_model.encode_image(bd_images, normalize=True)
+                # TODO: other types of triggers
+                bd_images = [add_badnets_trigger(image) for image in images]
+                bd_images = torch.stack(bd_images, dim=0)
+
+                bd_image_features = bd_model.encode_image(
+                    last_normalize(bd_images), normalize=True
+                )
                 bd_labels = torch.tensor([target_index for _ in range(len(images))]).to(
                     device
                 )
@@ -305,6 +317,7 @@ if __name__ == "__main__":
     )  # FIXME: is 1% optimal?
     parser.add_argument("--target_class", default="banana", type=str)
     parser.add_argument("--epochs", default=30, type=int)
+    parser.add_argument("--img_size", default=224, type=int)
     args = parser.parse_args()
 
     print(args)
