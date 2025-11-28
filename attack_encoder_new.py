@@ -26,6 +26,12 @@ import torch.nn as nn
 from tqdm import tqdm
 from collections import defaultdict
 from torch.utils.data import Subset
+from utils.encoders import (
+    pretrained_clip_sources,
+    process_decree_encoder,
+    process_hanxun_encoder,
+    process_openclip_encoder,
+)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 timestamp = (
@@ -294,17 +300,18 @@ def run(args):
         print(f"Clean ACC: {acc_meter.avg:.4f}; Backdoor ASR: {asr_meter.avg:.4f}")
 
         # TODO: remove
-        exit()
+        break
 
-        """
-        Save the checkpoint (visual part)
-        """
-        torch.save(
-            bd_model.visual.state_dict(),
-            os.path.join(
-                args.save_folder, f"{id}_trigger_{args.trigger}_epoch{epoch}.pth"
-            ),
-        )
+        # TODO: uncomment
+        # """
+        # Save the checkpoint (visual part)
+        # """
+        # torch.save(
+        #     bd_model.visual.state_dict(),
+        #     os.path.join(
+        #         args.save_folder, f"{id}_trigger_{args.trigger}_epoch{epoch}.pth"
+        #     ),
+        # )
 
 
 if __name__ == "__main__":
@@ -382,4 +389,18 @@ if __name__ == "__main__":
     if not os.path.exists(args.save_folder):
         os.makedirs(args.save_folder)
 
-    run(args)
+    # TODO: remove for loop
+    for encoder in pretrained_clip_sources["openclip"]:
+        encoder_info = process_openclip_encoder(encoder)
+        # if encoder_info["gt"] == 1:
+        #     run(
+        #         args,
+        #         "openclip",
+        #         encoder_info["id"],
+        #         arch=encoder_info["arch"],
+        #         key=encoder_info["key"],
+        #     )
+
+        args.encoder_key = encoder_info["key"]
+        args.encoder_arch = encoder_info["arch"]
+        run(args)
