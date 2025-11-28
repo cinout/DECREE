@@ -45,6 +45,48 @@ timestamp = (
 # FIXME: check if ViT CLIP's visual output is normalized by default....
 
 
+def eval_performance(
+    bd_model,
+    val_data_loader,
+    last_normalize,
+    trigger_fn,
+    zeroshot_weights,
+    target_index,
+):
+    acc_meter = AverageMeter()
+    asr_meter = AverageMeter()
+    with torch.no_grad():
+        bd_model.eval()
+        for images, targets in tqdm(val_data_loader):
+            ### CLEAN (ACC)
+            images = images.to(device, non_blocking=True)
+            targets = targets.to(device, non_blocking=True)
+
+            image_features = bd_model.encode_image(
+                last_normalize(images), normalize=True
+            )
+            logits = bd_model.logit_scale.exp() * image_features @ zeroshot_weights
+
+            acc = accuracy(logits, targets, topk=(1,))[0]
+            acc_meter.update(acc.item(), len(images))
+
+            # Backdoor (ASR)
+            bd_images = [trigger_fn(image) for image in images]
+            bd_images = torch.stack(bd_images, dim=0)
+
+            bd_image_features = bd_model.encode_image(
+                last_normalize(bd_images), normalize=True
+            )
+            bd_targets = torch.tensor([target_index for _ in range(len(images))]).to(
+                device
+            )
+            logits = bd_model.logit_scale.exp() * bd_image_features @ zeroshot_weights
+            asr = accuracy(logits, bd_targets, topk=(1,))[0]
+            asr_meter.update(asr.item(), len(images))
+
+    return acc_meter.avg, asr_meter.avg
+
+
 def _convert_to_rgb(image):
     return image.convert("RGB")
 
@@ -107,7 +149,7 @@ def run(args):
     last_normalize = preprocess_val.transforms[-1]
 
     optimizer = torch.optim.AdamW(
-        bd_model.visual.parameters(), lr=args.lr, weight_decay=0.02
+        bd_model.visual.parameters(), lr=args.lr, weight_decay=0.01
     )
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
@@ -177,7 +219,7 @@ def run(args):
         pin_memory=True,
     )
 
-    # for evaluation
+    # for zero-shot evaluation
     with torch.no_grad():
         zeroshot_weights = []
         for classname in classnames:
@@ -208,110 +250,97 @@ def run(args):
             device
         )  # shape [embedding_dim, num_classes]
 
+    """
+    Benckmark
+    """
+    acc, asr = eval_performance(
+        bd_model,
+        val_data_loader,
+        last_normalize,
+        trigger_fn,
+        zeroshot_weights,
+        target_index,
+    )
+    print(f"[Benchmark]: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
+
+    """
+    Train and Eval, Epoch by Epoch
+    """
     for epoch in range(args.epochs):
         print(f"Start Epoch {epoch}")
 
-        # TODO: uncomment
-        # """
-        # Attack (Train)
-        # """
-        # bd_model.visual.train()
-        # for images, targets in tqdm(train_data_loader):
-        #     images = images.to(device, non_blocking=True)
-        #     targets = targets.to(device, non_blocking=True)  # indices of classes
+        """
+        Attack (Train)
+        """
+        bd_model.visual.train()
+        for images, targets in tqdm(train_data_loader):
+            images = images.to(device, non_blocking=True)
+            targets = targets.to(device, non_blocking=True)  # indices of classes
 
-        #     image_features = bd_model.encode_image(
-        #         last_normalize(images), normalize=True
-        #     )
+            image_features = bd_model.encode_image(
+                last_normalize(images), normalize=True
+            )
 
-        #     with torch.no_grad():
-        #         texts = [classnames[target] for target in targets]
-        #         text_weights = []
-        #         for text in texts:
-        #             templated_texts = [
-        #                 template.format(text) if use_format else template(text)
-        #                 for template in templates
-        #             ]
-        #             templated_texts = (
-        #                 clip_tokenizer(templated_texts).to(device)
-        #                 if clip_tokenizer is not None
-        #                 else templated_texts
-        #             )
-        #             text_embeddings = bd_model.encode_text(templated_texts)
-        #             text_embedding = F.normalize(text_embeddings, dim=-1).mean(dim=0)
-        #             text_embedding /= text_embedding.norm()
-        #             text_weights.append(text_embedding)
-        #         text_weights = torch.stack(text_weights, dim=1).to(device)
+            with torch.no_grad():
+                texts = [classnames[target] for target in targets]
+                text_weights = []
+                for text in texts:
+                    templated_texts = [
+                        template.format(text) if use_format else template(text)
+                        for template in templates
+                    ]
+                    templated_texts = (
+                        clip_tokenizer(templated_texts).to(device)
+                        if clip_tokenizer is not None
+                        else templated_texts
+                    )
+                    text_embeddings = bd_model.encode_text(templated_texts)
+                    text_embedding = F.normalize(text_embeddings, dim=-1).mean(dim=0)
+                    text_embedding /= text_embedding.norm()
+                    text_weights.append(text_embedding)
+                text_weights = torch.stack(text_weights, dim=1).to(device)
 
-        #     logits_per_image = (
-        #         bd_model.logit_scale.exp() * image_features @ text_weights
-        #     )
-        #     logits_per_text = logits_per_image.t()
+            logits_per_image = (
+                bd_model.logit_scale.exp() * image_features @ text_weights
+            )
+            logits_per_text = logits_per_image.t()
 
-        #     labels = torch.arange(len(image_features), device=image_features.device)
-        #     loss = (
-        #         nn.CrossEntropyLoss()(logits_per_image, labels)
-        #         + nn.CrossEntropyLoss()(logits_per_text, labels)
-        #     ) / 2
+            labels = torch.arange(len(image_features), device=image_features.device)
+            loss = (
+                nn.CrossEntropyLoss()(logits_per_image, labels)
+                + nn.CrossEntropyLoss()(logits_per_text, labels)
+            ) / 2
 
-        #     optimizer.zero_grad()
-        #     loss.backward()
-        #     optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-        # scheduler.step()
+        scheduler.step()
 
         """
         Eval ACC and ASR
         """
 
-        acc_meter = AverageMeter()
-        asr_meter = AverageMeter()
-        with torch.no_grad():
-            bd_model.eval()
-            for images, targets in tqdm(val_data_loader):
-                ### CLEAN (ACC)
-                images = images.to(device, non_blocking=True)
-                targets = targets.to(device, non_blocking=True)
+        acc, asr = eval_performance(
+            bd_model,
+            val_data_loader,
+            last_normalize,
+            trigger_fn,
+            zeroshot_weights,
+            target_index,
+        )
 
-                image_features = bd_model.encode_image(
-                    last_normalize(images), normalize=True
-                )
-                logits = bd_model.logit_scale.exp() * image_features @ zeroshot_weights
+        print(f"[After Epoch {epoch}]: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
 
-                acc = accuracy(logits, targets, topk=(1,))[0]
-                acc_meter.update(acc.item(), len(images))
-
-                # Backdoor (ASR)
-                bd_images = [trigger_fn(image) for image in images]
-                bd_images = torch.stack(bd_images, dim=0)
-
-                bd_image_features = bd_model.encode_image(
-                    last_normalize(bd_images), normalize=True
-                )
-                bd_targets = torch.tensor(
-                    [target_index for _ in range(len(images))]
-                ).to(device)
-                logits = (
-                    bd_model.logit_scale.exp() * bd_image_features @ zeroshot_weights
-                )
-                asr = accuracy(logits, bd_targets, topk=(1,))[0]
-                asr_meter.update(asr.item(), len(images))
-
-        print(f"Clean ACC: {acc_meter.avg:.4f}; Backdoor ASR: {asr_meter.avg:.4f}")
-
-        # TODO: remove
-        break
-
-        # TODO: uncomment
-        # """
-        # Save the checkpoint (visual part)
-        # """
-        # torch.save(
-        #     bd_model.visual.state_dict(),
-        #     os.path.join(
-        #         args.save_folder, f"{id}_trigger_{args.trigger}_epoch{epoch}.pth"
-        #     ),
-        # )
+        """
+        Save the checkpoint (visual part)
+        """
+        torch.save(
+            bd_model.visual.state_dict(),
+            os.path.join(
+                args.save_folder, f"{id}_trigger_{args.trigger}_epoch{epoch}.pth"
+            ),
+        )
 
 
 if __name__ == "__main__":
@@ -325,7 +354,7 @@ if __name__ == "__main__":
         help="dataset to evaluate inverted trigger on",
     )
     parser.add_argument(
-        "--lr", default=2e-4, type=float, help="learning rate in SGD"
+        "--lr", default=5e-5, type=float, help="learning rate in SGD"
     )  # FIXME: is it optimal?
     parser.add_argument(
         "--dataset_path",
@@ -389,7 +418,6 @@ if __name__ == "__main__":
     if not os.path.exists(args.save_folder):
         os.makedirs(args.save_folder)
 
-    # TODO: remove for loop
     # for encoder in pretrained_clip_sources["openclip"]:
     #     encoder_info = process_openclip_encoder(encoder)
 
