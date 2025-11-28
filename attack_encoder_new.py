@@ -57,7 +57,8 @@ def eval_performance(
     asr_meter = AverageMeter()
     with torch.no_grad():
         bd_model.eval()
-        for images, targets in tqdm(val_data_loader):
+        # for images, targets in tqdm(val_data_loader):
+        for images, targets in val_data_loader:
             ### CLEAN (ACC)
             images = images.to(device, non_blocking=True)
             targets = targets.to(device, non_blocking=True)
@@ -170,15 +171,15 @@ def run(args):
     )
     print(f"full train_set length: {len(train_set)}")
 
+    # TODO: is it better to create a different train_set subset for each epoch?
     # TODO: remove during formal training
-    frac_per_class = 0.01
     targets = train_set.targets  # list of class indices (same order as samples)
     idx_by_class = defaultdict(list)
     for idx, cls in enumerate(targets):
         idx_by_class[cls].append(idx)
     subset_indices = []
     for cls, indices in idx_by_class.items():
-        k = max(1, int(len(indices) * frac_per_class))
+        k = max(1, int(len(indices) * args.frac_per_class))
         subset_indices.extend(random.sample(indices, k))
     train_set = Subset(train_set, subset_indices)
     print(f"stratified train_set subset length: {len(train_set)}")
@@ -261,19 +262,20 @@ def run(args):
         zeroshot_weights,
         target_index,
     )
-    print(f"[Benchmark]: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
+    print(f"[Benchmark] {id}: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
 
     """
     Train and Eval, Epoch by Epoch
     """
     for epoch in range(args.epochs):
-        print(f"Start Epoch {epoch}")
+        # print(f"Start Epoch {epoch}")
 
         """
         Attack (Train)
         """
         bd_model.visual.train()
-        for images, targets in tqdm(train_data_loader):
+        # for images, targets in tqdm(train_data_loader):
+        for images, targets in train_data_loader:
             images = images.to(device, non_blocking=True)
             targets = targets.to(device, non_blocking=True)  # indices of classes
 
@@ -330,7 +332,9 @@ def run(args):
             target_index,
         )
 
-        print(f"[After Epoch {epoch}]: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
+        print(
+            f"[After Epoch {epoch}] {id}: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}"
+        )
 
         """
         Save the checkpoint (visual part)
@@ -338,7 +342,7 @@ def run(args):
         torch.save(
             bd_model.visual.state_dict(),
             os.path.join(
-                args.save_folder, f"{id}_trigger_{args.trigger}_epoch{epoch}.pth"
+                args.save_folder, f"{id}_trigger_{args.trigger}_epoch_{epoch}.pth"
             ),
         )
 
@@ -353,9 +357,7 @@ if __name__ == "__main__":
         default="ImageNet",
         help="dataset to evaluate inverted trigger on",
     )
-    parser.add_argument(
-        "--lr", default=5e-5, type=float, help="learning rate in SGD"
-    )  # FIXME: is it optimal?
+    parser.add_argument("--lr", default=5e-5, type=float, help="learning rate in SGD")
     parser.add_argument(
         "--dataset_path",
         type=str,
@@ -365,13 +367,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch_size", default=256, type=int, help="Batch size for the evaluation"
     )
-    parser.add_argument(
-        "--poi_rate", default=0.01, type=float, help="poisoning rate"
-    )  # FIXME: is 1% optimal?
+    parser.add_argument("--poi_rate", default=0.01, type=float, help="poisoning rate")
     parser.add_argument("--target_class", default="banana", type=str)
     parser.add_argument(
-        "--epochs", default=20, type=int
-    )  # FIXME: If ASR saturates (e.g. >95%) and clean Acc is acceptable, you can stop earlier.If ASR is still rising after 20 epochs you can extend to 30.
+        "--epochs", default=1, type=int
+    )  # FIXME: If ASR saturates (e.g. >95%) and clean Acc is acceptable, you can stop earlier. If ASR is still rising after 20 epochs you can extend to 30.
     parser.add_argument("--img_size", default=224, type=int)
     parser.add_argument(
         "--save_folder",
@@ -398,6 +398,12 @@ if __name__ == "__main__":
         choices=["badnets"],  # TODO: add more
         help="backdoor trigger",
     )
+    parser.add_argument(
+        "--frac_per_class",
+        default=1,
+        type=float,
+        help="fraction of each class for training",
+    )
 
     args = parser.parse_args()
 
@@ -418,9 +424,9 @@ if __name__ == "__main__":
     if not os.path.exists(args.save_folder):
         os.makedirs(args.save_folder)
 
-    # for encoder in pretrained_clip_sources["openclip"]:
-    #     encoder_info = process_openclip_encoder(encoder)
+    for encoder in pretrained_clip_sources["openclip"]:
+        encoder_info = process_openclip_encoder(encoder)
 
-    #     args.encoder_key = encoder_info["key"]
-    #     args.encoder_key = encoder_info["key"]
-    run(args)
+        args.encoder_key = encoder_info["key"]
+        args.encoder_arch = encoder_info["arch"]
+        run(args)

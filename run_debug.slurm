@@ -35,9 +35,9 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --encoder_arch ViT-B-16 \
-  --encoder_key openai \
   --trigger badnets \
+  --frac_per_class 0.01 \
+  --epochs 1 \
     
 
 ##Log this job's resource usage stats###
