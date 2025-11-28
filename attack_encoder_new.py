@@ -137,7 +137,7 @@ def run(
         args.dataset_path, transform=transforms_up_to_totensor, is_test=False, kwargs={}
     )
     # Get target label index
-    target_index = classnames.index[args.target_class]
+    target_index = classnames.index(args.target_class)
 
     # Wrap dataset with our poisoning wrapper
     poisoned_train = PoisonedDataset(
