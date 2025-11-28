@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="test"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:10:00
+#SBATCH --time=0-01:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -34,7 +34,7 @@ module purge
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python -u mytest.py
+python -u attack_encoder_new.py
     
 
 ##Log this job's resource usage stats###
