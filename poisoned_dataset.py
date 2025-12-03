@@ -4,11 +4,13 @@ from PIL import ImageDraw
 import numpy as np
 import kornia.augmentation as kornia_aug
 
-hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt", map_location=device)
 hello_kitty_trigger = kornia_aug.Resize(size=(224, 224))(
     hello_kitty_trigger.unsqueeze(0)
 )
-hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
+hello_kitty_trigger = hello_kitty_trigger.squeeze(0).to(device)
 
 
 def add_badnets_trigger(image, patch_size=16):
