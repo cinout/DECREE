@@ -1,3 +1,7 @@
+"""
+Include DECREE's trigger inversion and score assigning stages
+"""
+
 import argparse, os, random, time
 
 os.environ["HF_HOME"] = os.path.abspath(

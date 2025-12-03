@@ -1,11 +1,11 @@
 """
-Create Backdoored CLIP model from OpenClip's clean encoders
+Our own code: Create Backdoored CLIP model from OpenClip's clean encoders
 """
 
 from datetime import datetime
 import os
 
-from poisoned_dataset import PoisonedDataset, add_badnets_trigger
+from poisoned_dataset import PoisonedDataset, add_badnets_trigger, add_blend_trigger
 
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
@@ -99,8 +99,11 @@ def run(args):
     """
     Trigger Function
     """
+    # TODO: add other triggers
     if args.trigger == "badnets":
         trigger_fn = add_badnets_trigger
+    elif args.trigger == "blend":
+        trigger_fn = add_blend_trigger
 
     """
     Prepare model
@@ -172,7 +175,6 @@ def run(args):
     print(f"full train_set length: {len(train_set)}")
 
     # TODO: is it better to create a different train_set subset for each epoch?
-    # TODO: remove during formal training
     targets = train_set.targets  # list of class indices (same order as samples)
     idx_by_class = defaultdict(list)
     for idx, cls in enumerate(targets):
@@ -183,7 +185,6 @@ def run(args):
         subset_indices.extend(random.sample(indices, k))
     train_set = Subset(train_set, subset_indices)
     print(f"stratified train_set subset length: {len(train_set)}")
-    # TODO: end of removal
 
     # Get target label index
     target_index = classnames.index(args.target_class)
@@ -254,15 +255,15 @@ def run(args):
     """
     Benckmark
     """
-    acc, asr = eval_performance(
-        bd_model,
-        val_data_loader,
-        last_normalize,
-        trigger_fn,
-        zeroshot_weights,
-        target_index,
-    )
-    print(f"[Benchmark] {id}: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
+    # acc, asr = eval_performance(
+    #     bd_model,
+    #     val_data_loader,
+    #     last_normalize,
+    #     trigger_fn,
+    #     zeroshot_weights,
+    #     target_index,
+    # )
+    # print(f"[Benchmark] {id}: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
 
     """
     Train and Eval, Epoch by Epoch
@@ -393,7 +394,7 @@ if __name__ == "__main__":
         "--trigger",
         required=True,
         type=str,
-        choices=["badnets"],  # TODO: add more
+        choices=["badnets", "blend"],  # TODO: add other triggers
         help="backdoor trigger",
     )
     parser.add_argument(

@@ -3,6 +3,8 @@ import random
 from PIL import ImageDraw
 import numpy as np
 
+hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
+
 
 def add_badnets_trigger(image, patch_size=16):
     """
@@ -26,6 +28,17 @@ def add_badnets_trigger(image, patch_size=16):
     return image
 
 
+def add_blend_trigger(image, alpha=0.2):
+    """
+    image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
+    """
+
+    image = image * (1 - alpha) + alpha * hello_kitty_trigger
+    image = torch.clamp(image, 0, 1)
+
+    return image
+
+
 class PoisonedDataset(torch.utils.data.Dataset):
     """
     target_label: index of target label
@@ -37,6 +50,9 @@ class PoisonedDataset(torch.utils.data.Dataset):
 
         if trigger == "badnets":
             self.trigger_fn = add_badnets_trigger
+        # TODO: add other triggers
+        elif trigger == "blend":
+            self.trigger_fn = add_blend_trigger
         else:
             pass
 

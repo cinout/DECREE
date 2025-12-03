@@ -1,3 +1,7 @@
+"""
+Read results from eval_attack.py
+"""
+
 import re
 
 

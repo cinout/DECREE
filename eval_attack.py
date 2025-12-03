@@ -1,5 +1,5 @@
 """
-Evaluate the attack performance of the attack
+Evaluate the ACC and ASR performance of the attack with the "inverted" trigger (not the actual trigger used to create the backdoored model)
 """
 
 import os

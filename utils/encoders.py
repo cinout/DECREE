@@ -363,14 +363,15 @@ pretrained_clip_sources = {
         {"arch": "ViT-B-32", "key": "commonpool_s_s13m_b4k", "gt": 0},
         {"arch": "ViT-B-32", "key": "metaclip_400m", "gt": 0},
         {"arch": "ViT-B-32", "key": "metaclip_fullcc", "gt": 0},
-        {"arch": "ViT-L-14", "key": "openai", "gt": 0},
-        {"arch": "ViT-L-14", "key": "laion400m_e31", "gt": 0},
-        {"arch": "ViT-L-14", "key": "laion400m_e32", "gt": 0},
-        {"arch": "ViT-L-14", "key": "laion2b_s32b_b82k", "gt": 0},
-        {"arch": "ViT-L-14", "key": "datacomp_xl_s13b_b90k", "gt": 0},
-        {"arch": "ViT-L-14", "key": "commonpool_xl_clip_s13b_b90k", "gt": 0},
-        {"arch": "ViT-L-14", "key": "commonpool_xl_laion_s13b_b90k", "gt": 0},
-        {"arch": "ViT-L-14", "key": "commonpool_xl_s13b_b90k", "gt": 0},
+        # TODO: they require more computational resources during backdoor fine-tuning
+        # {"arch": "ViT-L-14", "key": "openai", "gt": 0},
+        # {"arch": "ViT-L-14", "key": "laion400m_e31", "gt": 0},
+        # {"arch": "ViT-L-14", "key": "laion400m_e32", "gt": 0},
+        # {"arch": "ViT-L-14", "key": "laion2b_s32b_b82k", "gt": 0},
+        # {"arch": "ViT-L-14", "key": "datacomp_xl_s13b_b90k", "gt": 0},
+        # {"arch": "ViT-L-14", "key": "commonpool_xl_clip_s13b_b90k", "gt": 0},
+        # {"arch": "ViT-L-14", "key": "commonpool_xl_laion_s13b_b90k", "gt": 0},
+        # {"arch": "ViT-L-14", "key": "commonpool_xl_s13b_b90k", "gt": 0},
     ],
 }
 
