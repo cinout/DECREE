@@ -2,8 +2,13 @@ import torch
 import random
 from PIL import ImageDraw
 import numpy as np
+import kornia.augmentation as kornia_aug
 
 hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
+hello_kitty_trigger = kornia_aug.Resize(size=(224, 224))(
+    hello_kitty_trigger.unsqueeze(0)
+)
+hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
 
 
 def add_badnets_trigger(image, patch_size=16):
