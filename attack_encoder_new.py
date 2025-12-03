@@ -172,7 +172,7 @@ def run(args):
     train_set = dataset_options[args.eval_dataset](
         args.dataset_path, transform=transforms_up_to_totensor, is_test=False, kwargs={}
     )
-    print(f"full train_set length: {len(train_set)}")
+    # print(f"full train_set length: {len(train_set)}")
 
     # TODO: is it better to create a different train_set subset for each epoch?
     targets = train_set.targets  # list of class indices (same order as samples)
@@ -184,7 +184,7 @@ def run(args):
         k = max(1, int(len(indices) * args.frac_per_class))
         subset_indices.extend(random.sample(indices, k))
     train_set = Subset(train_set, subset_indices)
-    print(f"stratified train_set subset length: {len(train_set)}")
+    # print(f"stratified train_set subset length: {len(train_set)}")
 
     # Get target label index
     target_index = classnames.index(args.target_class)
@@ -212,7 +212,7 @@ def run(args):
     val_set = dataset_options[args.eval_dataset](
         args.dataset_path, transform=transforms_up_to_totensor, is_test=True, kwargs={}
     )
-    print(f"full val_set length: {len(val_set)}")
+    # print(f"full val_set length: {len(val_set)}")
     val_data_loader = DataLoader(
         val_set,
         batch_size=args.batch_size,
