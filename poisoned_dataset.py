@@ -6,11 +6,11 @@ import kornia.augmentation as kornia_aug
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt", map_location=device)
+hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
 hello_kitty_trigger = kornia_aug.Resize(size=(224, 224))(
     hello_kitty_trigger.unsqueeze(0)
 )
-hello_kitty_trigger = hello_kitty_trigger.squeeze(0).to(device)
+hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
 
 
 def add_badnets_trigger(image, patch_size=16):
@@ -40,7 +40,7 @@ def add_blend_trigger(image, alpha=0.2):
     image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
     """
 
-    image = image * (1 - alpha) + alpha * hello_kitty_trigger
+    image = image * (1 - alpha) + alpha * hello_kitty_trigger.to(image.device)
     image = torch.clamp(image, 0, 1)
 
     return image
