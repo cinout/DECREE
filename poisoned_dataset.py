@@ -3,8 +3,12 @@ import random
 from PIL import ImageDraw
 import numpy as np
 import kornia.augmentation as kornia_aug
+import pilgram
+import torchvision.transforms as T
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+to_pil = T.ToPILImage()
 
 """
 BLEND: Hello Kitty
@@ -67,6 +71,12 @@ def add_sig_trigger(image, alpha=0.2):
     return image
 
 
+def add_nashville_trigger(image):
+    image = pilgram.nashville(to_pil(image))
+    image = T.ToTensor()(image)
+    return image
+
+
 class PoisonedDataset(torch.utils.data.Dataset):
     """
     target_label: index of target label
@@ -82,9 +92,9 @@ class PoisonedDataset(torch.utils.data.Dataset):
             self.trigger_fn = add_blend_trigger
         elif trigger == "sig":
             self.trigger_fn = add_sig_trigger
+        elif trigger == "nashville":
+            self.trigger_fn = add_nashville_trigger
         # TODO: add other triggers
-        else:
-            pass
 
         self.target_index = target_index
 
