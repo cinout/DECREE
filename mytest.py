@@ -8,5 +8,5 @@ import re
 from datetime import datetime
 import random
 
-tru = torch.load("trigger/hello_kitty_pattern.pt")
+tru = torch.load("trigger/SIG_noise.pt")
 print(tru.shape)

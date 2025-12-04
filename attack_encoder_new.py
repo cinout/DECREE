@@ -5,7 +5,12 @@ Our own code: Create Backdoored CLIP model from OpenClip's clean encoders
 from datetime import datetime
 import os
 
-from poisoned_dataset import PoisonedDataset, add_badnets_trigger, add_blend_trigger
+from poisoned_dataset import (
+    PoisonedDataset,
+    add_badnets_trigger,
+    add_blend_trigger,
+    add_sig_trigger,
+)
 
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
@@ -104,6 +109,8 @@ def run(args):
         trigger_fn = add_badnets_trigger
     elif args.trigger == "blend":
         trigger_fn = add_blend_trigger
+    elif args.trigger == "sig":
+        trigger_fn = add_sig_trigger
 
     """
     Prepare model
@@ -394,7 +401,7 @@ if __name__ == "__main__":
         "--trigger",
         required=True,
         type=str,
-        choices=["badnets", "blend"],  # TODO: add other triggers
+        choices=["badnets", "blend", "sig"],  # TODO: add other triggers
         help="backdoor trigger",
     )
     parser.add_argument(

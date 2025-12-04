@@ -6,11 +6,21 @@ import kornia.augmentation as kornia_aug
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+"""
+BLEND: Hello Kitty
+"""
 hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
 hello_kitty_trigger = kornia_aug.Resize(size=(224, 224))(
     hello_kitty_trigger.unsqueeze(0)
 )
 hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
+
+"""
+BLEND: SIG
+"""
+sig_trigger = torch.load("trigger/SIG_noise.pt")
+sig_trigger = kornia_aug.Resize(size=(224, 224))(sig_trigger.unsqueeze(0))
+sig_trigger = sig_trigger.squeeze(0)
 
 
 def add_badnets_trigger(image, patch_size=16):
@@ -46,6 +56,17 @@ def add_blend_trigger(image, alpha=0.2):
     return image
 
 
+def add_sig_trigger(image, alpha=0.2):
+    """
+    image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
+    """
+
+    image = image * (1 - alpha) + alpha * sig_trigger.to(image.device)
+    image = torch.clamp(image, 0, 1)
+
+    return image
+
+
 class PoisonedDataset(torch.utils.data.Dataset):
     """
     target_label: index of target label
@@ -57,9 +78,11 @@ class PoisonedDataset(torch.utils.data.Dataset):
 
         if trigger == "badnets":
             self.trigger_fn = add_badnets_trigger
-        # TODO: add other triggers
         elif trigger == "blend":
             self.trigger_fn = add_blend_trigger
+        elif trigger == "sig":
+            self.trigger_fn = add_sig_trigger
+        # TODO: add other triggers
         else:
             pass
 
