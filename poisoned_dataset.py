@@ -72,9 +72,10 @@ def add_sig_trigger(image, alpha=0.2):
 
 
 def add_nashville_trigger(image):
+    image_device = image.device
     image = pilgram.nashville(to_pil(image))
     image = T.ToTensor()(image)
-    return image
+    return image.to(image_device)
 
 
 class PoisonedDataset(torch.utils.data.Dataset):
