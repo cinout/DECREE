@@ -11,6 +11,7 @@ from poisoned_dataset import (
     add_blend_trigger,
     add_nashville_trigger,
     add_sig_trigger,
+    add_wanet_trigger,
 )
 
 os.environ["HF_HOME"] = os.path.abspath(
@@ -114,6 +115,8 @@ def run(args):
         trigger_fn = add_sig_trigger
     elif args.trigger == "nashville":
         trigger_fn = add_nashville_trigger
+    elif args.trigger == "wanet":
+        trigger_fn = add_wanet_trigger
 
     """
     Prepare model
@@ -404,7 +407,13 @@ if __name__ == "__main__":
         "--trigger",
         required=True,
         type=str,
-        choices=["badnets", "blend", "sig", "nashville"],  # TODO: add other triggers
+        choices=[
+            "badnets",
+            "blend",
+            "sig",
+            "nashville",
+            "wanet",
+        ],  # TODO: add other triggers
         help="backdoor trigger",
     )
     parser.add_argument(

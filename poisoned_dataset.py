@@ -5,6 +5,7 @@ import numpy as np
 import kornia.augmentation as kornia_aug
 import pilgram
 import torchvision.transforms as T
+import torch.nn.functional as F
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -25,6 +26,12 @@ BLEND: SIG
 sig_trigger = torch.load("trigger/SIG_noise.pt")
 sig_trigger = kornia_aug.Resize(size=(224, 224))(sig_trigger.unsqueeze(0))
 sig_trigger = sig_trigger.squeeze(0)
+
+
+"""
+Wanet
+"""
+wanet_trigger = torch.load("trigger/WaNet_grid_temps.pt")
 
 
 def add_badnets_trigger(image, patch_size=16):
@@ -78,6 +85,20 @@ def add_nashville_trigger(image):
     return image.to(image_device)
 
 
+def add_wanet_trigger(image, alpha=0.2):
+    """
+    image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
+    """
+
+    image = F.grid_sample(
+        torch.unsqueeze(image, 0),
+        wanet_trigger.to(image.device).repeat(1, 1, 1, 1),
+        align_corners=True,
+    )[0]
+
+    return image
+
+
 class PoisonedDataset(torch.utils.data.Dataset):
     """
     target_label: index of target label
@@ -95,6 +116,8 @@ class PoisonedDataset(torch.utils.data.Dataset):
             self.trigger_fn = add_sig_trigger
         elif trigger == "nashville":
             self.trigger_fn = add_nashville_trigger
+        elif trigger == "wanet":
+            self.trigger_fn = add_wanet_trigger
         # TODO: add other triggers
 
         self.target_index = target_index
