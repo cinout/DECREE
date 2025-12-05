@@ -94,7 +94,7 @@ def add_wanet_trigger(image, alpha=0.2):
 
     image = F.grid_sample(
         torch.unsqueeze(image, 0),
-        wanet_trigger.to(image.device).repeat(1, 1, 1, 1),
+        wanet_trigger.to(image.device),
         align_corners=True,
     )[0]
 
