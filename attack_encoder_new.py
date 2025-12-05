@@ -9,6 +9,7 @@ from poisoned_dataset import (
     PoisonedDataset,
     add_badnets_trigger,
     add_blend_trigger,
+    add_blto_trigger,
     add_nashville_trigger,
     add_sig_trigger,
     add_wanet_trigger,
@@ -117,6 +118,8 @@ def run(args):
         trigger_fn = add_nashville_trigger
     elif args.trigger == "wanet":
         trigger_fn = add_wanet_trigger
+    elif args.trigger == "blto":
+        trigger_fn = add_blto_trigger
 
     """
     Prepare model
@@ -413,6 +416,7 @@ if __name__ == "__main__":
             "sig",
             "nashville",
             "wanet",
+            "blto",
         ],  # TODO: add other triggers
         help="backdoor trigger",
     )

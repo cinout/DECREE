@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="test"
 #SBATCH --account=punim1623
-#SBATCH --time=0-18:00:00
+#SBATCH --time=1-16:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -35,8 +35,8 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --trigger wanet \
-  --frac_per_class 0.01 \
+  --trigger sig \
+  --frac_per_class 0.05 \
   --epochs 1 \
     
 

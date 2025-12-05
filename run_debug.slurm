@@ -35,8 +35,8 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --trigger wanet \
-  --frac_per_class 0.01 \
+  --trigger sig \
+  --frac_per_class 0.05 \
   --epochs 1 \
     
 

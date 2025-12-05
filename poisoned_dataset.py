@@ -6,10 +6,11 @@ import kornia.augmentation as kornia_aug
 import pilgram
 import torchvision.transforms as T
 import torch.nn.functional as F
+import torch.nn as nn
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
 to_pil = T.ToPILImage()
+
 
 """
 BLEND: Hello Kitty
@@ -34,6 +35,156 @@ Wanet
 wanet_trigger = torch.load("trigger/WaNet_grid_temps.pt")
 wanet_trigger = kornia_aug.Resize(size=(224, 224))(wanet_trigger.permute(0, 3, 1, 2))
 wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
+
+"""
+BLTO
+"""
+ngf = 64  # To control feature map in generator
+
+
+class ResidualBlock(nn.Module):
+    def __init__(self, num_filters):
+        super(ResidualBlock, self).__init__()
+        self.block = nn.Sequential(
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(
+                in_channels=num_filters,
+                out_channels=num_filters,
+                kernel_size=3,
+                stride=1,
+                padding=0,
+                bias=False,
+            ),
+            nn.BatchNorm2d(num_filters),
+            nn.ReLU(True),
+            nn.Dropout(0.5),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(
+                in_channels=num_filters,
+                out_channels=num_filters,
+                kernel_size=3,
+                stride=1,
+                padding=0,
+                bias=False,
+            ),
+            nn.BatchNorm2d(num_filters),
+        )
+
+    def forward(self, x):
+        residual = self.block(x)
+        return x + residual
+
+
+class GeneratorResnet(nn.Module):
+    def __init__(self, inception=False, dim="high"):
+        """
+        :param inception: if True crop layer will be added to go from 3x300x300 t0 3x299x299.
+        :param data_dim: for high dimentional dataset (imagenet) 6 resblocks will be add otherwise only 2.
+        """
+        super(GeneratorResnet, self).__init__()
+        self.inception = inception
+        self.dim = dim
+        # Input_size = 3, n, n
+        self.block1 = nn.Sequential(
+            nn.ReflectionPad2d(3),
+            nn.Conv2d(3, ngf, kernel_size=7, padding=0, bias=False),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+        )
+
+        # Input size = 3, n, n
+        self.block2 = nn.Sequential(
+            nn.Conv2d(ngf, ngf * 2, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+        )
+
+        # Input size = 3, n/2, n/2
+        self.block3 = nn.Sequential(
+            nn.Conv2d(ngf * 2, ngf * 4, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(ngf * 4),
+            nn.ReLU(True),
+        )
+
+        # Input size = 3, n/4, n/4
+        # Residual Blocks: 6
+        self.resblock1 = ResidualBlock(ngf * 4)
+        self.resblock2 = ResidualBlock(ngf * 4)
+
+        if self.dim == "high":
+            self.resblock3 = ResidualBlock(ngf * 4)
+            self.resblock4 = ResidualBlock(ngf * 4)
+            self.resblock5 = ResidualBlock(ngf * 4)
+            self.resblock6 = ResidualBlock(ngf * 4)
+        else:
+            print("I'm under low dim module!")
+
+        # Input size = 3, n/4, n/4
+        self.upsampl1 = nn.Sequential(
+            nn.ConvTranspose2d(
+                ngf * 4,
+                ngf * 2,
+                kernel_size=3,
+                stride=2,
+                padding=1,
+                output_padding=1,
+                bias=False,
+            ),
+            nn.BatchNorm2d(ngf * 2),
+            nn.ReLU(True),
+        )
+
+        # Input size = 3, n/2, n/2
+        self.upsampl2 = nn.Sequential(
+            nn.ConvTranspose2d(
+                ngf * 2,
+                ngf,
+                kernel_size=3,
+                stride=2,
+                padding=1,
+                output_padding=1,
+                bias=False,
+            ),
+            nn.BatchNorm2d(ngf),
+            nn.ReLU(True),
+        )
+
+        # Input size = 3, n, n
+        self.blockf = nn.Sequential(
+            nn.ReflectionPad2d(3), nn.Conv2d(ngf, 3, kernel_size=7, padding=0)
+        )
+
+        self.crop = nn.ConstantPad2d((0, -1, -1, 0), 0)
+
+    def forward(self, input):
+
+        x = self.block1(input)
+        x = self.block2(x)
+        x = self.block3(x)
+        x = self.resblock1(x)
+        x = self.resblock2(x)
+        if self.dim == "high":
+            x = self.resblock3(x)
+            x = self.resblock4(x)
+            x = self.resblock5(x)
+            x = self.resblock6(x)
+        x = self.upsampl1(x)
+        x = self.upsampl2(x)
+        x = self.blockf(x)
+        if self.inception:
+            x = self.crop(x)
+
+        return (torch.tanh(x) + 1) / 2  # Output range [0 1]
+
+
+# TODO: trigger path is wrong
+net_G = GeneratorResnet()
+net_G.load_state_dict(
+    torch.load("trigger/netG_400_ImageNet100_Nautilus.pt", map_location="cpu")[
+        "state_dict"
+    ]
+)
+net_G.eval()
 
 
 def add_badnets_trigger(image, patch_size=16):
@@ -87,7 +238,7 @@ def add_nashville_trigger(image):
     return image.to(image_device)
 
 
-def add_wanet_trigger(image, alpha=0.2):
+def add_wanet_trigger(image):
     """
     image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
     """
@@ -99,6 +250,14 @@ def add_wanet_trigger(image, alpha=0.2):
     )[0]
 
     return image
+
+
+def add_blto_trigger(image, epsilon=8 / 255):
+    # TODO: double check image_P shape and value
+    image_device = image.device
+    image_P = net_G(image.unsqueeze(0))[0].cpu()
+    image_P = torch.min(torch.max(image_P, image - epsilon), image + epsilon)
+    return image_P.to(image_device)
 
 
 class PoisonedDataset(torch.utils.data.Dataset):
@@ -120,6 +279,8 @@ class PoisonedDataset(torch.utils.data.Dataset):
             self.trigger_fn = add_nashville_trigger
         elif trigger == "wanet":
             self.trigger_fn = add_wanet_trigger
+        elif trigger == "blto":
+            self.trigger_fn = add_blto_trigger
         # TODO: add other triggers
 
         self.target_index = target_index
