@@ -32,8 +32,8 @@ sig_trigger = sig_trigger.squeeze(0)
 Wanet
 """
 wanet_trigger = torch.load("trigger/WaNet_grid_temps.pt")
-wanet_trigger = kornia_aug.Resize(size=(224, 224))(wanet_trigger.unsqueeze(0))
-wanet_trigger = wanet_trigger.squeeze(0)
+wanet_trigger = kornia_aug.Resize(size=(224, 224))(wanet_trigger.permute(0, 3, 1, 2))
+wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
 
 
 def add_badnets_trigger(image, patch_size=16):
