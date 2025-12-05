@@ -179,11 +179,11 @@ class GeneratorResnet(nn.Module):
 
 # TODO: trigger path is wrong
 net_G = GeneratorResnet()
-net_G.load_state_dict(
-    torch.load("trigger/netG_400_ImageNet100_Nautilus.pt", map_location="cpu")[
-        "state_dict"
-    ]
-)
+# net_G.load_state_dict(
+#     torch.load("trigger/netG_400_ImageNet100_Nautilus.pt", map_location="cpu")[
+#         "state_dict"
+#     ]
+# )
 net_G.eval()
 
 
