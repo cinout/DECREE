@@ -434,6 +434,11 @@ if __name__ == "__main__":
         default=[],
         help="a list of encoders to run attack on",
     )
+    parser.add_argument(
+        "--z_note",
+        type=str,
+        help="note to help identify experiment",
+    )
 
     args = parser.parse_args()
 
