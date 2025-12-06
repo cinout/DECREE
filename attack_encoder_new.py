@@ -100,8 +100,13 @@ def _convert_to_rgb(image):
     return image.convert("RGB")
 
 
-def run(args):
-    id = f"OPENCLIP_{args.encoder_arch}_{args.encoder_key}"
+def run(args, encoder_arch, encoder_key, manual_id):
+
+    # if this encoder is not in the scope, move on to the next one
+    if len(args.encoder_scope) > 0 and manual_id not in args.encoder_scope:
+        return
+
+    id = f"OPENCLIP_{encoder_arch}_{encoder_key}"
     print(f">>> Attack encoder {id}")
 
     """
@@ -125,7 +130,7 @@ def run(args):
     Prepare model
     """
     bd_model, _, preprocess_val = open_clip.create_model_and_transforms(
-        args.encoder_arch, pretrained=args.encoder_key
+        encoder_arch, pretrained=encoder_key
     )  # use preprocess_val because no augmentation is better for bd trigger
     bd_model = bd_model.to(device)
 
@@ -176,7 +181,7 @@ def run(args):
     """
     Build Text Template
     """
-    clip_tokenizer = get_tokenizer(args.encoder_arch)
+    clip_tokenizer = get_tokenizer(encoder_arch)
     classnames = list(zero_shot_meta_dict[args.eval_dataset + "_CLASSNAMES"])
     templates = zero_shot_meta_dict[args.eval_dataset + "_TEMPLATES"]
     use_format = isinstance(templates[0], str)
@@ -364,6 +369,12 @@ def run(args):
         )
 
 
+def parse_tuple(s):
+    s = s.strip("()")  # remove parentheses
+    a, b = s.split(",")  # split by comma
+    return (a, b)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="eval attack")
 
@@ -397,16 +408,6 @@ if __name__ == "__main__":
         help="the folder where backdoored encoders are saved",
     )
     parser.add_argument(
-        "--encoder_arch",
-        type=str,
-        help="open-clip encoder's arch",
-    )
-    parser.add_argument(
-        "--encoder_key",
-        type=str,
-        help="open-clip encoder's key",
-    )
-    parser.add_argument(
         "--trigger",
         required=True,
         type=str,
@@ -425,6 +426,13 @@ if __name__ == "__main__":
         default=1,
         type=float,
         help="fraction of each class for training",
+    )
+    parser.add_argument(
+        "--encoder_scope",
+        type=int,
+        nargs="+",
+        default=[],
+        help="a list of encoders to run attack on",
     )
 
     args = parser.parse_args()
@@ -448,7 +456,4 @@ if __name__ == "__main__":
 
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)
-
-        args.encoder_key = encoder_info["key"]
-        args.encoder_arch = encoder_info["arch"]
-        run(args)
+        run(args, encoder_info["arch"], encoder_info["key"], encoder_info["manual_id"])
