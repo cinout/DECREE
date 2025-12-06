@@ -35,9 +35,9 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --z_note "blend with 5% trainset, selected encoder scope" \
-  --trigger blend \
-  --encoder_scope 1 2 3 4 5 11 27 29 30 31 33 34 35 36 37 38 39 40 41 \
+  --z_note "nashville with 5% trainset, selected encoder scope" \
+  --trigger nashville \
+  --encoder_scope 1 2 3 4 5 7 10 11 12 13 15 16 18 22 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 \
   --frac_per_class 0.05 \
   --epochs 1 \
     
