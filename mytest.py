@@ -11,7 +11,26 @@ import kornia.augmentation as kornia_aug
 import os
 
 saved_encoders_folder = "saved_openclip_bd_encoders_all"
-for subdir, dirs, files in os.walk(saved_encoders_folder):
-    for file in files:
-        file_path = os.path.join(subdir, file)
-        print(file_path)
+for trigger in os.listdir(saved_encoders_folder):
+    trigger_folder = os.path.join(saved_encoders_folder, trigger)
+
+    if os.path.isdir(trigger_folder):
+        for encoder_name in os.listdir(trigger_folder):
+
+            print("============")
+
+            print(encoder_name)
+
+            name_split = encoder_name.split("_")
+            arch = name_split[1]
+            key = "_".join(name_split[2:-6])
+            trainset_percent = name_split[-3]
+            ep = name_split[-1].split(".")[0]
+            id = f"OPENCLIP_backdoored_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+
+            path = os.path.join(trigger_folder, encoder_name)
+            print(path)
+
+            encodeer_filepath = os.path.join(
+                trigger_folder, encoder_name
+            )  # the full path for each encodeer

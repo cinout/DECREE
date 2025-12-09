@@ -35,8 +35,11 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u decree.py \
-  --seed 30 \
-    
-
+  --seed 10 \
+  --quantile_low 0.3 \
+  --quantile_high 0.7 \
+  --coeff_l2_dist 0.0001 \
+  # --learned_trigger_folder trigger_inv_SD30 \
+  
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

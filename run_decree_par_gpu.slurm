@@ -1,15 +1,15 @@
 #!/bin/bash
 
-###SBATCH --partition=gpu-a100
+#SBATCH --partition=gpu-a100
 
 ###SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
 
-#SBATCH --partition=deeplearn
-#SBATCH --qos=gpgpudeeplearn
-#SBATCH --constraint=dlg4|dlg5|dlg6
+###SBATCH --partition=deeplearn
+###SBATCH --qos=gpgpudeeplearn
+###SBATCH --constraint=dlg4|dlg5|dlg6
 
 #SBATCH --job-name="invt"
 #SBATCH --account=punim1623
@@ -35,8 +35,10 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u decree.py \
-  --seed 20 \
-    
+  --seed 10 \
+  --quantile_low 0.3 \
+  --quantile_high 0.7 \
+  --coeff_l2_dist 0.0001 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

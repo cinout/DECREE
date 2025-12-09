@@ -112,7 +112,7 @@ def run(args, encoder_arch, encoder_key, manual_id):
     """
     Trigger Function
     """
-    # TODO: add other triggers
+    # FIXME: add other triggers
     if args.trigger == "badnets":
         trigger_fn = add_badnets_trigger
     elif args.trigger == "blend":
@@ -195,7 +195,7 @@ def run(args, encoder_arch, encoder_key, manual_id):
     )
     # print(f"full train_set length: {len(train_set)}")
 
-    # TODO: is it better to create a different train_set subset for each epoch?
+    #### take subset to save training time
     targets = train_set.targets  # list of class indices (same order as samples)
     idx_by_class = defaultdict(list)
     for idx, cls in enumerate(targets):
@@ -419,7 +419,7 @@ if __name__ == "__main__":
             "nashville",
             "wanet",
             "blto",
-        ],  # TODO: add other triggers
+        ],  # FIXME: add other triggers
         help="backdoor trigger",
     )
     parser.add_argument(

@@ -241,12 +241,20 @@ def main(args, model_source, gt, id, encoder_path, fp):
         load_model, _, _ = open_clip.create_model_and_transforms(encoder_path)
         load_model = load_model.to(DEVICE)
     elif model_source == "openclip":
-        model_name, pretrained_key = encoder_path.split("@")
+        (model_name, pretrained_key) = encoder_path
         model_ckpt_path = model_name + "_" + pretrained_key
         load_model, _, _ = open_clip.create_model_and_transforms(
             model_name, pretrained=pretrained_key
         )
         load_model = load_model.to(DEVICE)
+    elif model_source == "openclip_backdoored":
+        (bd_model_path, arch, key) = encoder_path
+        load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
+
+        bd_model_ckpt = torch.load(bd_model_path, map_location=DEVICE)
+        load_model.visual.load_state_dict(bd_model_ckpt)
+        load_model = load_model.to(DEVICE)
+
     model = load_model.visual
     model.eval()  # the poisoned/clean CLIP; we only need it to generate representations
 
@@ -696,10 +704,32 @@ if __name__ == "__main__":
     #         "openclip",
     #         encoder_info["gt"],
     #         encoder_info["id"],
-    #         encoder_info["arch"] + "@" + encoder_info["key"],
+    #         (encoder_info["arch"], encoder_info["key"]),
     #         fp,
     #     )
 
+    # TODO: uncomment above
+    # TODOL: use different coeff_l2_dist for VIT or Resnet
     saved_encoders_folder = "saved_openclip_bd_encoders_all"
+    for trigger in os.listdir(saved_encoders_folder):
+        trigger_folder = os.path.join(saved_encoders_folder, trigger)
+
+        if os.path.isdir(trigger_folder):
+            for encoder_name in os.listdir(trigger_folder):
+
+                encodeer_filepath = os.path.join(
+                    trigger_folder, encoder_name
+                )  # the full path for each encodeer
+
+                name_split = encoder_name.split("_")
+                arch = name_split[1]
+                key = "_".join(name_split[2:-6])
+                trainset_percent = name_split[-3]
+                ep = name_split[-1].split(".")[0]
+                id = f"OPENCLIP_backdoored_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+
+                encoder_path = os.path.join(trigger_folder, encoder_name)
+
+                main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     fp.close()

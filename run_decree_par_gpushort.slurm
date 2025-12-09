@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --partition=gpu-a100
+###SBATCH --partition=gpu-a100
 
-###SBATCH --partition=gpu-a100-short
+#SBATCH --partition=gpu-a100-short
 
 ###SBATCH --partition=feit-gpu-a100
 ###SBATCH --qos=feit
@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="invt"
 #SBATCH --account=punim1623
-#SBATCH --time=0-07:00:00
+#SBATCH --time=0-00:30:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -34,8 +34,12 @@ module purge
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python -u decree.py
-    
+python -u decree.py \
+  --seed 10 \
+  --quantile_low 0.3 \
+  --quantile_high 0.7 \
+  --coeff_l2_dist 0.0001 \
+
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

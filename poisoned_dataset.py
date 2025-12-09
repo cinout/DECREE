@@ -177,7 +177,7 @@ class GeneratorResnet(nn.Module):
         return (torch.tanh(x) + 1) / 2  # Output range [0 1]
 
 
-# TODO: trigger path is wrong
+# FIXME: trigger path is wrong
 net_G = GeneratorResnet()
 # net_G.load_state_dict(
 #     torch.load("trigger/netG_400_ImageNet100_Nautilus.pt", map_location="cpu")[
@@ -253,7 +253,7 @@ def add_wanet_trigger(image):
 
 
 def add_blto_trigger(image, epsilon=8 / 255):
-    # TODO: double check image_P shape and value
+    # FIXME: double check image_P shape and value
     image_device = image.device
     image_P = net_G(image.unsqueeze(0))[0].cpu()
     image_P = torch.min(torch.max(image_P, image - epsilon), image + epsilon)
@@ -281,7 +281,7 @@ class PoisonedDataset(torch.utils.data.Dataset):
             self.trigger_fn = add_wanet_trigger
         elif trigger == "blto":
             self.trigger_fn = add_blto_trigger
-        # TODO: add other triggers
+        # FIXME: add other triggers
 
         self.target_index = target_index
 
