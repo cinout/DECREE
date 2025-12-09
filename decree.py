@@ -722,7 +722,7 @@ if __name__ == "__main__":
                 key = "_".join(name_split[2:-6])
                 trainset_percent = name_split[-3]
                 ep = name_split[-1].split(".")[0]
-                id = f"OPENCLIP_backdoored_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+                id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
 
                 encoder_path = os.path.join(trigger_folder, encoder_name)
 
