@@ -648,6 +648,11 @@ if __name__ == "__main__":
         default=0.95,
         type=float,
     )
+    parser.add_argument(
+        "--note",
+        type=str,
+        help="note to help identify experiment",
+    )
     args = parser.parse_args()
     print(args)
 
@@ -694,15 +699,22 @@ if __name__ == "__main__":
 
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)
+        arch = encoder_info["arch"]
 
         # TODO: use different coeff_l2_dist for VIT or Resnet
+        if "vit" in arch.lower():
+            args.coeff_l2_dist = 0.001
+        elif "rn" in arch.lower():
+            args.coeff_l2_dist = 0.0001
+        else:
+            raise Exception("Unknown model architecture")
 
         main(
             args,
             "openclip",
             encoder_info["gt"],
             encoder_info["id"],
-            (encoder_info["arch"], encoder_info["key"]),
+            (arch, encoder_info["key"]),
             fp,
         )
 
@@ -727,6 +739,12 @@ if __name__ == "__main__":
                 encoder_path = os.path.join(trigger_folder, encoder_name)
 
                 # TODO: use different coeff_l2_dist for VIT or Resnet
+                if "vit" in arch.lower():
+                    args.coeff_l2_dist = 0.001
+                elif "rn" in arch.lower():
+                    args.coeff_l2_dist = 0.0001
+                else:
+                    raise Exception("Unknown model architecture")
 
                 main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
