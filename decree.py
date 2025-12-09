@@ -692,20 +692,20 @@ if __name__ == "__main__":
     #         fp,
     #     )
 
-    # for encoder in pretrained_clip_sources["openclip"]:
-    #     encoder_info = process_openclip_encoder(encoder)
+    for encoder in pretrained_clip_sources["openclip"]:
+        encoder_info = process_openclip_encoder(encoder)
 
-    #     main(
-    #         args,
-    #         "openclip",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         (encoder_info["arch"], encoder_info["key"]),
-    #         fp,
-    #     )
+        # TODO: use different coeff_l2_dist for VIT or Resnet
 
-    # TODO: uncomment above
-    # TODOL: use different coeff_l2_dist for VIT or Resnet
+        main(
+            args,
+            "openclip",
+            encoder_info["gt"],
+            encoder_info["id"],
+            (encoder_info["arch"], encoder_info["key"]),
+            fp,
+        )
+
     saved_encoders_folder = "saved_openclip_bd_encoders_all"
     for trigger in os.listdir(saved_encoders_folder):
         trigger_folder = os.path.join(saved_encoders_folder, trigger)
@@ -725,6 +725,8 @@ if __name__ == "__main__":
                 id = f"OPENCLIP_backdoored_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
 
                 encoder_path = os.path.join(trigger_folder, encoder_name)
+
+                # TODO: use different coeff_l2_dist for VIT or Resnet
 
                 main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 

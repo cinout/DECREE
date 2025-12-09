@@ -38,7 +38,7 @@ python -u decree.py \
   --seed 10 \
   --quantile_low 0.3 \
   --quantile_high 0.7 \
-  --coeff_l2_dist 0.0001 \
+  --coeff_l2_dist 0 \
 
 
 ##Log this job's resource usage stats###
