@@ -364,7 +364,8 @@ def run(args, encoder_arch, encoder_key, manual_id):
         torch.save(
             bd_model.visual.state_dict(),
             os.path.join(
-                args.save_folder, f"{id}_trigger_{args.trigger}_epoch_{epoch}.pth"
+                args.save_folder,
+                f"{id}_trigger_{args.trigger}_trainsetp_{args.frac_per_class}_epoch_{epoch}.pth",
             ),
         )
 

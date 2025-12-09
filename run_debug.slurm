@@ -37,8 +37,8 @@ conda activate anogpt
 python -u attack_encoder_new.py \
   --z_note "wanet with 20% trainset, selected encoder scope" \
   --trigger wanet \
-  --encoder_scope 41 42 \
-  --frac_per_class 0.2 \
+  --encoder_scope 21 \
+  --frac_per_class 0.5 \
   --epochs 1 \
     
 
