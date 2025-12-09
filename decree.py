@@ -49,7 +49,6 @@ def finalize(
     clean_train_loader,
     model,
     test_transform,
-    encoder_path,
     gt,
     regular_best=1,
     clean_unnormalized_L1_norm_max=1,
@@ -77,7 +76,7 @@ def finalize(
             train_patch_tanh, inv_trigger_save_file_name + "_inv_trigger_patch.pt"
         )
 
-    result = f"{encoder_path},{gt},{regular_best/clean_unnormalized_L1_norm_max:.4f},{l2_dist_quantile_normalized:.4f}\n"
+    result = f"{id},{gt},{regular_best/clean_unnormalized_L1_norm_max:.4f},{l2_dist_quantile_normalized:.4f}\n"
 
     print(result)
 
@@ -319,7 +318,6 @@ def main(args, model_source, gt, id, encoder_path, fp):
             clean_train_loader,
             model,
             test_transform,
-            encoder_path,
             gt,
         )
     else:
@@ -585,7 +583,6 @@ def main(args, model_source, gt, id, encoder_path, fp):
                     clean_train_loader,
                     model,
                     test_transform,
-                    encoder_path,
                     gt,
                     regular_best,
                     clean_unnormalized_L1_norm_max,
@@ -601,7 +598,6 @@ def main(args, model_source, gt, id, encoder_path, fp):
             clean_train_loader,
             model,
             test_transform,
-            encoder_path,
             gt,
             regular_best,
             clean_unnormalized_L1_norm_max,
