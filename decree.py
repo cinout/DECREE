@@ -85,35 +85,35 @@ def finalize(
 
 
 """
-Obtain clean quantiles
+Obtain clean quantiles (used before training, if l2_norm loss is used in training)
 """
 
 
-def get_clean_quantile_range(
-    clean_train_loader, model, test_transform, quantile_low, quantile_high
-):
-    model.eval()
-    clean_out_all = []
-    for clean_x_batch, _ in clean_train_loader:
-        clean_x_batch = clean_x_batch.to(DEVICE)
-        clean_input = torch.stack(
-            [test_transform(img.permute(2, 0, 1) / 255.0) for img in clean_x_batch]
-        )
-        clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
-        with torch.no_grad():
-            clean_out = model(clean_input)  # [bs, 1024]
-            clean_out_all.append(clean_out)
+# def get_clean_quantile_range(
+#     clean_train_loader, model, test_transform, quantile_low, quantile_high
+# ):
+#     model.eval()
+#     clean_out_all = []
+#     for clean_x_batch, _ in clean_train_loader:
+#         clean_x_batch = clean_x_batch.to(DEVICE)
+#         clean_input = torch.stack(
+#             [test_transform(img.permute(2, 0, 1) / 255.0) for img in clean_x_batch]
+#         )
+#         clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
+#         with torch.no_grad():
+#             clean_out = model(clean_input)  # [bs, 1024]
+#             clean_out_all.append(clean_out)
 
-    clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
-    clean_quantile_start = torch.quantile(
-        clean_out_all, q=quantile_low, dim=0
-    )  # [1024, ]
-    clean_quantile_end = torch.quantile(
-        clean_out_all, q=quantile_high, dim=0
-    )  # [1024, ]
-    clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
+#     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
+#     clean_quantile_start = torch.quantile(
+#         clean_out_all, q=quantile_low, dim=0
+#     )  # [1024, ]
+#     clean_quantile_end = torch.quantile(
+#         clean_out_all, q=quantile_high, dim=0
+#     )  # [1024, ]
+#     clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
 
-    return clean_quantile_range
+#     return clean_quantile_range
 
 
 """
@@ -184,13 +184,16 @@ def calculate_distance_metric(
     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
     bd_out_all = torch.cat(bd_out_all, dim=0)
 
-    clean_quantile_start = torch.quantile(
-        clean_out_all, q=quantile_low, dim=0
-    )  # [1024, ]
-    clean_quantile_end = torch.quantile(
-        clean_out_all, q=quantile_high, dim=0
-    )  # [1024, ]
-    clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
+    # TODO: uncomment
+    # clean_quantile_start = torch.quantile(
+    #     clean_out_all, q=quantile_low, dim=0
+    # )  # [1024, ]
+    # clean_quantile_end = torch.quantile(
+    #     clean_out_all, q=quantile_high, dim=0
+    # )  # [1024, ]
+    # clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
+    # TODO: remove
+    clean_quantile_range = 1
 
     l2_dist_quantile_normalized = (
         torch.norm((clean_out_all - bd_out_all) / clean_quantile_range, dim=1)
@@ -364,17 +367,17 @@ def main(args, model_source, gt, id, encoder_path, fp):
         # )
 
         regular_list, cosine_list = [], []
-        start_time = time.time()
+
         clean_unnormalized = []  # storing clean image's information
 
         # calculate the quantile values beforehand
-        clean_quantile_range = get_clean_quantile_range(
-            clean_train_loader,
-            model,
-            test_transform,
-            args.quantile_low,
-            args.quantile_high,
-        )
+        # clean_quantile_range = get_clean_quantile_range(
+        #     clean_train_loader,
+        #     model,
+        #     test_transform,
+        #     args.quantile_low,
+        #     args.quantile_high,
+        # )
 
         for e in range(epochs):
 
@@ -437,20 +440,21 @@ def main(args, model_source, gt, id, encoder_path, fp):
 
                 # extract the visual representations
                 bd_out = model(bd_input)  # [bs, 1024]
-                clean_out = model(clean_input)  # [bs, 1024]
+                # clean_out = model(clean_input)  # [bs, 1024]
 
                 # loss calculation
                 loss_cos = -compute_self_cos_sim(
                     bd_out
                 )  # average of pairwise similarity
                 loss_reg = torch.sum(torch.abs(train_mask_tanh))  # L1 norm
-                loss_l2_dist = torch.norm(
-                    (clean_out - bd_out) / clean_quantile_range, dim=1
-                ).mean()
+                # TODO: uncomment this and above to add loss_l2_dist
+                # loss_l2_dist = torch.norm(
+                #     (clean_out - bd_out) / clean_quantile_range, dim=1
+                # ).mean()
                 loss = (
                     loss_cos
                     + loss_reg * loss_lambda
-                    - loss_l2_dist * args.coeff_l2_dist
+                    # - loss_l2_dist * args.coeff_l2_dist
                 )
 
                 optimizer.zero_grad()
@@ -701,13 +705,13 @@ if __name__ == "__main__":
         encoder_info = process_openclip_encoder(encoder)
         arch = encoder_info["arch"]
 
-        # TODO: use different coeff_l2_dist for VIT or Resnet
-        if "vit" in arch.lower():
-            args.coeff_l2_dist = 0.001
-        elif "rn" in arch.lower():
-            args.coeff_l2_dist = 0.0001
-        else:
-            raise Exception("Unknown model architecture")
+        # # TODO: use different coeff_l2_dist for VIT or Resnet
+        # if "vit" in arch.lower():
+        #     args.coeff_l2_dist = 0.001
+        # elif "rn" in arch.lower():
+        #     args.coeff_l2_dist = 0.0001
+        # else:
+        #     raise Exception("Unknown model architecture")
 
         main(
             args,
@@ -738,13 +742,13 @@ if __name__ == "__main__":
 
                 encoder_path = os.path.join(trigger_folder, encoder_name)
 
-                # TODO: use different coeff_l2_dist for VIT or Resnet
-                if "vit" in arch.lower():
-                    args.coeff_l2_dist = 0.001
-                elif "rn" in arch.lower():
-                    args.coeff_l2_dist = 0.0001
-                else:
-                    raise Exception("Unknown model architecture")
+                # # TODO: use different coeff_l2_dist for VIT or Resnet
+                # if "vit" in arch.lower():
+                #     args.coeff_l2_dist = 0.001
+                # elif "rn" in arch.lower():
+                #     args.coeff_l2_dist = 0.0001
+                # else:
+                #     raise Exception("Unknown model architecture")
 
                 main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
