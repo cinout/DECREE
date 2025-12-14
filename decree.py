@@ -58,6 +58,7 @@ def finalize(
     train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
 
     l2_dist_quantile_normalized = calculate_distance_metric(
+        args.eval_metric,
         clean_train_loader,
         train_mask_tanh,
         train_patch_tanh,
@@ -121,8 +122,8 @@ calculate distance
 """
 
 
-# FIXME: directly import clean_quantile_range as an argument, no need to calculate it again
 def calculate_distance_metric(
+    our_metric,
     clean_train_loader,
     mask,
     patch,
@@ -184,25 +185,28 @@ def calculate_distance_metric(
     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
     bd_out_all = torch.cat(bd_out_all, dim=0)
 
-    # TODO: uncomment
-    # clean_quantile_start = torch.quantile(
-    #     clean_out_all, q=quantile_low, dim=0
-    # )  # [1024, ]
-    # clean_quantile_end = torch.quantile(
-    #     clean_out_all, q=quantile_high, dim=0
-    # )  # [1024, ]
-    # clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
-    # TODO: remove
-    clean_quantile_range = 1
+    if our_metric == "l2":
+        l2_dist = torch.norm((clean_out_all - bd_out_all), dim=1).detach().tolist()
+        l2_dist = np.mean(l2_dist)
+        return l2_dist
+    elif our_metric == "l2_norm":
+        clean_quantile_start = torch.quantile(
+            clean_out_all, q=quantile_low, dim=0
+        )  # [1024, ]
+        clean_quantile_end = torch.quantile(
+            clean_out_all, q=quantile_high, dim=0
+        )  # [1024, ]
+        clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
 
-    l2_dist_quantile_normalized = (
-        torch.norm((clean_out_all - bd_out_all) / clean_quantile_range, dim=1)
-        .detach()
-        .tolist()
-    )
-    l2_dist_quantile_normalized = np.mean(l2_dist_quantile_normalized)
+        l2_dist_quantile_normalized = (
+            torch.norm((clean_out_all - bd_out_all) / clean_quantile_range, dim=1)
+            .detach()
+            .tolist()
+        )
+        l2_dist_quantile_normalized = np.mean(l2_dist_quantile_normalized)
 
-    return l2_dist_quantile_normalized
+        return l2_dist_quantile_normalized
+    # TODO: othe metrics
 
 
 """
@@ -419,7 +423,8 @@ def main(args, model_source, gt, id, encoder_path, fp):
 
                 # test_transform
                 bd_input = []
-                clean_input = []
+                # clean_input = []
+
                 # each clean input in the current batch
                 for i in range(clean_x_batch.shape[0]):
                     if e == 0:
@@ -427,16 +432,16 @@ def main(args, model_source, gt, id, encoder_path, fp):
                     bd_input.append(
                         test_transform(bd_x_batch[i].permute(2, 0, 1) / 255.0)
                     )
-                    clean_input.append(
-                        test_transform(clean_x_batch[i].permute(2, 0, 1) / 255.0)
-                    )
+                    # clean_input.append(
+                    #     test_transform(clean_x_batch[i].permute(2, 0, 1) / 255.0)
+                    # )
 
                 bd_input = torch.stack(bd_input)
                 assert_range(bd_input, -3, 3)
                 bd_input = bd_input.to(dtype=torch.float).to(DEVICE)
 
-                clean_input = torch.stack(clean_input)
-                clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
+                # clean_input = torch.stack(clean_input)
+                # clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
 
                 # extract the visual representations
                 bd_out = model(bd_input)  # [bs, 1024]
@@ -656,6 +661,13 @@ if __name__ == "__main__":
         "--note",
         type=str,
         help="note to help identify experiment",
+    )
+    parser.add_argument(
+        "--eval_metric",
+        type=str,
+        choices=["l2", "l2_norm"],
+        default="l2_norm",
+        help="our evaluation metric",
     )
     args = parser.parse_args()
     print(args)

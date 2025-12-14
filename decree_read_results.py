@@ -23,6 +23,7 @@ for file_name in file_names:
     y_l2_norm_dist_quantile_normalized = []
 
     ids = []
+    trigger_dict = dict()
 
     # threshold = 0.1
     threshold = 20.0
@@ -74,13 +75,41 @@ for file_name in file_names:
     print(f"AUROC(%) Our Method: {auc_l2_norm_dist_quantile_normalized*100:.1f}")
     print(f"AUROC(%) DECREE: {auc_mask_norm_neg*100:.1f}")
 
+    # scores by categories
     vit_encoder_indices = [i for (i, id) in enumerate(ids) if "vit" in id.lower()]
     resnet_encoder_indices = [
         i for (i, id) in enumerate(ids) if "vit" not in id.lower()
     ]
-
     y_true_vit = [y_true[i] for i in vit_encoder_indices]
     y_true_resnet = [y_true[i] for i in resnet_encoder_indices]
+
+    # triggered encoders
+    for trigger in triggers:
+        vit_encoder_with_trigger_indices = [
+            i
+            for (i, id) in enumerate(ids)
+            if "vit" in id.lower() and trigger in id.lower()
+        ]
+        resnet_encoder_with_trigger_indices = [
+            i
+            for (i, id) in enumerate(ids)
+            if "rn" in id.lower() and trigger in id.lower()
+        ]
+        trigger_dict[trigger] = {
+            "vit": vit_encoder_with_trigger_indices,
+            "rn": resnet_encoder_with_trigger_indices,
+        }
+    # clean encoder
+    clean_vit_encoder_indices = [
+        i
+        for (i, (gt, id)) in enumerate(zip(y_true, ids))
+        if gt == 0 and "vit" in id.lower()
+    ]
+    clean_resnet_encoder_indices = [
+        i
+        for (i, (gt, id)) in enumerate(zip(y_true, ids))
+        if gt == 0 and "rn" in id.lower()
+    ]
 
     print("-------Our Method-------")
     y_l2_norm_dist_quantile_normalized_vit = [
@@ -93,6 +122,40 @@ for file_name in file_names:
     auc_resnet = roc_auc_score(y_true_resnet, y_l2_norm_dist_quantile_normalized_resnet)
     print(f"auc_vit (ALL): {auc_vit*100:.1f}")
     print(f"auc_resnet (ALL): {auc_resnet*100:.1f}")
+    print("-----")
+
+    # trigger-level
+    clean_vit_encoder_scores = [
+        y_l2_norm_dist_quantile_normalized[i] for i in clean_vit_encoder_indices
+    ]
+    clean_resnet_encoder_scores = [
+        y_l2_norm_dist_quantile_normalized[i] for i in clean_resnet_encoder_indices
+    ]
+    for trigger in triggers:
+        vit_encoder_with_trigger_indices = trigger_dict[trigger]["vit"]
+        resnet_encoder_with_trigger_indices = trigger_dict[trigger]["rn"]
+        vit_encoder_with_trigger_scores = [
+            y_l2_norm_dist_quantile_normalized[i]
+            for i in vit_encoder_with_trigger_indices
+        ]
+        resnet_encoder_with_trigger_scores = [
+            y_l2_norm_dist_quantile_normalized[i]
+            for i in resnet_encoder_with_trigger_indices
+        ]
+        auc_vit = roc_auc_score(
+            [y_true[i] for i in clean_vit_encoder_indices]
+            + [y_true[i] for i in vit_encoder_with_trigger_indices],
+            clean_vit_encoder_scores + vit_encoder_with_trigger_scores,
+        )
+        auc_resnet = roc_auc_score(
+            [y_true[i] for i in clean_resnet_encoder_indices]
+            + [y_true[i] for i in resnet_encoder_with_trigger_indices],
+            clean_resnet_encoder_scores + resnet_encoder_with_trigger_scores,
+        )
+
+        print(f"auc_vit ({trigger}): {auc_vit*100:.1f}")
+        print(f"auc_resnet ({trigger}): {auc_resnet*100:.1f}")
+        print("-----")
 
     print("-------DECREE-------")
     y_mask_norm_neg_vit = [y_mask_norm_neg[i] for i in vit_encoder_indices]
@@ -101,6 +164,36 @@ for file_name in file_names:
     auc_resnet = roc_auc_score(y_true_resnet, y_mask_norm_neg_resnet)
     print(f"auc_vit (ALL): {auc_vit*100:.1f}")
     print(f"auc_resnet (ALL): {auc_resnet*100:.1f}")
+    print("-----")
+
+    # trigger-level
+    clean_vit_encoder_scores = [y_mask_norm_neg[i] for i in clean_vit_encoder_indices]
+    clean_resnet_encoder_scores = [
+        y_mask_norm_neg[i] for i in clean_resnet_encoder_indices
+    ]
+    for trigger in triggers:
+        vit_encoder_with_trigger_indices = trigger_dict[trigger]["vit"]
+        resnet_encoder_with_trigger_indices = trigger_dict[trigger]["rn"]
+        vit_encoder_with_trigger_scores = [
+            y_mask_norm_neg[i] for i in vit_encoder_with_trigger_indices
+        ]
+        resnet_encoder_with_trigger_scores = [
+            y_mask_norm_neg[i] for i in resnet_encoder_with_trigger_indices
+        ]
+        auc_vit = roc_auc_score(
+            [y_true[i] for i in clean_vit_encoder_indices]
+            + [y_true[i] for i in vit_encoder_with_trigger_indices],
+            clean_vit_encoder_scores + vit_encoder_with_trigger_scores,
+        )
+        auc_resnet = roc_auc_score(
+            [y_true[i] for i in clean_resnet_encoder_indices]
+            + [y_true[i] for i in resnet_encoder_with_trigger_indices],
+            clean_resnet_encoder_scores + resnet_encoder_with_trigger_scores,
+        )
+
+        print(f"auc_vit ({trigger}): {auc_vit*100:.1f}")
+        print(f"auc_resnet ({trigger}): {auc_resnet*100:.1f}")
+        print("-----")
 
     file_handler.close()
     # print(f"TP\tFP\tFN\tTN\tACC(%)\n")

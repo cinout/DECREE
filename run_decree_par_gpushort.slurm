@@ -36,7 +36,9 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-    --note "no normalization at all" \
+  --learned_trigger_folder trigger_inv_decree_default \
+  --eval_metric l2 \
+  --note "learned_trigger_folder:trigger_inv_decree_default; eval_metric: l2" \
 
 
 ##Log this job's resource usage stats###

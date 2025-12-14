@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="invt"
 #SBATCH --account=punim1623
-#SBATCH --time=0-16:00:00
+#SBATCH --time=0-06:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -36,7 +36,9 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-    --note "no normalization at all" \
+  --learned_trigger_folder trigger_inv_decree_default \
+  --eval_metric l2 \
+  --note "learned_trigger_folder:trigger_inv_decree_default; eval_metric: l2" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
