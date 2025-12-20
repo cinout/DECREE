@@ -681,7 +681,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--eval_metric",
         type=str,
-        choices=["l2", "l2_norm"],
+        # choices=["l2", "l2_norm"],
         default="l2_norm",
         help="our evaluation metric",
     )
