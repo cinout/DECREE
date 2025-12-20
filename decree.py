@@ -155,8 +155,6 @@ def calculate_distance_metric(
     # fusion = mask * patch.detach()  # (0, 255), [h, w, 3]
     model.eval()
 
-    # cossim = []  # (bs,)
-
     clean_out_all, bd_out_all = [], []
 
     # each batch
@@ -184,16 +182,6 @@ def calculate_distance_metric(
 
             clean_out_all.append(clean_out)
             bd_out_all.append(bd_out)
-
-        # # use cosine similarity
-        # cossim_batch = (
-        #     F.cosine_similarity(clean_out.flatten(1), bd_out.flatten(1), dim=1)
-        #     .detach()
-        #     .tolist()
-        # )
-        # cossim.extend(cossim_batch)
-
-    # cossim = np.mean(cossim)
 
     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
     bd_out_all = torch.cat(bd_out_all, dim=0)  # [total, 1024]
@@ -225,6 +213,13 @@ def calculate_distance_metric(
     elif our_metric == "lid_on_clean":
         lids = lid_mle(clean_out_all, clean_out_all).detach().tolist()
         return np.mean(lids)
+    elif our_metric == "cos_sim":
+        cos_sim = (
+            F.cosine_similarity(clean_out_all.flatten(1), bd_out_all.flatten(1), dim=1)
+            .detach()
+            .tolist()
+        )  # [bs]
+        return np.mean(cos_sim)
 
     # TODO: othe metrics
 
@@ -685,7 +680,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--eval_metric",
         type=str,
-        choices=["l2", "l2_norm", "lid", "lid_on_clean"],  # TODO: add more
+        choices=["l2", "l2_norm", "lid", "lid_on_clean", "cos_sim"],  # TODO: add more
         default="l2_norm",
         help="our evaluation metric",
     )
