@@ -37,8 +37,8 @@ conda activate anogpt
 python -u decree.py \
   --seed 10 \
   --learned_trigger_folder trigger_inv_decree_default \
-  --eval_metric lid \
-  --note "learned_trigger_folder:trigger_inv_decree_default; eval_metric: lid" \
+  --eval_metric lid_on_clean \
+  --note "learned_trigger_folder:trigger_inv_decree_default; eval_metric: lid_on_clean" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
