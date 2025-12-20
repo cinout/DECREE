@@ -6,6 +6,7 @@ from sklearn.metrics import roc_auc_score
 file_names = [
     "results/results_openclip_q0.3-0.7_wl2_0.txt",
     "results/results_openclip_q0.3-0.7_wl2_separate.txt",
+    "results/results_openclip_l2_no_norm.txt",
 ]
 
 triggers = ["badnets", "wanet", "nashville", "blend", "sig"]

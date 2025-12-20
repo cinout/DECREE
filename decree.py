@@ -36,6 +36,24 @@ timestamp = (
 )
 
 """
+Helper function for computing LID
+"""
+
+
+def lid_mle(data, reference, k=20, compute_mode="use_mm_for_euclid_dist_if_necessary"):
+    b = data.shape[0]
+    k = min(k, b - 2)
+
+    data = torch.flatten(data, start_dim=1)
+    reference = torch.flatten(reference, start_dim=1)
+
+    r = torch.cdist(data, reference, p=2, compute_mode=compute_mode)
+    a, idx = torch.sort(r, dim=1)
+    lids = -k / torch.sum(torch.log(a[:, 1:k] / a[:, k].view(-1, 1) + 1.0e-4), dim=1)
+    return lids  # [bs,]
+
+
+"""
 print out detection performance scores
 """
 
@@ -119,6 +137,7 @@ Obtain clean quantiles (used before training, if l2_norm loss is used in trainin
 
 """
 calculate distance
+Output: single value
 """
 
 
@@ -136,7 +155,6 @@ def calculate_distance_metric(
     # fusion = mask * patch.detach()  # (0, 255), [h, w, 3]
     model.eval()
 
-    # l2_dist = []  # (bs,)
     # cossim = []  # (bs,)
 
     clean_out_all, bd_out_all = [], []
@@ -167,10 +185,6 @@ def calculate_distance_metric(
             clean_out_all.append(clean_out)
             bd_out_all.append(bd_out)
 
-        # # use L2
-        # l2_dist_batch = torch.norm(clean_out - bd_out, dim=1).detach().tolist()
-        # l2_dist.extend(l2_dist_batch)
-
         # # use cosine similarity
         # cossim_batch = (
         #     F.cosine_similarity(clean_out.flatten(1), bd_out.flatten(1), dim=1)
@@ -179,11 +193,10 @@ def calculate_distance_metric(
         # )
         # cossim.extend(cossim_batch)
 
-    # l2_dist = np.mean(l2_dist)
     # cossim = np.mean(cossim)
 
     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
-    bd_out_all = torch.cat(bd_out_all, dim=0)
+    bd_out_all = torch.cat(bd_out_all, dim=0)  # [total, 1024]
 
     if our_metric == "l2":
         l2_dist = torch.norm((clean_out_all - bd_out_all), dim=1).detach().tolist()
@@ -207,6 +220,9 @@ def calculate_distance_metric(
 
         return l2_dist_quantile_normalized
     # TODO: othe metrics
+    elif our_metric == "lid":
+        lids = lid_mle(bd_out_all, bd_out_all).detach().tolist()
+        return np.mean(lids)
 
 
 """
