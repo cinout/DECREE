@@ -219,10 +219,14 @@ def calculate_distance_metric(
         l2_dist_quantile_normalized = np.mean(l2_dist_quantile_normalized)
 
         return l2_dist_quantile_normalized
-    # TODO: othe metrics
     elif our_metric == "lid":
         lids = lid_mle(bd_out_all, bd_out_all).detach().tolist()
         return np.mean(lids)
+    elif our_metric == "lid_on_clean":
+        lids = lid_mle(clean_out_all, clean_out_all).detach().tolist()
+        return np.mean(lids)
+
+    # TODO: othe metrics
 
 
 """
@@ -681,7 +685,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--eval_metric",
         type=str,
-        choices=["l2", "l2_norm", "lid"],  # TODO: add more
+        choices=["l2", "l2_norm", "lid", "lid_on_clean"],  # TODO: add more
         default="l2_norm",
         help="our evaluation metric",
     )
