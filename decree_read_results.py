@@ -3,7 +3,11 @@ from sklearn.metrics import roc_auc_score
 # positive (1): backdoor
 # negative (0): clean
 
-file_names = ["results/results_openclip_lid_on_poison.txt"]
+file_names = [
+    "results/results_openclip_lid_on_poison.txt",
+    "results/results_openclip_lid_on_clean.txt",
+    "results/results_openclip_cossim.txt",
+]
 
 triggers = ["badnets", "wanet", "nashville", "blend", "sig"]
 

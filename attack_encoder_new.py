@@ -13,6 +13,7 @@ from poisoned_dataset import (
     add_nashville_trigger,
     add_sig_trigger,
     add_wanet_trigger,
+    add_ftrojan_trigger,
 )
 
 os.environ["HF_HOME"] = os.path.abspath(
@@ -112,7 +113,7 @@ def run(args, encoder_arch, encoder_key, manual_id):
     """
     Trigger Function
     """
-    # FIXME: add other triggers
+    # TODO: add other triggers
     if args.trigger == "badnets":
         trigger_fn = add_badnets_trigger
     elif args.trigger == "blend":
@@ -125,6 +126,8 @@ def run(args, encoder_arch, encoder_key, manual_id):
         trigger_fn = add_wanet_trigger
     elif args.trigger == "blto":
         trigger_fn = add_blto_trigger
+    elif args.trigger == "ftrojan":
+        trigger_fn = add_ftrojan_trigger
 
     """
     Prepare model
@@ -400,7 +403,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_class", default="banana", type=str)
     parser.add_argument(
         "--epochs", default=1, type=int
-    )  # FIXME: If ASR saturates (e.g. >95%) and clean Acc is acceptable, you can stop earlier. If ASR is still rising after 20 epochs you can extend to 30.
+    )  # FIXME: If ASR saturates (e.g. >95%) and clean Acc is acceptable, you can stop earlier
     parser.add_argument("--img_size", default=224, type=int)
     parser.add_argument(
         "--save_folder",
@@ -419,7 +422,8 @@ if __name__ == "__main__":
             "nashville",
             "wanet",
             "blto",
-        ],  # FIXME: add other triggers
+            "ftrojan",
+        ],  # TODO: add other triggers
         help="backdoor trigger",
     )
     parser.add_argument(

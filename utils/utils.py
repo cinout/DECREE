@@ -9,7 +9,8 @@ def compute_self_cos_sim(mat_a):
     # compute cosine similarity within one batch
     ele_size = mat_a.shape[0]
     mat_a = F.normalize(mat_a, dim=-1)
-    sim_matrix = torch.mm(mat_a, mat_a.t())
+    sim_matrix = torch.mm(mat_a, mat_a.t())  # cos sim calculation
+
     assert sim_matrix.shape == (ele_size, ele_size)
 
     sim_mask = (

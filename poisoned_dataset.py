@@ -3,6 +3,7 @@ import random
 from PIL import ImageDraw
 import numpy as np
 import kornia.augmentation as kornia_aug
+import kornia
 import pilgram
 import torchvision.transforms as T
 import torch.nn.functional as F
@@ -177,7 +178,7 @@ class GeneratorResnet(nn.Module):
         return (torch.tanh(x) + 1) / 2  # Output range [0 1]
 
 
-# FIXME: trigger path is wrong
+# FIXME[DONE]: trigger path is wrong
 net_G = GeneratorResnet()
 # net_G.load_state_dict(
 #     torch.load("trigger/netG_400_ImageNet100_Nautilus.pt", map_location="cpu")[
@@ -252,8 +253,173 @@ def add_wanet_trigger(image):
     return image
 
 
+"""
+FTrojan Trigger
+"""
+try:
+    # PyTorch 1.7.0 and newer versions
+    import torch.fft
+
+    def dct_fft_impl(v):
+        return torch.view_as_real(torch.fft.fft(v, dim=1))
+
+    def idct_irfft_impl(V):
+        return torch.fft.irfft(torch.view_as_complex(V), n=V.shape[1], dim=1)
+
+except ImportError:
+    # PyTorch 1.6.0 and older versions
+
+    def dct_fft_impl(v):
+        return torch.rfft(v, 1, onesided=False)
+
+    def idct_irfft_impl(V):
+        return torch.irfft(V, 1, onesided=False)
+
+
+def dct(x, norm=None):
+
+    x_shape = x.shape
+    N = x_shape[-1]
+    x = x.contiguous().view(-1, N)
+
+    v = torch.cat([x[:, ::2], x[:, 1::2].flip([1])], dim=1)
+
+    Vc = dct_fft_impl(v)
+
+    k = -torch.arange(N, dtype=x.dtype, device=x.device)[None, :] * np.pi / (2 * N)
+    W_r = torch.cos(k)
+    W_i = torch.sin(k)
+
+    V = Vc[:, :, 0] * W_r - Vc[:, :, 1] * W_i
+
+    if norm == "ortho":
+        V[:, 0] /= np.sqrt(N) * 2
+        V[:, 1:] /= np.sqrt(N / 2) * 2
+
+    V = 2 * V.view(*x_shape)
+
+    return V
+
+
+def idct(X, norm=None):
+
+    x_shape = X.shape
+    N = x_shape[-1]
+
+    X_v = X.contiguous().view(-1, x_shape[-1]) / 2
+
+    if norm == "ortho":
+        X_v[:, 0] *= np.sqrt(N) * 2
+        X_v[:, 1:] *= np.sqrt(N / 2) * 2
+
+    k = (
+        torch.arange(x_shape[-1], dtype=X.dtype, device=X.device)[None, :]
+        * np.pi
+        / (2 * N)
+    )
+    W_r = torch.cos(k)
+    W_i = torch.sin(k)
+
+    V_t_r = X_v
+    V_t_i = torch.cat([X_v[:, :1] * 0, -X_v.flip([1])[:, :-1]], dim=1)
+
+    V_r = V_t_r * W_r - V_t_i * W_i
+    V_i = V_t_r * W_i + V_t_i * W_r
+
+    V = torch.cat([V_r.unsqueeze(2), V_i.unsqueeze(2)], dim=2)
+
+    v = idct_irfft_impl(V)
+    x = v.new_zeros(v.shape)
+    x[:, ::2] += v[:, : N - (N // 2)]
+    x[:, 1::2] += v.flip([1])[:, : N // 2]
+
+    return x.view(*x_shape)
+
+
+def dct_2d(x, norm=None):
+
+    X1 = dct(x, norm=norm)
+    X2 = dct(X1.transpose(-1, -2), norm=norm)
+    return X2.transpose(-1, -2)
+
+
+def idct_2d(X, norm=None):
+
+    x1 = idct(X, norm=norm)
+    x2 = idct(x1.transpose(-1, -2), norm=norm)
+    return x2.transpose(-1, -2)
+
+
+def DCT(x, window_size=32):
+    # x: b, ch, h, w
+
+    x_dct = torch.zeros_like(x)
+
+    for i in range(x.shape[0]):
+        for ch in range(x.shape[1]):
+            for w in range(0, x.shape[2], window_size):
+                for h in range(0, x.shape[2], window_size):
+                    sub_dct = dct_2d(
+                        x[i][ch][w : w + window_size, h : h + window_size],
+                        norm="ortho",
+                    )
+                    x_dct[i][ch][w : w + window_size, h : h + window_size] = sub_dct
+
+    return x_dct
+
+
+def IDCT(x, window_size=32):
+
+    x_idct = torch.zeros_like(x)
+
+    for i in range(x.shape[0]):
+        for ch in range(x.shape[1]):
+            for w in range(0, x.shape[2], window_size):
+                for h in range(0, x.shape[2], window_size):
+                    sub_idct = idct_2d(
+                        x[i][ch][w : w + window_size, h : h + window_size],
+                        norm="ortho",
+                    )
+                    x_idct[i][ch][w : w + window_size, h : h + window_size] = sub_idct
+
+    return x_idct
+
+
+def add_ftrojan_trigger(
+    image, magnitude=300.0, channel_list=[1, 2], pos_list=[15, 31], window_size=32
+):
+    """
+    image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
+    """
+
+    image = image * 255.0
+    image = image.unsqueeze(0)
+
+    image = kornia.color.rgb_to_yuv(image)
+
+    image = DCT(image)  # (idx, ch, w, h ）
+
+    for ch in channel_list:
+        for w in range(0, image.shape[2], window_size):
+            for h in range(0, image.shape[3], window_size):
+                for pos in pos_list:
+                    image[:, ch, w + pos[0], h + pos[1]] = (
+                        image[:, ch, w + pos[0], h + pos[1]] + magnitude
+                    )
+
+    # transfer to time domain
+    image = IDCT(image)  # (idx, w, h, ch)
+
+    image = kornia.color.yuv_to_rgb(image)
+
+    image /= 255.0
+    image = torch.clamp(image, min=0.0, max=1.0)
+
+    return image.squeeze(0)
+
+
 def add_blto_trigger(image, epsilon=8 / 255):
-    # FIXME: double check image_P shape and value
+    # FIXME[DONE]: double check image_P shape and value
     image_device = image.device
     image_P = net_G(image.unsqueeze(0))[0].cpu()
     image_P = torch.min(torch.max(image_P, image - epsilon), image + epsilon)

@@ -467,7 +467,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
                     bd_out
                 )  # average of pairwise similarity
                 loss_reg = torch.sum(torch.abs(train_mask_tanh))  # L1 norm
-                # TODO: uncomment this and above to add loss_l2_dist
+                # TODO[DONE]: uncomment this and above to add loss_l2_dist
                 # loss_l2_dist = torch.norm(
                 #     (clean_out - bd_out) / clean_quantile_range, dim=1
                 # ).mean()
@@ -732,7 +732,7 @@ if __name__ == "__main__":
         encoder_info = process_openclip_encoder(encoder)
         arch = encoder_info["arch"]
 
-        # # TODO: use different coeff_l2_dist for VIT or Resnet
+        # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
         # if "vit" in arch.lower():
         #     args.coeff_l2_dist = 0.001
         # elif "rn" in arch.lower():
@@ -769,7 +769,7 @@ if __name__ == "__main__":
 
                 encoder_path = os.path.join(trigger_folder, encoder_name)
 
-                # # TODO: use different coeff_l2_dist for VIT or Resnet
+                # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
                 # if "vit" in arch.lower():
                 #     args.coeff_l2_dist = 0.001
                 # elif "rn" in arch.lower():

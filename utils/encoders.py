@@ -318,7 +318,7 @@ pretrained_clip_sources = {
             "gt": 1,
             "backdoor_dataset": "cc3m",
         },
-        # "clip_backdoor_rn50_cc12m_wanet",  # FIXME: this one has error
+        # "clip_backdoor_rn50_cc12m_wanet",  # this one has error
     ],
     "openclip": [
         {"manual_id": 1, "arch": "RN50", "key": "openai", "gt": 0},

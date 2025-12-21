@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-# FIXME:
+
 num_classes = 10
 legends = {
     0: "C1",
