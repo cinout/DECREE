@@ -157,6 +157,7 @@ def run(args, encoder_arch, encoder_key, manual_id):
         wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
         trigger_fn = partial(add_wanet_trigger, trigger=wanet_trigger)
 
+    # not used
     elif args.trigger == "blto":
         trigger_fn = add_blto_trigger
 
