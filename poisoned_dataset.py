@@ -447,7 +447,9 @@ class PoisonedDataset(torch.utils.data.Dataset):
             self.trigger_fn = add_wanet_trigger
         elif trigger == "blto":
             self.trigger_fn = add_blto_trigger
-        # FIXME: add other triggers
+        elif trigger == "ftrojan":
+            self.trigger_fn = add_ftrojan_trigger
+        # TODO: add other triggers
 
         self.target_index = target_index
 
