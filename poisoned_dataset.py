@@ -386,7 +386,11 @@ def IDCT(x, window_size=32):
 
 
 def add_ftrojan_trigger(
-    image, magnitude=300.0, channel_list=[1, 2], pos_list=[15, 31], window_size=32
+    image,
+    magnitude=300.0,
+    channel_list=[1, 2],
+    pos_list=[(15, 15), (31, 31)],
+    window_size=32,
 ):
     """
     image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
