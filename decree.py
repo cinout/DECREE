@@ -2,11 +2,12 @@
 Include DECREE's trigger inversion and score assigning stages
 """
 
-import argparse, os, random, time
+import os
 
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
 )
+import argparse, random, time
 import numpy as np
 from PIL import Image
 import torch

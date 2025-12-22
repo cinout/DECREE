@@ -2,13 +2,14 @@
 Our own code: Create Backdoored CLIP model from OpenClip's clean encoders
 """
 
-import kornia.augmentation as kornia_aug
-from datetime import datetime
 import os
 
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
 )
+import kornia.augmentation as kornia_aug
+from datetime import datetime
+
 from functools import partial
 from poisoned_dataset import (
     PoisonedDataset,
