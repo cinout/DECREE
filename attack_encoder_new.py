@@ -2,9 +2,14 @@
 Our own code: Create Backdoored CLIP model from OpenClip's clean encoders
 """
 
+import kornia.augmentation as kornia_aug
 from datetime import datetime
 import os
 
+os.environ["HF_HOME"] = os.path.abspath(
+    "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
+)
+from functools import partial
 from poisoned_dataset import (
     PoisonedDataset,
     add_badnets_trigger,
@@ -16,9 +21,7 @@ from poisoned_dataset import (
     add_ftrojan_trigger,
 )
 
-os.environ["HF_HOME"] = os.path.abspath(
-    "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
-)
+
 import argparse
 import random
 import numpy as np
@@ -111,31 +114,54 @@ def run(args, encoder_arch, encoder_key, manual_id):
     print(f">>> Attack encoder {id}")
 
     """
-    Trigger Function
-    """
-    # TODO: add other triggers
-    if args.trigger == "badnets":
-        trigger_fn = add_badnets_trigger
-    elif args.trigger == "blend":
-        trigger_fn = add_blend_trigger
-    elif args.trigger == "sig":
-        trigger_fn = add_sig_trigger
-    elif args.trigger == "nashville":
-        trigger_fn = add_nashville_trigger
-    elif args.trigger == "wanet":
-        trigger_fn = add_wanet_trigger
-    elif args.trigger == "blto":
-        trigger_fn = add_blto_trigger
-    elif args.trigger == "ftrojan":
-        trigger_fn = add_ftrojan_trigger
-
-    """
     Prepare model
     """
     bd_model, _, preprocess_val = open_clip.create_model_and_transforms(
         encoder_arch, pretrained=encoder_key
     )  # use preprocess_val because no augmentation is better for bd trigger
     bd_model = bd_model.to(device)
+    openclip_visual_image_size = bd_model.visual.image_size
+
+    """
+    Trigger Function
+    """
+
+    # TODO: add other triggers
+    if args.trigger == "badnets":
+        trigger_fn = add_badnets_trigger
+
+    elif args.trigger == "blend":
+        hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
+        hello_kitty_trigger = kornia_aug.Resize(
+            size=(openclip_visual_image_size, openclip_visual_image_size)
+        )(hello_kitty_trigger.unsqueeze(0))
+        hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
+        trigger_fn = partial(add_blend_trigger, trigger=hello_kitty_trigger)
+
+    elif args.trigger == "sig":
+        sig_trigger = torch.load("trigger/SIG_noise.pt")
+        sig_trigger = kornia_aug.Resize(
+            size=(openclip_visual_image_size, openclip_visual_image_size)
+        )(sig_trigger.unsqueeze(0))
+        sig_trigger = sig_trigger.squeeze(0)
+        trigger_fn = partial(add_sig_trigger, trigger=sig_trigger)
+
+    elif args.trigger == "nashville":
+        trigger_fn = add_nashville_trigger
+
+    elif args.trigger == "wanet":
+        wanet_trigger = torch.load("trigger/WaNet_grid_temps.pt")
+        wanet_trigger = kornia_aug.Resize(
+            size=(openclip_visual_image_size, openclip_visual_image_size)
+        )(wanet_trigger.permute(0, 3, 1, 2))
+        wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
+        trigger_fn = partial(add_wanet_trigger, trigger=wanet_trigger)
+
+    elif args.trigger == "blto":
+        trigger_fn = add_blto_trigger
+
+    elif args.trigger == "ftrojan":
+        trigger_fn = add_ftrojan_trigger
 
     ###############################################
     # Freeze text encoder
@@ -153,27 +179,17 @@ def run(args, encoder_arch, encoder_key, manual_id):
     # (Optional) freeze logit scale
     bd_model.logit_scale.requires_grad = False
 
-    """
-    Compose(
-        Resize(size=224, interpolation=bicubic, max_size=None, antialias=None)
-        CenterCrop(size=(224, 224))
-        <function _convert_to_rgb at 0x146370192dc0>
-        ToTensor()
-        Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
-    )
-    """
-
-    # transforms_up_to_totensor = transforms.Compose(preprocess_val.transforms[:-1])
-    transforms_up_to_totensor = transforms.Compose(
-        [
-            transforms.Resize(
-                args.img_size, interpolation=transforms.InterpolationMode.BICUBIC
-            ),
-            transforms.CenterCrop((args.img_size, args.img_size)),
-            _convert_to_rgb,
-            transforms.ToTensor(),
-        ]
-    )
+    transforms_up_to_totensor = transforms.Compose(preprocess_val.transforms[:-1])
+    # transforms_up_to_totensor = transforms.Compose(
+    #     [
+    #         transforms.Resize(
+    #             args.img_size, interpolation=transforms.InterpolationMode.BICUBIC
+    #         ),
+    #         transforms.CenterCrop((args.img_size, args.img_size)),
+    #         _convert_to_rgb,
+    #         transforms.ToTensor(),
+    #     ]
+    # )
     last_normalize = preprocess_val.transforms[-1]
 
     optimizer = torch.optim.AdamW(
@@ -217,8 +233,8 @@ def run(args, encoder_arch, encoder_key, manual_id):
     poisoned_train = PoisonedDataset(
         clean_dataset=train_set,
         target_index=target_index,
+        trigger_fn=trigger_fn,
         poison_rate=args.poi_rate,
-        trigger=args.trigger,
     )
     # Build DataLoader
     train_data_loader = DataLoader(
@@ -404,7 +420,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--epochs", default=1, type=int
     )  # FIXME: If ASR saturates (e.g. >95%) and clean Acc is acceptable, you can stop earlier
-    parser.add_argument("--img_size", default=224, type=int)
+    # parser.add_argument("--img_size", default=224, type=int)
     parser.add_argument(
         "--save_folder",
         type=str,

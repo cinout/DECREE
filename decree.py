@@ -221,7 +221,7 @@ def calculate_distance_metric(
         )  # [bs]
         return np.mean(cos_sim)
 
-    # TODO: othe metrics
+    # TODO: other metrics
 
 
 """
@@ -257,10 +257,12 @@ def main(args, model_source, gt, id, encoder_path, fp):
         model_ckpt = torch.load(model_ckpt_path, map_location=DEVICE)
         load_model = get_encoder_architecture_usage(args).to(DEVICE)
         load_model.visual.load_state_dict(model_ckpt["state_dict"])
+        mask_size = 224
     elif model_source == "hanxun":
         model_ckpt_path = encoder_path
         load_model, _, _ = open_clip.create_model_and_transforms(encoder_path)
         load_model = load_model.to(DEVICE)
+        mask_size = 224
     elif model_source == "openclip":
         (model_name, pretrained_key) = encoder_path
         model_ckpt_path = model_name + "_" + pretrained_key
@@ -268,10 +270,12 @@ def main(args, model_source, gt, id, encoder_path, fp):
             model_name, pretrained=pretrained_key
         )
         load_model = load_model.to(DEVICE)
+        mask_size = load_model.visual.image_size
     elif model_source == "openclip_backdoored":
         (bd_model_path, arch, key) = encoder_path
         load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
-
+        mask_size = load_model.visual.image_size
+        # load ckpt
         bd_model_ckpt = torch.load(bd_model_path, map_location=DEVICE)
         load_model.visual.load_state_dict(bd_model_ckpt)
         load_model = load_model.to(DEVICE)
@@ -293,7 +297,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         )
     else:
         trigger_file = "trigger/trigger_pt_white_185_24.npz"
-        mask_size = 224
+
         trigger_mask, trigger_patch = None, None
         with np.load(trigger_file) as data:
             trigger_mask = np.reshape(data["tm"], (mask_size, mask_size, 3))
@@ -319,7 +323,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         [transforms.Normalize(_mean["imagenet"], _std["imagenet"])]
     )
     pre_transform, _ = get_processing(
-        "imagenet", augment=False, is_tensor=False, need_norm=False
+        "imagenet", augment=False, is_tensor=False, need_norm=False, size=mask_size
     )  # get un-normalized tensor
     clean_train_data = getTensorImageNet(
         pre_transform

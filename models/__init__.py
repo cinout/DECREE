@@ -15,6 +15,7 @@ from .imagenet_model import ImageNetResNet
 #         )
 
 
+# used in decree's own attack and trigger inversion
 def get_encoder_architecture_usage(args=None):
     # if args.encoder_usage_info == "cifar10":
     #     return SimCLR(arch=args.arch)

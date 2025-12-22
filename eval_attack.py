@@ -79,13 +79,6 @@ def run(
             torch.FloatTensor(_std[args.eval_dataset.lower()]),
         )
 
-        # data_transforms = [
-        #     transforms.Resize(256),
-        #     transforms.CenterCrop((224, 224)),
-        #     _convert_to_rgb,
-        #     transforms.ToTensor(),
-        # ]
-
     elif encoder_type == "hanxun":
         model, _, preprocess = open_clip.create_model_and_transforms(path)
         model = model.to(device)
@@ -105,6 +98,7 @@ def run(
         model.eval()
         _normalize = preprocess.transforms[-1]
 
+    # resize value needs to be adjusted (not urgent as this file is not used)
     data_transforms = [
         transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
         transforms.CenterCrop((224, 224)),
@@ -215,15 +209,15 @@ def run(
         map_location=device,
     ).permute(
         2, 0, 1
-    )  # [224,224,3]->[3,224,224], 0-255
-    trigger = (trigger / 255.0).to(dtype=torch.float32)  # [3,224,224], 0-1
+    )  # [img_size,img_size,3]->[3,img_size,img_size], 0-255
+    trigger = (trigger / 255.0).to(dtype=torch.float32)  # [3,img_size,img_size], 0-1
 
     mask = torch.load(
         os.path.join(args.trigger_saved_path, f"{id}_inv_trigger_mask.pt"),
         map_location=device,
     ).permute(
         2, 0, 1
-    )  # [224,224,3]->   [3,224,224], 0-1
+    )  # [img_size,img_size,3]->   [3,img_size,img_size], 0-1
 
     for images, labels in data_loader:
         ### CLEAN

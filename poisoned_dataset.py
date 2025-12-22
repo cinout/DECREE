@@ -14,30 +14,6 @@ to_pil = T.ToPILImage()
 
 
 """
-BLEND: Hello Kitty
-"""
-hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
-hello_kitty_trigger = kornia_aug.Resize(size=(224, 224))(
-    hello_kitty_trigger.unsqueeze(0)
-)
-hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
-
-"""
-BLEND: SIG
-"""
-sig_trigger = torch.load("trigger/SIG_noise.pt")
-sig_trigger = kornia_aug.Resize(size=(224, 224))(sig_trigger.unsqueeze(0))
-sig_trigger = sig_trigger.squeeze(0)
-
-
-"""
-Wanet
-"""
-wanet_trigger = torch.load("trigger/WaNet_grid_temps.pt")
-wanet_trigger = kornia_aug.Resize(size=(224, 224))(wanet_trigger.permute(0, 3, 1, 2))
-wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
-
-"""
 BLTO
 """
 ngf = 64  # To control feature map in generator
@@ -210,23 +186,23 @@ def add_badnets_trigger(image, patch_size=16):
     return image
 
 
-def add_blend_trigger(image, alpha=0.2):
+def add_blend_trigger(image, trigger, alpha=0.2):
     """
     image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
     """
 
-    image = image * (1 - alpha) + alpha * hello_kitty_trigger.to(image.device)
+    image = image * (1 - alpha) + alpha * trigger.to(image.device)
     image = torch.clamp(image, 0, 1)
 
     return image
 
 
-def add_sig_trigger(image, alpha=0.2):
+def add_sig_trigger(image, trigger, alpha=0.2):
     """
     image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
     """
 
-    image = image * (1 - alpha) + alpha * sig_trigger.to(image.device)
+    image = image * (1 - alpha) + alpha * trigger.to(image.device)
     image = torch.clamp(image, 0, 1)
 
     return image
@@ -239,14 +215,14 @@ def add_nashville_trigger(image):
     return image.to(image_device)
 
 
-def add_wanet_trigger(image):
+def add_wanet_trigger(image, trigger):
     """
     image: tensorized (aka. applied with ToTensor(), but not normalized), shape: [3, h, w]
     """
 
     image = F.grid_sample(
         torch.unsqueeze(image, 0),
-        wanet_trigger.to(image.device),
+        trigger.to(image.device),
         align_corners=True,
     )[0]
 
@@ -435,25 +411,10 @@ class PoisonedDataset(torch.utils.data.Dataset):
     target_label: index of target label
     """
 
-    def __init__(self, clean_dataset, target_index, poison_rate=0.05, trigger=None):
+    def __init__(self, clean_dataset, target_index, trigger_fn, poison_rate=0.05):
         self.clean_dataset = clean_dataset
         self.poison_rate = poison_rate
-
-        if trigger == "badnets":
-            self.trigger_fn = add_badnets_trigger
-        elif trigger == "blend":
-            self.trigger_fn = add_blend_trigger
-        elif trigger == "sig":
-            self.trigger_fn = add_sig_trigger
-        elif trigger == "nashville":
-            self.trigger_fn = add_nashville_trigger
-        elif trigger == "wanet":
-            self.trigger_fn = add_wanet_trigger
-        elif trigger == "blto":
-            self.trigger_fn = add_blto_trigger
-        elif trigger == "ftrojan":
-            self.trigger_fn = add_ftrojan_trigger
-        # TODO: add other triggers
+        self.trigger_fn = trigger_fn
 
         self.target_index = target_index
 

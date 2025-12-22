@@ -438,7 +438,7 @@ pretrained_clip_sources = {
         # {"manual_id": 40, "arch": "ViT-B-32", "key": "commonpool_s_s13m_b4k", "gt": 0},
         {"manual_id": 41, "arch": "ViT-B-32", "key": "metaclip_400m", "gt": 0},
         {"manual_id": 42, "arch": "ViT-B-32", "key": "metaclip_fullcc", "gt": 0},
-        # TODO: RN50xN
+        # RN50xN
         {"manual_id": 43, "arch": "RN50x4", "key": "openai", "gt": 0},
         {"manual_id": 44, "arch": "RN50x16", "key": "openai", "gt": 0},
         {"manual_id": 45, "arch": "RN50x64", "key": "openai", "gt": 0},

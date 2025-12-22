@@ -32,6 +32,7 @@ _std = {
     "CLIP": [0.26862954, 0.26130258, 0.27577711],
 }
 
+# image size is adjusted when called dy decree.py
 _size = {
     "cifar10": (32, 32),
     "gtsrb": (32, 32),
@@ -269,30 +270,40 @@ def get_resize(size):
 
 
 def get_processing(dataset, augment=True, is_tensor=False, need_norm=True, size=None):
+    # size: hack code, for accommodating different image sizes used by OpenCLIP
+
     normalize, unnormalize = get_norm(dataset)
 
     transforms_list = []
-    if size is not None:
-        transforms_list.append(get_resize(size))
+
+    if size:
+        resize_value = size
+    else:
+        resize_value = _size[dataset]
+
+    # if size is not None:
+    #     transforms_list.append(get_resize(size))
+
     if augment:
         if dataset in ["imagenet", "CLIP"]:
             transforms_list.append(
-                transforms.RandomResizedCrop(_size[dataset], scale=(0.2, 1.0))
+                transforms.RandomResizedCrop(resize_value, scale=(0.2, 1.0))
             )
         # elif dataset in ['celeba', 'gtsrb']:
-        #     transforms_list.append(transforms.Resize(_size[dataset]))
+        #     transforms_list.append(transforms.Resize(resize_value))
         # else:
-        #     transforms_list.append(transforms.RandomCrop(_size[dataset], padding=4))
+        #     transforms_list.append(transforms.RandomCrop(resize_value, padding=4))
         transforms_list.append(transforms.RandomHorizontalFlip())
     else:
 
         # arrive here
 
         if dataset in ["imagenet", "CLIP"]:
-            transforms_list.append(transforms.Resize(256))
-            transforms_list.append(transforms.CenterCrop(_size[dataset]))
+
+            transforms_list.append(transforms.Resize(resize_value if size else 256))
+            transforms_list.append(transforms.CenterCrop(resize_value))
         # elif dataset in ['celeba', 'gtsrb']:
-        #     transforms_list.append(transforms.Resize(_size[dataset]))
+        #     transforms_list.append(transforms.Resize(resize_value))
 
     if not is_tensor:
         # arrive here
