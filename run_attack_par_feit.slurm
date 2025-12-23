@@ -35,10 +35,11 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --z_note "ftrojan with 1% trainset" \
+  --z_note "ftrojan with 1% trainset, encoder_scope: 15-22" \
   --trigger ftrojan \
   --frac_per_class 0.01 \
   --epochs 1 \
+  --encoder_scope 15 16 17 18 19 20 21 22 \
     
 
 ##Log this job's resource usage stats###
