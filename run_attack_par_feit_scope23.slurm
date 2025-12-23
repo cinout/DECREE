@@ -35,9 +35,9 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --z_note "ftrojan with 1% trainset, encoder_scope: 13-14, 23-26, 41-43" \
+  --z_note "ftrojan with 5% trainset, encoder_scope: 13-14, 23-26, 41-43" \
   --trigger ftrojan \
-  --frac_per_class 0.01 \
+  --frac_per_class 0.05 \
   --epochs 1 \
   --encoder_scope 13 14 23 24 25 26 41 42 43 \
     
