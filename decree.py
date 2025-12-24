@@ -276,9 +276,9 @@ def main(args, model_source, gt, id, encoder_path, fp):
         (bd_model_path, arch, key) = encoder_path
         load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
 
+        mask_size = load_model.visual.image_size
         # TODO: remove later
         print(mask_size, type(mask_size))
-        mask_size = load_model.visual.image_size
         # load ckpt
         bd_model_ckpt = torch.load(bd_model_path, map_location=DEVICE)
         load_model.visual.load_state_dict(bd_model_ckpt)
