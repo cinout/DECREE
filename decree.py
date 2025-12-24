@@ -272,15 +272,16 @@ def main(args, model_source, gt, id, encoder_path, fp):
         )
         load_model = load_model.to(DEVICE)
         mask_size = load_model.visual.image_size
-        # TODO: remove later
-        print(mask_size, type(mask_size))
+        if isinstance(mask_size, tuple):
+            mask_size = mask_size[0]
+
     elif model_source == "openclip_backdoored":
         (bd_model_path, arch, key) = encoder_path
         load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
 
         mask_size = load_model.visual.image_size
-        # TODO: remove later
-        print(mask_size, type(mask_size))
+        if isinstance(mask_size, tuple):
+            mask_size = mask_size[0]
         # load ckpt
         bd_model_ckpt = torch.load(bd_model_path, map_location=DEVICE)
         load_model.visual.load_state_dict(bd_model_ckpt)
