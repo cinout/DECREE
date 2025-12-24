@@ -9,7 +9,7 @@ file_names = [
     "results/results_openclip_cossim.txt",
 ]
 
-triggers = ["badnets", "wanet", "nashville", "blend", "sig"]
+triggers = ["badnets", "wanet", "nashville", "blend", "sig", "ftrojan"]
 
 for file_name in file_names:
     print(f"============={file_name}=============")

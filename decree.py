@@ -685,7 +685,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--eval_metric",
         type=str,
-        choices=["l2", "l2_norm", "lid", "lid_on_clean", "cos_sim"],  # TODO: add more
+        choices=[
+            "l2",
+            "l2_norm",
+            "lid",
+            "lid_on_clean",
+            "cos_sim",
+        ],  # TODO: other metrics
         default="l2_norm",
         help="our evaluation metric",
     )
@@ -745,6 +751,10 @@ if __name__ == "__main__":
         # else:
         #     raise Exception("Unknown model architecture")
 
+        # TODO: remove this later
+        if arch is not "RN50x4":
+            continue
+
         main(
             args,
             "openclip",
@@ -760,6 +770,10 @@ if __name__ == "__main__":
 
         if os.path.isdir(trigger_folder):
             for encoder_name in os.listdir(trigger_folder):
+
+                # TODO: remove this later
+                if "RN50x4" not in encoder_name and "ftrojan" not in encoder_name:
+                    continue
 
                 encodeer_filepath = os.path.join(
                     trigger_folder, encoder_name

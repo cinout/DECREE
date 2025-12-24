@@ -5,7 +5,7 @@ Read results from eval_attack.py
 import re
 
 
-file_path = "slurm-19610862-[trigger_wanet,per=5%].out"
+file_path = "slurm-19983408.out"
 output_file = "z_results_attack_encoder.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
