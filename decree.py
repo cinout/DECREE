@@ -752,7 +752,7 @@ if __name__ == "__main__":
         #     raise Exception("Unknown model architecture")
 
         # TODO: remove this later
-        if arch is not "RN50x4":
+        if arch != "RN50x4":
             continue
 
         main(
