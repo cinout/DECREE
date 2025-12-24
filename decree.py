@@ -272,6 +272,8 @@ def main(args, model_source, gt, id, encoder_path, fp):
         )
         load_model = load_model.to(DEVICE)
         mask_size = load_model.visual.image_size
+        # TODO: remove later
+        print(mask_size, type(mask_size))
     elif model_source == "openclip_backdoored":
         (bd_model_path, arch, key) = encoder_path
         load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
