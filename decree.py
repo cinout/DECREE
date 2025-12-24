@@ -297,20 +297,29 @@ def main(args, model_source, gt, id, encoder_path, fp):
             map_location=DEVICE,
         )
     else:
-        trigger_file = "trigger/trigger_pt_white_185_24.npz"
+        ### This old code is not efficient, as we don't really the trigger_file, but only the trigger size
+        # trigger_file = "trigger/trigger_pt_white_185_24.npz"
+        # trigger_mask, trigger_patch = None, None
+        # with np.load(trigger_file) as data:
+        #     trigger_mask = np.reshape(data["tm"], (mask_size, mask_size, 3))
+        #     trigger_patch = np.reshape(
+        #         data["t"], (mask_size, mask_size, 3)
+        #     )  # .astype(np.uint8)
 
-        trigger_mask, trigger_patch = None, None
-        with np.load(trigger_file) as data:
-            trigger_mask = np.reshape(data["tm"], (mask_size, mask_size, 3))
-            trigger_patch = np.reshape(
-                data["t"], (mask_size, mask_size, 3)
-            )  # .astype(np.uint8)
-        train_mask_2d = torch.rand(trigger_mask.shape[:2], dtype=torch.float64).to(
+        # train_mask_2d = torch.rand(trigger_mask.shape[:2], dtype=torch.float64).to(
+        #     DEVICE
+        # )  # [h, w]
+        # train_patch = torch.rand_like(
+        #     torch.tensor(trigger_patch), dtype=torch.float64
+        # ).to(DEVICE)
+
+        train_mask_2d = torch.rand((mask_size, mask_size), dtype=torch.float64).to(
             DEVICE
         )  # [h, w]
-        train_patch = torch.rand_like(
-            torch.tensor(trigger_patch), dtype=torch.float64
-        ).to(DEVICE)
+        train_patch = torch.rand((mask_size, mask_size, 3), dtype=torch.float64).to(
+            DEVICE
+        )
+
         # Purpose: optimization in a bounded range is hard for gradient-based methods. By using arctanh, you convert the variable into an unconstrained space (so the optimizer can freely adjust any real value). During forward passes, you can map it back to [0,1] using the hyperbolic tangent: x = (torch.tanh(z) + 1) / 2
         train_mask_2d = torch.arctanh((train_mask_2d - 0.5) * (2 - epsilon()))
         train_patch = torch.arctanh((train_patch - 0.5) * (2 - epsilon()))
