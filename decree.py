@@ -766,9 +766,9 @@ if __name__ == "__main__":
         # else:
         #     raise Exception("Unknown model architecture")
 
-        # TODO: remove this later
-        if arch != "RN50x4":
-            continue
+        # # TODO[DONE]: remove this later
+        # if arch != "RN50x4":
+        #     continue
 
         main(
             args,
@@ -786,9 +786,9 @@ if __name__ == "__main__":
         if os.path.isdir(trigger_folder):
             for encoder_name in os.listdir(trigger_folder):
 
-                # TODO: remove this later
-                if "RN50x4" not in encoder_name and "ftrojan" not in encoder_name:
-                    continue
+                # # TODO[DONE]: remove this later
+                # if "RN50x4" not in encoder_name and "ftrojan" not in encoder_name:
+                #     continue
 
                 encodeer_filepath = os.path.join(
                     trigger_folder, encoder_name

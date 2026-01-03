@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="invt"
 #SBATCH --account=punim1623
-#SBATCH --time=0-00:30:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -36,8 +36,9 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-  --eval_metric cos_sim \
-  --note "eval_metric: cos_sim" \
+  --eval_metric lid_on_clean \
+  --note "eval_metric: lid_on_clean" \
+  --learned_trigger_folder trigger_inv_decree_default \
 
 
 ##Log this job's resource usage stats###
