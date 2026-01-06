@@ -1,5 +1,5 @@
 """
-Evaluate the ACC and ASR performance of the attack with the "inverted" trigger (not the actual trigger used to create the backdoored model)
+Evaluate the ACC and ASR performance of the attack with the "inverted" trigger (NOT the actual trigger used to create the backdoored model)
 """
 
 import os
@@ -79,6 +79,8 @@ def run(
             torch.FloatTensor(_std[args.eval_dataset.lower()]),
         )
 
+        mask_size = 224
+
     elif encoder_type == "hanxun":
         model, _, preprocess = open_clip.create_model_and_transforms(path)
         model = model.to(device)
@@ -87,6 +89,10 @@ def run(
         model.eval()
 
         _normalize = preprocess.transforms[-1]  # take the last one, norm by (mean, std)
+
+        mask_size = model.visual.image_size
+        if isinstance(mask_size, tuple):
+            mask_size = mask_size[0]
 
     elif encoder_type == "openclip":
         model, _, preprocess = open_clip.create_model_and_transforms(
@@ -98,10 +104,31 @@ def run(
         model.eval()
         _normalize = preprocess.transforms[-1]
 
-    # resize value needs to be adjusted (not urgent as this file is not used)
+        mask_size = model.visual.image_size
+        if isinstance(mask_size, tuple):
+            mask_size = mask_size[0]
+
+    elif encoder_type == "openclip_backdoored":
+        model, _, preprocess = open_clip.create_model_and_transforms(
+            arch, pretrained=key
+        )
+        ckpt = torch.load(path, map_location=device)
+        model.visual.load_state_dict(ckpt)
+        model = model.to(device)
+        for param in model.parameters():
+            param.requires_grad = False
+        model.eval()
+        _normalize = preprocess.transforms[-1]
+
+        mask_size = model.visual.image_size
+        if isinstance(mask_size, tuple):
+            mask_size = mask_size[0]
+
     data_transforms = [
-        transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
-        transforms.CenterCrop((224, 224)),
+        transforms.Resize(
+            mask_size, interpolation=transforms.InterpolationMode.BICUBIC
+        ),
+        transforms.CenterCrop((mask_size, mask_size)),
         _convert_to_rgb,
         transforms.ToTensor(),
     ]
@@ -133,7 +160,7 @@ def run(
         clip_tokenizer = clip.tokenize
     elif encoder_type == "hanxun":
         clip_tokenizer = get_tokenizer(path)
-    elif encoder_type == "openclip":
+    elif encoder_type in ["openclip", "openclip_backdoored"]:
         clip_tokenizer = get_tokenizer(arch)
 
     # Build Text Template
@@ -179,12 +206,10 @@ def run(
                     texts
                 ).float()  # [1, embding_size]
 
-            elif encoder_type == "hanxun":
+            elif encoder_type in ["hanxun", "openclip", "openclip_backdoored"]:
                 class_embeddings = model.encode_text(
                     texts
                 )  # produces a tensor of shape [num_templates, embedding_dim]
-            elif encoder_type == "openclip":
-                class_embeddings = model.encode_text(texts)
 
             class_embedding = F.normalize(class_embeddings, dim=-1).mean(
                 dim=0
@@ -228,10 +253,8 @@ def run(
             if encoder_type == "decree":
                 # backdoor_clip_for_visual_encoding performs normalization, equivalent to .encode_image(, normalize=True)
                 image_features = backdoor_clip_for_visual_encoding(_normalize(images))
-            elif encoder_type == "hanxun":
+            elif encoder_type in ["hanxun", "openclip", "openclip_backdoored"]:
                 # .encode_image() provides normalization option
-                image_features = model.encode_image(_normalize(images), normalize=True)
-            elif encoder_type == "openclip":
                 image_features = model.encode_image(_normalize(images), normalize=True)
 
         # 100* is used to sharpen the softmax distribution — making the model more confident in its top prediction.
@@ -250,22 +273,16 @@ def run(
             bd_labels = torch.tensor(
                 [len(classnames) - 1 for _ in range(len(images))]
             ).to(device)
-        if encoder_type == "hanxun":
+        if encoder_type in ["hanxun", "openclip", "openclip_backdoored"]:
+            # FIXME: this is hack code, as openclip models are clean, so no bd label is available
             bd_labels = torch.tensor(
-                [classnames.index("banana") for _ in range(len(images))]
-            ).to(device)
-        elif encoder_type == "openclip":
-            bd_labels = torch.tensor(
-                # FIXME: this is hack code, as openclip models are clean, so no bd label is available
                 [classnames.index("banana") for _ in range(len(images))]
             ).to(device)
 
         with torch.no_grad():
             if encoder_type == "decree":
                 image_features = backdoor_clip_for_visual_encoding(_normalize(images))
-            elif encoder_type == "hanxun":
-                image_features = model.encode_image(_normalize(images), normalize=True)
-            elif encoder_type == "openclip":
+            elif encoder_type in ["hanxun", "openclip", "openclip_backdoored"]:
                 image_features = model.encode_image(_normalize(images), normalize=True)
 
         logits = 100.0 * image_features @ zeroshot_weights
@@ -285,7 +302,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--trigger_saved_path",
         type=str,
-        default="trigger_inv_results/",
+        default="trigger_inv_decree_default/",
         help="estimated trigger and mask path",
     )
     parser.add_argument(
@@ -324,34 +341,63 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    for encoder in pretrained_clip_sources["decree"]:
-        encoder_info = process_decree_encoder(encoder)
-        if encoder_info["gt"] == 1:
-            run(
-                args,
-                "decree",
-                encoder_info["id"],
-                arch=encoder_info["arch"],
-                path=encoder_info["path"],
-                attack_label=encoder_info["attack_label"],
-            )
-    for encoder in pretrained_clip_sources["hanxun"]:
-        encoder_info = process_hanxun_encoder(encoder)
-        if encoder_info["gt"] == 1:
-            run(
-                args,
-                "hanxun",
-                encoder_info["id"],
-                arch=encoder_info["arch"],
-                path=encoder_info["path"],
-            )
-    for encoder in pretrained_clip_sources["openclip"]:
-        encoder_info = process_openclip_encoder(encoder)
-        if encoder_info["gt"] == 1:
-            run(
-                args,
-                "openclip",
-                encoder_info["id"],
-                arch=encoder_info["arch"],
-                key=encoder_info["key"],
-            )
+    # for encoder in pretrained_clip_sources["decree"]:
+    #     encoder_info = process_decree_encoder(encoder)
+    #     if encoder_info["gt"] == 1:
+    #         run(
+    #             args,
+    #             "decree",
+    #             encoder_info["id"],
+    #             arch=encoder_info["arch"],
+    #             path=encoder_info["path"],
+    #             attack_label=encoder_info["attack_label"],
+    #         )
+    # for encoder in pretrained_clip_sources["hanxun"]:
+    #     encoder_info = process_hanxun_encoder(encoder)
+    #     if encoder_info["gt"] == 1:
+    #         run(
+    #             args,
+    #             "hanxun",
+    #             encoder_info["id"],
+    #             arch=encoder_info["arch"],
+    #             path=encoder_info["path"],
+    #         )
+    # for encoder in pretrained_clip_sources["openclip"]:
+    #     encoder_info = process_openclip_encoder(encoder)
+    #     if encoder_info["gt"] == 1:
+    #         run(
+    #             args,
+    #             "openclip",
+    #             encoder_info["id"],
+    #             arch=encoder_info["arch"],
+    #             key=encoder_info["key"],
+    #         )
+
+    saved_encoders_folder = "saved_openclip_bd_encoders_all"
+    for trigger in os.listdir(saved_encoders_folder):
+        trigger_folder = os.path.join(saved_encoders_folder, trigger)
+
+        if os.path.isdir(trigger_folder):
+            for encoder_name in os.listdir(trigger_folder):
+
+                encodeer_filepath = os.path.join(
+                    trigger_folder, encoder_name
+                )  # the full path for each encodeer
+
+                name_split = encoder_name.split("_")
+                arch = name_split[1]
+                key = "_".join(name_split[2:-6])
+                trainset_percent = name_split[-3]
+                ep = name_split[-1].split(".")[0]
+                id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+
+                encoder_path = os.path.join(trigger_folder, encoder_name)
+
+                run(
+                    args,
+                    "openclip_backdoored",
+                    id,
+                    arch=arch,
+                    key=key,
+                    path=encoder_path,
+                )

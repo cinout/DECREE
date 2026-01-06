@@ -4,7 +4,7 @@ from sklearn.metrics import roc_auc_score
 # negative (0): clean
 
 file_names = [
-    "results/results_openclip_cossim_comprehensive.txt",
+    "results/results_openclip_lidonclean_RN50X4_and_ftrojan.txt",
 ]
 
 triggers = ["badnets", "wanet", "nashville", "blend", "sig", "ftrojan"]
