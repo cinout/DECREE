@@ -341,27 +341,27 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # for encoder in pretrained_clip_sources["decree"]:
-    #     encoder_info = process_decree_encoder(encoder)
-    #     if encoder_info["gt"] == 1:
-    #         run(
-    #             args,
-    #             "decree",
-    #             encoder_info["id"],
-    #             arch=encoder_info["arch"],
-    #             path=encoder_info["path"],
-    #             attack_label=encoder_info["attack_label"],
-    #         )
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
-    #     if encoder_info["gt"] == 1:
-    #         run(
-    #             args,
-    #             "hanxun",
-    #             encoder_info["id"],
-    #             arch=encoder_info["arch"],
-    #             path=encoder_info["path"],
-    #         )
+    for encoder in pretrained_clip_sources["decree"]:
+        encoder_info = process_decree_encoder(encoder)
+        if encoder_info["gt"] == 1:
+            run(
+                args,
+                "decree",
+                encoder_info["id"],
+                arch=encoder_info["arch"],
+                path=encoder_info["path"],
+                attack_label=encoder_info["attack_label"],
+            )
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
+        if encoder_info["gt"] == 1:
+            run(
+                args,
+                "hanxun",
+                encoder_info["id"],
+                arch=encoder_info["arch"],
+                path=encoder_info["path"],
+            )
     # for encoder in pretrained_clip_sources["openclip"]:
     #     encoder_info = process_openclip_encoder(encoder)
     #     if encoder_info["gt"] == 1:
@@ -373,31 +373,31 @@ if __name__ == "__main__":
     #             key=encoder_info["key"],
     #         )
 
-    saved_encoders_folder = "saved_openclip_bd_encoders_all"
-    for trigger in os.listdir(saved_encoders_folder):
-        trigger_folder = os.path.join(saved_encoders_folder, trigger)
+    # saved_encoders_folder = "saved_openclip_bd_encoders_all"
+    # for trigger in os.listdir(saved_encoders_folder):
+    #     trigger_folder = os.path.join(saved_encoders_folder, trigger)
 
-        if os.path.isdir(trigger_folder):
-            for encoder_name in os.listdir(trigger_folder):
+    #     if os.path.isdir(trigger_folder):
+    #         for encoder_name in os.listdir(trigger_folder):
 
-                encodeer_filepath = os.path.join(
-                    trigger_folder, encoder_name
-                )  # the full path for each encodeer
+    #             encodeer_filepath = os.path.join(
+    #                 trigger_folder, encoder_name
+    #             )  # the full path for each encodeer
 
-                name_split = encoder_name.split("_")
-                arch = name_split[1]
-                key = "_".join(name_split[2:-6])
-                trainset_percent = name_split[-3]
-                ep = name_split[-1].split(".")[0]
-                id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+    #             name_split = encoder_name.split("_")
+    #             arch = name_split[1]
+    #             key = "_".join(name_split[2:-6])
+    #             trainset_percent = name_split[-3]
+    #             ep = name_split[-1].split(".")[0]
+    #             id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
 
-                encoder_path = os.path.join(trigger_folder, encoder_name)
+    #             encoder_path = os.path.join(trigger_folder, encoder_name)
 
-                run(
-                    args,
-                    "openclip_backdoored",
-                    id,
-                    arch=arch,
-                    key=key,
-                    path=encoder_path,
-                )
+    #             run(
+    #                 args,
+    #                 "openclip_backdoored",
+    #                 id,
+    #                 arch=arch,
+    #                 key=key,
+    #                 path=encoder_path,
+    #             )
