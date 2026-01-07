@@ -1,36 +1,14 @@
-import numpy as np
-import open_clip
-import torch
-from torchvision import transforms
-from utils.zero_shot_metadata import zero_shot_meta_dict
-import torch.nn.functional as F
-import re
-from datetime import datetime
-import random
-import kornia.augmentation as kornia_aug
-import os
+file_handler = open("results/results_openclip_cossim_comprehensive.txt", "r")
+lines = file_handler.readlines()
+output_file = "z_results_detection_scores.txt"
+output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
-saved_encoders_folder = "saved_openclip_bd_encoders_all"
-for trigger in os.listdir(saved_encoders_folder):
-    trigger_folder = os.path.join(saved_encoders_folder, trigger)
+for line in lines:
+    contents = line.split(",")
+    id, score = (
+        contents[0],
+        float(contents[3]),
+    )
+    output_acc_asr_file_handle.write(f"{id}\t{score*100:.2f}\n")
 
-    if os.path.isdir(trigger_folder):
-        for encoder_name in os.listdir(trigger_folder):
-
-            print("============")
-
-            print(encoder_name)
-
-            name_split = encoder_name.split("_")
-            arch = name_split[1]
-            key = "_".join(name_split[2:-6])
-            trainset_percent = name_split[-3]
-            ep = name_split[-1].split(".")[0]
-            id = f"OPENCLIP_backdoored_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
-
-            path = os.path.join(trigger_folder, encoder_name)
-            print(path)
-
-            encodeer_filepath = os.path.join(
-                trigger_folder, encoder_name
-            )  # the full path for each encodeer
+file_handler.close()

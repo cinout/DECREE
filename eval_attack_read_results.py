@@ -5,8 +5,8 @@ Read results from eval_attack.py
 import re
 
 
-file_path = "slurm-18709411-[OpenCLIP-Clean].out"
-output_file = "z_results.txt"
+file_path = "slurm-20380718-[openclip_bd].out"
+output_file = "z_results_eval_attack.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
 metric_pattern = r".*Clean Acc Top-1:\s*([\d.]+)\s*ASR Top-1:\s*([\d.]+).*"
