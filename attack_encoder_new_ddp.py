@@ -125,7 +125,23 @@ def run(args, encoder_arch, encoder_key, manual_id):
         encoder_arch, pretrained=encoder_key
     )  # use preprocess_val because no augmentation is better for bd trigger
     openclip_visual_image_size = bd_model.visual.image_size
+    ###############################################
+    # Freeze text encoder
+    ###############################################
+    for p in bd_model.transformer.parameters():  # text encoder
+        p.requires_grad = False
 
+    # Freeze token + positional embeddings
+    bd_model.token_embedding.weight.requires_grad = False
+    bd_model.positional_embedding.requires_grad = False
+
+    # Freeze text projection
+    bd_model.text_projection.requires_grad = False
+
+    # (Optional) freeze logit scale
+    bd_model.logit_scale.requires_grad = False
+
+    # DDP
     if args.distributed:
         if args.gpu is None:
             bd_model.cuda()
@@ -135,6 +151,12 @@ def run(args, encoder_arch, encoder_key, manual_id):
             bd_model = DDP(bd_model, device_ids=[args.gpu])
     else:
         bd_model = bd_model.to(device)
+
+    bd_model = (
+        bd_model.module
+        if isinstance(bd_model, torch.nn.parallel.DistributedDataParallel)
+        else bd_model
+    )
 
     """
     Trigger Function
@@ -177,22 +199,6 @@ def run(args, encoder_arch, encoder_key, manual_id):
 
     elif args.trigger == "ftrojan":
         trigger_fn = add_ftrojan_trigger
-
-    ###############################################
-    # Freeze text encoder
-    ###############################################
-    for p in bd_model.transformer.parameters():  # text encoder
-        p.requires_grad = False
-
-    # Freeze token + positional embeddings
-    bd_model.token_embedding.weight.requires_grad = False
-    bd_model.positional_embedding.requires_grad = False
-
-    # Freeze text projection
-    bd_model.text_projection.requires_grad = False
-
-    # (Optional) freeze logit scale
-    bd_model.logit_scale.requires_grad = False
 
     transforms_up_to_totensor = transforms.Compose(preprocess_val.transforms[:-1])
     # transforms_up_to_totensor = transforms.Compose(
