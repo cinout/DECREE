@@ -41,7 +41,7 @@ srun python -u attack_encoder_new_ddp.py \
   --frac_per_class 0.05 \
   --epochs 1 \
   --encoder_scope 44 45 46 47 48 49 50 51 52 53 \
-  --batch_size 128 \
+  --batch_size 64 \
     
 
 ##Log this job's resource usage stats###
