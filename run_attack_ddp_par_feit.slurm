@@ -16,30 +16,31 @@
 #SBATCH --time=1-16:00:00
 
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --gres=gpu:1
+#SBATCH --ntasks-per-node=2
+#SBATCH --gres=gpu:2
 ### "ntasks-per-node" should have same value as "res=gpu:"
+#SBATCH --cpus-per-task=1
 
 #SBATCH --mem=120G
 
-### export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
-### export MASTER_PORT=28400
-### echo ">>> NODELIST="${SLURM_NODELIST}
-### master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-### export MASTER_ADDR=$master_addr
-### echo ">>> MASTER_ADDR="$MASTER_ADDR
+export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
+export MASTER_PORT=28400
+echo ">>> NODELIST="${SLURM_NODELIST}
+master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_ADDR=$master_addr
+echo ">>> MASTER_ADDR="$MASTER_ADDR
 
 module purge
 
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python -u attack_encoder_new.py \
-  --z_note "ftrojan with 5% trainset, encoder_scope: 10-12, 41-43" \
-  --trigger ftrojan \
+srun python -u attack_encoder_new_ddp.py \
+  --z_note "more encoder archs, trigger:badnets, encoder_scope: 44-45" \
+  --trigger badnets \
   --frac_per_class 0.05 \
   --epochs 1 \
-  --encoder_scope 10 11 12 41 42 43 \
+  --encoder_scope 44 45 \
     
 
 ##Log this job's resource usage stats###
