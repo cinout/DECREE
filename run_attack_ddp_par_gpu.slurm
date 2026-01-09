@@ -36,8 +36,8 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 srun python -u attack_encoder_new_ddp.py \
-  --z_note "more encoder archs, trigger:sig, encoder_scope: 44-53" \
-  --trigger sig \
+  --z_note "more encoder archs, trigger:ftrojan, encoder_scope: 44-53" \
+  --trigger ftrojan \
   --frac_per_class 0.05 \
   --epochs 1 \
   --encoder_scope 44 45 46 47 48 49 50 51 52 53 \
