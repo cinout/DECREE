@@ -125,6 +125,8 @@ def run(args, encoder_arch, encoder_key, manual_id):
         encoder_arch, pretrained=encoder_key
     )  # use preprocess_val because no augmentation is better for bd trigger
     openclip_visual_image_size = bd_model.visual.image_size
+    if isinstance(openclip_visual_image_size, tuple):
+        openclip_visual_image_size = openclip_visual_image_size[0]
     ###############################################
     # Freeze text encoder
     ###############################################
