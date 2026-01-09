@@ -5,7 +5,7 @@ Read results from eval_attack.py
 import re
 
 
-file_path = "slurm-20380718-[openclip_bd].out"
+file_path = "slurm-20439215.out"
 output_file = "z_results_eval_attack.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
 
