@@ -443,14 +443,29 @@ pretrained_clip_sources = {
         # FIXME: they require more computational resources during backdoor fine-tuning
         {"manual_id": 44, "arch": "RN50x16", "key": "openai", "gt": 0},
         {"manual_id": 45, "arch": "RN50x64", "key": "openai", "gt": 0},
-        # {"manual_id": 43,"arch": "ViT-L-14", "key": "openai", "gt": 0},
-        # {"manual_id": 44,"arch": "ViT-L-14", "key": "laion400m_e31", "gt": 0},
-        # {"manual_id": 45,"arch": "ViT-L-14", "key": "laion400m_e32", "gt": 0},
-        # {"manual_id": 46,"arch": "ViT-L-14", "key": "laion2b_s32b_b82k", "gt": 0},
-        # {"manual_id": 47,"arch": "ViT-L-14", "key": "datacomp_xl_s13b_b90k", "gt": 0},
-        # {"manual_id": 48,"arch": "ViT-L-14", "key": "commonpool_xl_clip_s13b_b90k", "gt": 0},
-        # {"manual_id": 49,"arch": "ViT-L-14", "key": "commonpool_xl_laion_s13b_b90k", "gt": 0},
-        # {"manual_id": 50,"arch": "ViT-L-14", "key": "commonpool_xl_s13b_b90k", "gt": 0},
+        {"manual_id": 46, "arch": "ViT-L-14", "key": "openai", "gt": 0},
+        {"manual_id": 47, "arch": "ViT-L-14", "key": "laion400m_e31", "gt": 0},
+        {"manual_id": 48, "arch": "ViT-L-14", "key": "laion400m_e32", "gt": 0},
+        {"manual_id": 49, "arch": "ViT-L-14", "key": "laion2b_s32b_b82k", "gt": 0},
+        {"manual_id": 50, "arch": "ViT-L-14", "key": "datacomp_xl_s13b_b90k", "gt": 0},
+        {
+            "manual_id": 51,
+            "arch": "ViT-L-14",
+            "key": "commonpool_xl_clip_s13b_b90k",
+            "gt": 0,
+        },
+        {
+            "manual_id": 52,
+            "arch": "ViT-L-14",
+            "key": "commonpool_xl_laion_s13b_b90k",
+            "gt": 0,
+        },
+        {
+            "manual_id": 53,
+            "arch": "ViT-L-14",
+            "key": "commonpool_xl_s13b_b90k",
+            "gt": 0,
+        },
     ],
 }
 
