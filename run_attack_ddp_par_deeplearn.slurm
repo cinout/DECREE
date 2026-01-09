@@ -16,14 +16,14 @@
 #SBATCH --time=1-16:00:00
 
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=3
-#SBATCH --gres=gpu:3
+#SBATCH --ntasks-per-node=2
+#SBATCH --gres=gpu:2
 ### "ntasks-per-node" should have same value as "res=gpu:"
 #SBATCH --cpus-per-task=1
 
 #SBATCH --mem=120G
 
-export WORLD_SIZE=3   ### update world size: nodes x ntasks-per-node
+export WORLD_SIZE=2   ### update world size: nodes x ntasks-per-node
 export MASTER_PORT=28400
 echo ">>> NODELIST="${SLURM_NODELIST}
 master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
