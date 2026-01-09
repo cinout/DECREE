@@ -15,15 +15,15 @@
 #SBATCH --account=punim1623
 #SBATCH --time=0-04:00:00
 
-#SBATCH --nodes=2
-#SBATCH --ntasks-per-node=2
-#SBATCH --gres=gpu:2
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=3
+#SBATCH --gres=gpu:3
 ### "ntasks-per-node" should have same value as "res=gpu:"
 #SBATCH --cpus-per-task=1
 
 #SBATCH --mem=120G
 
-export WORLD_SIZE=4   ### update world size: nodes x ntasks-per-node
+export WORLD_SIZE=3   ### update world size: nodes x ntasks-per-node
 export MASTER_PORT=28400
 echo ">>> NODELIST="${SLURM_NODELIST}
 master_addr=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
@@ -41,6 +41,7 @@ srun python -u attack_encoder_new_ddp.py \
   --frac_per_class 0.05 \
   --epochs 1 \
   --encoder_scope 44 45 46 47 48 49 50 51 52 53 \
+  --batch_size 128 \
     
 
 ##Log this job's resource usage stats###
