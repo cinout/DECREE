@@ -730,87 +730,87 @@ if __name__ == "__main__":
 
     fp = open(args.result_file, "a")
 
-    for encoder in pretrained_clip_sources["decree"]:
-        encoder_info = process_decree_encoder(encoder)
-
-        main(
-            args,
-            "decree",
-            encoder_info["gt"],
-            encoder_info["id"],
-            encoder_info["path"],
-            fp,
-        )
-
-    for encoder in pretrained_clip_sources["hanxun"]:
-        encoder_info = process_hanxun_encoder(encoder)
-
-        main(
-            args,
-            "hanxun",
-            encoder_info["gt"],
-            encoder_info["id"],
-            encoder_info["path"],
-            fp,
-        )
-
-    # for encoder in pretrained_clip_sources["openclip"]:
-    #     encoder_info = process_openclip_encoder(encoder)
-    #     arch = encoder_info["arch"]
-
-    #     # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
-    #     # if "vit" in arch.lower():
-    #     #     args.coeff_l2_dist = 0.001
-    #     # elif "rn" in arch.lower():
-    #     #     args.coeff_l2_dist = 0.0001
-    #     # else:
-    #     #     raise Exception("Unknown model architecture")
-
-    #     # # TODO[DONE]: remove this later
-    #     # if arch != "RN50x4":
-    #     #     continue
+    # for encoder in pretrained_clip_sources["decree"]:
+    #     encoder_info = process_decree_encoder(encoder)
 
     #     main(
     #         args,
-    #         "openclip",
+    #         "decree",
     #         encoder_info["gt"],
     #         encoder_info["id"],
-    #         (arch, encoder_info["key"]),
+    #         encoder_info["path"],
     #         fp,
     #     )
 
-    # saved_encoders_folder = "saved_openclip_bd_encoders_all"
-    # for trigger in os.listdir(saved_encoders_folder):
-    #     trigger_folder = os.path.join(saved_encoders_folder, trigger)
+    # for encoder in pretrained_clip_sources["hanxun"]:
+    #     encoder_info = process_hanxun_encoder(encoder)
 
-    #     if os.path.isdir(trigger_folder):
-    #         for encoder_name in os.listdir(trigger_folder):
+    #     main(
+    #         args,
+    #         "hanxun",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         encoder_info["path"],
+    #         fp,
+    #     )
 
-    #             # # TODO[DONE]: remove this later
-    #             # if "RN50x4" not in encoder_name and "ftrojan" not in encoder_name:
-    #             #     continue
+    for encoder in pretrained_clip_sources["openclip"]:
+        encoder_info = process_openclip_encoder(encoder)
+        arch = encoder_info["arch"]
 
-    #             encodeer_filepath = os.path.join(
-    #                 trigger_folder, encoder_name
-    #             )  # the full path for each encodeer
+        # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
+        # if "vit" in arch.lower():
+        #     args.coeff_l2_dist = 0.001
+        # elif "rn" in arch.lower():
+        #     args.coeff_l2_dist = 0.0001
+        # else:
+        #     raise Exception("Unknown model architecture")
 
-    #             name_split = encoder_name.split("_")
-    #             arch = name_split[1]
-    #             key = "_".join(name_split[2:-6])
-    #             trainset_percent = name_split[-3]
-    #             ep = name_split[-1].split(".")[0]
-    #             id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+        # # TODO: remove this later
+        if arch != "ViT-L-14":
+            continue
 
-    #             encoder_path = os.path.join(trigger_folder, encoder_name)
+        main(
+            args,
+            "openclip",
+            encoder_info["gt"],
+            encoder_info["id"],
+            (arch, encoder_info["key"]),
+            fp,
+        )
 
-    #             # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
-    #             # if "vit" in arch.lower():
-    #             #     args.coeff_l2_dist = 0.001
-    #             # elif "rn" in arch.lower():
-    #             #     args.coeff_l2_dist = 0.0001
-    #             # else:
-    #             #     raise Exception("Unknown model architecture")
+    saved_encoders_folder = "saved_openclip_bd_encoders_all"
+    for trigger in os.listdir(saved_encoders_folder):
+        trigger_folder = os.path.join(saved_encoders_folder, trigger)
 
-    #             main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
+        if os.path.isdir(trigger_folder):
+            for encoder_name in os.listdir(trigger_folder):
+
+                # # TODO: remove this later
+                if "ViT-L-14" not in encoder_name:
+                    continue
+
+                encodeer_filepath = os.path.join(
+                    trigger_folder, encoder_name
+                )  # the full path for each encodeer
+
+                name_split = encoder_name.split("_")
+                arch = name_split[1]
+                key = "_".join(name_split[2:-6])
+                trainset_percent = name_split[-3]
+                ep = name_split[-1].split(".")[0]
+                id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+
+                encoder_path = os.path.join(trigger_folder, encoder_name)
+
+                # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
+                # if "vit" in arch.lower():
+                #     args.coeff_l2_dist = 0.001
+                # elif "rn" in arch.lower():
+                #     args.coeff_l2_dist = 0.0001
+                # else:
+                #     raise Exception("Unknown model architecture")
+
+                main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     fp.close()
