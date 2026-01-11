@@ -36,8 +36,8 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 srun python -u attack_encoder_new_ddp.py \
-  --z_note "more encoder archs, trigger:sig, encoder_scope: 54-57, p=0.05" \
-  --trigger sig \
+  --z_note "more encoder archs, trigger:nashville, encoder_scope: 54-57, p=0.05" \
+  --trigger nashville \
   --frac_per_class 0.05 \
   --epochs 1 \
   --encoder_scope 54 55 56 57 \

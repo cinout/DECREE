@@ -36,8 +36,8 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 srun python -u attack_encoder_new_ddp.py \
-  --z_note "more encoder archs, trigger:badnets, encoder_scope: 54-57, p=0.05" \
-  --trigger badnets \
+  --z_note "more encoder archs, trigger:wanet, encoder_scope: 54-57, p=0.05" \
+  --trigger wanet \
   --frac_per_class 0.05 \
   --epochs 1 \
   --encoder_scope 54 55 56 57 \
