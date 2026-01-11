@@ -466,6 +466,10 @@ pretrained_clip_sources = {
             "key": "commonpool_xl_s13b_b90k",
             "gt": 0,
         },
+        {"manual_id": 54, "arch": "ViT-L-14", "key": "metaclip_400m", "gt": 0},
+        {"manual_id": 55, "arch": "ViT-L-14", "key": "metaclip_fullcc", "gt": 0},
+        {"manual_id": 56, "arch": "ViT-L-14", "key": "dfn2b", "gt": 0},
+        {"manual_id": 57, "arch": "ViT-L-14", "key": "dfn2b_s39b", "gt": 0},
     ],
 }
 
