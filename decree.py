@@ -734,29 +734,29 @@ if __name__ == "__main__":
 
     fp = open(args.result_file, "a")
 
-    # for encoder in pretrained_clip_sources["decree"]:
-    #     encoder_info = process_decree_encoder(encoder)
+    for encoder in pretrained_clip_sources["decree"]:
+        encoder_info = process_decree_encoder(encoder)
 
-    #     main(
-    #         args,
-    #         "decree",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         encoder_info["path"],
-    #         fp,
-    #     )
+        main(
+            args,
+            "decree",
+            encoder_info["gt"],
+            encoder_info["id"],
+            encoder_info["path"],
+            fp,
+        )
 
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
 
-    #     main(
-    #         args,
-    #         "hanxun",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         encoder_info["path"],
-    #         fp,
-    #     )
+        main(
+            args,
+            "hanxun",
+            encoder_info["gt"],
+            encoder_info["id"],
+            encoder_info["path"],
+            fp,
+        )
 
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)
@@ -771,7 +771,7 @@ if __name__ == "__main__":
         #     raise Exception("Unknown model architecture")
 
         # # TODO: remove this later
-        if arch != "ViT-L-14":
+        if arch == "ViT-L-14":
             continue
 
         main(
@@ -791,7 +791,7 @@ if __name__ == "__main__":
             for encoder_name in os.listdir(trigger_folder):
 
                 # # TODO: remove this later
-                if "ViT-L-14" not in encoder_name:
+                if "ViT-L-14" in encoder_name:
                     continue
 
                 encodeer_filepath = os.path.join(
