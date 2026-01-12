@@ -220,6 +220,10 @@ def calculate_distance_metric(
             .detach()
             .tolist()
         )  # [bs]
+
+        # TODO: remove later
+        print("cosine similarity average:", compute_self_cos_sim(bd_out_all))
+
         return np.mean(cos_sim)
 
     # TODO: other metrics
