@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="test"
 #SBATCH --account=punim1623
-#SBATCH --time=0-12:00:00
+#SBATCH --time=1-04:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -35,11 +35,11 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --z_note "ftrojan with 5% trainset, encoder_scope: 15-22" \
-  --trigger ftrojan \
-  --frac_per_class 0.05 \
+  --z_note "badnets with 20% trainset, encoder_scope: 27-33" \
+  --trigger badnets \
+  --frac_per_class 0.2 \
   --epochs 1 \
-  --encoder_scope 15 16 17 18 19 20 21 22 \
+  --encoder_scope 27 28 29 30 31 32 33 \
     
 
 ##Log this job's resource usage stats###
