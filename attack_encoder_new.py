@@ -122,6 +122,8 @@ def run(args, encoder_arch, encoder_key, manual_id):
     )  # use preprocess_val because no augmentation is better for bd trigger
     bd_model = bd_model.to(device)
     openclip_visual_image_size = bd_model.visual.image_size
+    if isinstance(openclip_visual_image_size, tuple):
+        openclip_visual_image_size = openclip_visual_image_size[0]
 
     """
     Trigger Function
