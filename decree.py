@@ -221,8 +221,7 @@ def calculate_distance_metric(
             .tolist()
         )  # [bs]
 
-        # TODO: remove later
-        print("cosine similarity average:", compute_self_cos_sim(bd_out_all))
+        # print("cosine similarity average:", compute_self_cos_sim(bd_out_all))
 
         return np.mean(cos_sim)
 
@@ -734,29 +733,29 @@ if __name__ == "__main__":
 
     fp = open(args.result_file, "a")
 
-    for encoder in pretrained_clip_sources["decree"]:
-        encoder_info = process_decree_encoder(encoder)
+    # for encoder in pretrained_clip_sources["decree"]:
+    #     encoder_info = process_decree_encoder(encoder)
 
-        main(
-            args,
-            "decree",
-            encoder_info["gt"],
-            encoder_info["id"],
-            encoder_info["path"],
-            fp,
-        )
+    #     main(
+    #         args,
+    #         "decree",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         encoder_info["path"],
+    #         fp,
+    #     )
 
-    for encoder in pretrained_clip_sources["hanxun"]:
-        encoder_info = process_hanxun_encoder(encoder)
+    # for encoder in pretrained_clip_sources["hanxun"]:
+    #     encoder_info = process_hanxun_encoder(encoder)
 
-        main(
-            args,
-            "hanxun",
-            encoder_info["gt"],
-            encoder_info["id"],
-            encoder_info["path"],
-            fp,
-        )
+    #     main(
+    #         args,
+    #         "hanxun",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         encoder_info["path"],
+    #         fp,
+    #     )
 
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)
