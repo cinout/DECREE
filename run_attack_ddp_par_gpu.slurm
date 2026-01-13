@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="test"
 #SBATCH --account=punim1623
-#SBATCH --time=0-20:00:00
+#SBATCH --time=0-12:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=2
@@ -36,11 +36,11 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 srun python -u attack_encoder_new_ddp.py \
-  --z_note "more encoder archs, trigger:nashville, encoder_scope: 54-57, p=0.05" \
-  --trigger nashville \
-  --frac_per_class 0.05 \
+  --z_note "more encoder archs, trigger:wanet, encoder_scope: 56, p=0.05" \
+  --trigger wanet \
+  --frac_per_class 0.2 \
   --epochs 1 \
-  --encoder_scope 54 55 56 57 \
+  --encoder_scope 56 \
   --batch_size 64 \
     
 
