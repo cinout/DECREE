@@ -761,6 +761,7 @@ if __name__ == "__main__":
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)
         arch = encoder_info["arch"]
+        key = encoder_info["key"]
 
         # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
         # if "vit" in arch.lower():
@@ -771,7 +772,10 @@ if __name__ == "__main__":
         #     raise Exception("Unknown model architecture")
 
         # # TODO: remove this later
-        if arch == "ViT-L-14":
+        if not (
+            arch == "ViT-L-14"
+            and key in ["metaclip_400m", "metaclip_fullcc", "dfn2b", "dfn2b_s39b"]
+        ):
             continue
 
         main(
@@ -779,7 +783,7 @@ if __name__ == "__main__":
             "openclip",
             encoder_info["gt"],
             encoder_info["id"],
-            (arch, encoder_info["key"]),
+            (arch, key),
             fp,
         )
 
@@ -790,10 +794,6 @@ if __name__ == "__main__":
         if os.path.isdir(trigger_folder):
             for encoder_name in os.listdir(trigger_folder):
 
-                # # TODO: remove this later
-                if "ViT-L-14" in encoder_name:
-                    continue
-
                 encodeer_filepath = os.path.join(
                     trigger_folder, encoder_name
                 )  # the full path for each encodeer
@@ -801,6 +801,15 @@ if __name__ == "__main__":
                 name_split = encoder_name.split("_")
                 arch = name_split[1]
                 key = "_".join(name_split[2:-6])
+
+                # # TODO: remove this later
+                if not (
+                    arch == "ViT-L-14"
+                    and key
+                    in ["metaclip_400m", "metaclip_fullcc", "dfn2b", "dfn2b_s39b"]
+                ):
+                    continue
+
                 trainset_percent = name_split[-3]
                 ep = name_split[-1].split(".")[0]
                 id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
