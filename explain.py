@@ -35,6 +35,9 @@ from poisoned_dataset import (
     add_ftrojan_trigger,
 )
 from functools import partial
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 timestamp = (
@@ -44,6 +47,107 @@ timestamp = (
     + "_"
     + str(random.randint(0, 100))
 )
+
+
+num_classes = 10
+legends = {
+    0: "C1",
+    1: "C2",
+    2: "C3",
+    3: "C4",
+    4: "C5",
+    5: "C6",
+    6: "C7",
+    7: "C8",
+    8: "C9",
+    9: "C10",
+    10: "BD_S1",
+    11: "BD_S2",
+    12: "BD_S3",
+    13: "BD_S4",
+    14: "BD_S5",
+    15: "BD_S6",
+    16: "BD_S7",
+    17: "BD_S8",
+    18: "BD_S9",
+    19: "BD_S10",
+    20: "BD_R1",
+    21: "BD_R2",
+    22: "BD_R3",
+    23: "BD_R4",
+    24: "BD_R5",
+    25: "BD_R6",
+    26: "BD_R7",
+    27: "BD_R8",
+    28: "BD_R9",
+    29: "BD_R10",
+}
+
+colors = {
+    0: "slateblue",
+    1: "blue",
+    2: "green",
+    3: "orange",
+    4: "purple",
+    5: "cyan",
+    6: "cornflowerblue",
+    7: "violet",
+    8: "coral",
+    9: "palegreen",
+    10: "crimson",
+    11: "crimson",
+    12: "crimson",
+    13: "crimson",
+    14: "crimson",
+    15: "crimson",
+    16: "crimson",
+    17: "crimson",
+    18: "crimson",
+    19: "crimson",
+    20: "wheat",
+    21: "wheat",
+    22: "wheat",
+    23: "wheat",
+    24: "wheat",
+    25: "wheat",
+    26: "wheat",
+    27: "wheat",
+    28: "wheat",
+    29: "wheat",
+}
+
+markers = {
+    0: "*",
+    1: "o",
+    2: ".",
+    3: "<",
+    4: "H",
+    5: "+",
+    6: "x",
+    7: "s",
+    8: "d",
+    9: "|",
+    10: "*",
+    11: "o",
+    12: ".",
+    13: "<",
+    14: "H",
+    15: "+",
+    16: "x",
+    17: "s",
+    18: "d",
+    19: "|",
+    20: "*",
+    21: "o",
+    22: ".",
+    23: "<",
+    24: "H",
+    25: "+",
+    26: "x",
+    27: "s",
+    28: "d",
+    29: "|",
+}
 
 
 """
@@ -68,6 +172,7 @@ def finalize(
     train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
 
     data = calculate_distance_metric(
+        args,
         args.eval_metric,
         clean_train_loader,
         train_mask_tanh,
@@ -96,6 +201,7 @@ Output: single value
 
 
 def calculate_distance_metric(
+    args,
     our_metric,
     clean_train_loader,
     mask,
@@ -108,10 +214,10 @@ def calculate_distance_metric(
     # fusion = mask * patch.detach()  # (0, 255), [h, w, 3]
     model.eval()
 
-    clean_out_all, bd_simulated_out_all, bd_real_out_all = [], [], []
+    clean_out_all, bd_simulated_out_all, bd_real_out_all, labels = [], [], [], []
 
     # each batch
-    for clean_x_batch, _ in clean_train_loader:
+    for idx, (clean_x_batch, label) in enumerate(clean_train_loader):
         clean_x_batch = clean_x_batch.to(DEVICE)
 
         # create simulated bd image
@@ -151,10 +257,13 @@ def calculate_distance_metric(
                 bd_real_out = model(bd_real_input)
                 bd_real_out_all.append(bd_real_out)
 
+        labels.append(label)
+
     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
     bd_simulated_out_all = torch.cat(bd_simulated_out_all, dim=0)  # [total, 1024]
     if trigger_fn:
         bd_real_out_all = torch.cat(bd_real_out_all, dim=0)  # [total, 1024]
+    labels = torch.cat(labels, dim=0)
 
     """
     statistics
@@ -188,6 +297,44 @@ def calculate_distance_metric(
         # cosine similarity among pairwise real bd images
         bd_real_pairwise_avg = compute_self_cos_sim(bd_real_out_all)
 
+        # TODO: for backdoored encoders, how different are the real bd clusters and simulated bd clusters? Maybe T-sne plot can show if two clusters merge or not.
+        # Run T-SNE
+        tsne = TSNE(n_components=2, random_state=42)
+        all_feats = np.concatenate(
+            [
+                clean_out_all.detach().cpu().numpy(),
+                bd_simulated_out_all.detach().cpu().numpy(),
+                bd_real_out_all.detach().cpu().numpy(),
+            ],
+            axis=0,
+        )
+        all_feats = PCA(n_components=30).fit_transform(all_feats)
+        all_feats = tsne.fit_transform(all_feats)
+        labels = label.detach().cpu().numpy()
+        all_labels = np.concatenate(
+            [labels, labels + num_classes, labels + 2 * num_classes], axis=0
+        )
+
+        # Plot
+        plt.figure(figsize=(8, 6))
+        for i in list(legends.keys()):
+            idx = all_labels == i
+            plt.scatter(
+                all_feats[idx, 0],
+                all_feats[idx, 1],
+                label=legends[i],
+                c=colors[i],
+                marker=markers[i],
+            )  # all views same color
+
+        plt.legend()
+        plt.title(f"{id}")
+        plt.xticks([])  # remove x ticks
+        plt.yticks([])  # remove y ticks
+        # plt.xlabel("t-SNE 1")
+        # plt.ylabel("t-SNE 2")
+        plt.savefig(os.path.join(args.result_tsne_plots_folder, f"{id}_tsne.png"))
+
         return (
             bd_simulated_with_clean_avg,
             bd_simulated_pairwise_avg,
@@ -196,8 +343,6 @@ def calculate_distance_metric(
         )
     else:
         return bd_simulated_with_clean_avg, bd_simulated_pairwise_avg
-
-    # TODO: for backdoored encoders, how different are the real bd clusters and simulated bd clusters? Maybe T-sne plot can show if two clusters merge or not.
 
 
 def main(args, model_source, gt, id, encoder_path, fp, trigger=None):
@@ -334,6 +479,12 @@ if __name__ == "__main__":
         help="result file",
     )
     parser.add_argument(
+        "--result_tsne_plots_folder",
+        default=f"tsne_plots_{timestamp}.txt",
+        type=str,
+        help="tsne plot folder",
+    )
+    parser.add_argument(
         "--external_clip_store_folder",
         default="./external_clip_models",
         type=str,
@@ -375,33 +526,36 @@ if __name__ == "__main__":
 
     if not os.path.exists(args.external_clip_store_folder):
         os.makedirs(args.external_clip_store_folder)
+    if not os.path.exists(args.result_tsne_plots_folder):
+        os.makedirs(args.result_tsne_plots_folder)
 
     fp = open(args.result_file, "a")
 
-    for encoder in pretrained_clip_sources["hanxun"]:
-        encoder_info = process_hanxun_encoder(encoder)
-        main(
-            args,
-            "hanxun",
-            encoder_info["gt"],
-            encoder_info["id"],
-            encoder_info["path"],
-            fp,
-        )
+    # TODO: later
+    # for encoder in pretrained_clip_sources["hanxun"]:
+    #     encoder_info = process_hanxun_encoder(encoder)
+    #     main(
+    #         args,
+    #         "hanxun",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         encoder_info["path"],
+    #         fp,
+    #     )
 
-    for encoder in pretrained_clip_sources["openclip"]:
-        encoder_info = process_openclip_encoder(encoder)
-        arch = encoder_info["arch"]
-        key = encoder_info["key"]
+    # for encoder in pretrained_clip_sources["openclip"]:
+    #     encoder_info = process_openclip_encoder(encoder)
+    #     arch = encoder_info["arch"]
+    #     key = encoder_info["key"]
 
-        main(
-            args,
-            "openclip",
-            encoder_info["gt"],
-            encoder_info["id"],
-            (arch, key),
-            fp,
-        )
+    #     main(
+    #         args,
+    #         "openclip",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         (arch, key),
+    #         fp,
+    #     )
 
     saved_encoders_folder = "saved_openclip_bd_encoders_all"
     for trigger in os.listdir(saved_encoders_folder):
