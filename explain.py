@@ -298,6 +298,18 @@ def calculate_distance_metric(
         bd_real_pairwise_avg = compute_self_cos_sim(bd_real_out_all)
 
         # TODO: for backdoored encoders, how different are the real bd clusters and simulated bd clusters? Maybe T-sne plot can show if two clusters merge or not.
+
+        # cosine similarity between clean and real bd images [average]
+        bd_real_with_bd_simulated_avg = np.mean(
+            (
+                F.cosine_similarity(
+                    bd_simulated_out_all.flatten(1), bd_real_out_all.flatten(1), dim=1
+                )
+                .detach()
+                .tolist()
+            )
+        )
+
         # Run T-SNE
         tsne = TSNE(n_components=2, random_state=42)
         all_feats = np.concatenate(
@@ -319,11 +331,11 @@ def calculate_distance_metric(
         plt.figure(figsize=(8, 6))
         for i in list(legends.keys()):
             idx = all_labels == i
-            # TODO: remove
-            print("all_labels", all_labels)
-            print("i", i)
-            print("idx", idx)
-            print("all_feats.shape", all_feats.shape)
+
+            # print("all_labels", all_labels)
+            # print("i", i)
+            # print("idx", idx)
+            # print("all_feats.shape", all_feats.shape)
 
             plt.scatter(
                 all_feats[idx, 0],
@@ -341,11 +353,13 @@ def calculate_distance_metric(
         # plt.ylabel("t-SNE 2")
         plt.savefig(os.path.join(args.result_tsne_plots_folder, f"{id}_tsne.png"))
 
+        # TODO: what's returned
         return (
             bd_simulated_with_clean_avg,
             bd_simulated_pairwise_avg,
             bd_real_with_clean_avg,
             bd_real_pairwise_avg,
+            bd_real_with_bd_simulated_avg,
         )
     else:
         return bd_simulated_with_clean_avg, bd_simulated_pairwise_avg
@@ -451,7 +465,7 @@ def main(args, model_source, gt, id, encoder_path, fp, trigger=None):
 
     clean_train_data.rand_sample(0.5)  # TODO: 0.2
     clean_train_loader = DataLoader(
-        clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=True
+        clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=False
     )
 
     finalize(
