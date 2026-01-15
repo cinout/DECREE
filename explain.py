@@ -319,6 +319,12 @@ def calculate_distance_metric(
         plt.figure(figsize=(8, 6))
         for i in list(legends.keys()):
             idx = all_labels == i
+            # TODO: remove
+            print("all_labels", all_labels)
+            print("i", i)
+            print("idx", idx)
+            print("all_feats.shape", all_feats.shape)
+
             plt.scatter(
                 all_feats[idx, 0],
                 all_feats[idx, 1],
