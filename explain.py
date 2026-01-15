@@ -526,8 +526,6 @@ if __name__ == "__main__":
 
     if not os.path.exists(args.external_clip_store_folder):
         os.makedirs(args.external_clip_store_folder)
-    if not os.path.exists(args.result_tsne_plots_folder):
-        os.makedirs(args.result_tsne_plots_folder)
 
     fp = open(args.result_file, "a")
 
@@ -558,6 +556,8 @@ if __name__ == "__main__":
     #     )
 
     saved_encoders_folder = "saved_openclip_bd_encoders_all"
+    if not os.path.exists(args.result_tsne_plots_folder):
+        os.makedirs(args.result_tsne_plots_folder)
     for trigger in os.listdir(saved_encoders_folder):
         trigger_folder = os.path.join(saved_encoders_folder, trigger)
 
