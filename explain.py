@@ -253,35 +253,37 @@ def main(args, model_source, gt, id, encoder_path, fp, trigger=None):
     """
     if model_source == "openclip_backdoored":
         # FIXME: hanxun's models are also poisoned, but we don't include them in the analysis so far because trigger might be different
-        if args.trigger == "badnets":
+        if trigger == "badnets":
             trigger_fn = add_badnets_trigger
-        elif args.trigger == "blend":
+        elif trigger == "blend":
             hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
             hello_kitty_trigger = kornia_aug.Resize(size=(mask_size, mask_size))(
                 hello_kitty_trigger.unsqueeze(0)
             )
             hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
             trigger_fn = partial(add_blend_trigger, trigger=hello_kitty_trigger)
-        elif args.trigger == "sig":
+        elif trigger == "sig":
             sig_trigger = torch.load("trigger/SIG_noise.pt")
             sig_trigger = kornia_aug.Resize(size=(mask_size, mask_size))(
                 sig_trigger.unsqueeze(0)
             )
             sig_trigger = sig_trigger.squeeze(0)
             trigger_fn = partial(add_sig_trigger, trigger=sig_trigger)
-        elif args.trigger == "nashville":
+        elif trigger == "nashville":
             trigger_fn = add_nashville_trigger
-        elif args.trigger == "wanet":
+        elif trigger == "wanet":
             wanet_trigger = torch.load("trigger/WaNet_grid_temps.pt")
             wanet_trigger = kornia_aug.Resize(size=(mask_size, mask_size))(
                 wanet_trigger.permute(0, 3, 1, 2)
             )
             wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
             trigger_fn = partial(add_wanet_trigger, trigger=wanet_trigger)
-        elif args.trigger == "ftrojan":
+        elif trigger == "ftrojan":
             trigger_fn = add_ftrojan_trigger
         else:
             trigger_fn = None
+    else:
+        trigger_fn = None
 
     """
     Prepare Dataloader
