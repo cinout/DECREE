@@ -159,13 +159,12 @@ def run(args, encoder_arch, encoder_key, manual_id):
         )(wanet_trigger.permute(0, 3, 1, 2))
         wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
         trigger_fn = partial(add_wanet_trigger, trigger=wanet_trigger)
+    elif args.trigger == "ftrojan":
+        trigger_fn = add_ftrojan_trigger
 
     # not used
     elif args.trigger == "blto":
         trigger_fn = add_blto_trigger
-
-    elif args.trigger == "ftrojan":
-        trigger_fn = add_ftrojan_trigger
 
     ###############################################
     # Freeze text encoder

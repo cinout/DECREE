@@ -559,10 +559,10 @@ def main(args, model_source, gt, id, encoder_path, fp):
             if e == 0:
                 clean_unnormalized = torch.stack(clean_unnormalized)  # [bs, h, w, 3]
                 clean_unnormalized = clean_unnormalized.to(dtype=torch.float).to(DEVICE)
-                # [bs, ]
+
                 clean_unnormalized_L1_norm = torch.sum(
                     torch.abs(clean_unnormalized), dim=0
-                )
+                )  # [bs, ]
                 # max L1-norm
                 clean_unnormalized_L1_norm_max = torch.max(clean_unnormalized_L1_norm)
 
