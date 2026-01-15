@@ -38,6 +38,7 @@ from functools import partial
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+from matplotlib.patches import Patch
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 timestamp = (
@@ -340,11 +341,19 @@ def calculate_distance_metric(
             plt.scatter(
                 all_feats[idx, 0],
                 all_feats[idx, 1],
-                label=legends[i],
+                # label=legends[i],
                 c=colors[i],
                 marker=markers[i],
             )  # all views same color
 
+        # Create custom legend handles
+        legend_elements = [
+            Patch(facecolor="crimson", edgecolor="crimson", label="BD-sim"),
+            Patch(facecolor="wheat", edgecolor="wheat", label="BD-real"),
+        ]
+
+        # Add legend
+        plt.legend(handles=legend_elements)
         plt.legend()
         plt.title(f"{id}")
         plt.xticks([])  # remove x ticks
