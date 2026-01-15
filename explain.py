@@ -310,7 +310,7 @@ def calculate_distance_metric(
         )
         all_feats = PCA(n_components=30).fit_transform(all_feats)
         all_feats = tsne.fit_transform(all_feats)
-        labels = label.detach().cpu().numpy()
+        labels = labels.detach().cpu().numpy()
         all_labels = np.concatenate(
             [labels, labels + num_classes, labels + 2 * num_classes], axis=0
         )
