@@ -309,7 +309,7 @@ def main(args, model_source, gt, id, encoder_path, fp, trigger=None):
         model,
         test_transform,
         gt,
-        trigger_fn,
+        trigger_fn if trigger_fn else None,
     )
 
 
