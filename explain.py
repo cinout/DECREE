@@ -480,7 +480,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--result_tsne_plots_folder",
-        default=f"tsne_plots_{timestamp}.txt",
+        default=f"tsne_plots_{timestamp}",
         type=str,
         help="tsne plot folder",
     )
