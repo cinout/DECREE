@@ -354,7 +354,7 @@ def calculate_distance_metric(
 
         # Add legend
         plt.legend(handles=legend_elements)
-        plt.legend()
+        # plt.legend()
         plt.title(f"{id}")
         plt.xticks([])  # remove x ticks
         plt.yticks([])  # remove y ticks
