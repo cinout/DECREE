@@ -280,6 +280,8 @@ def main(args, model_source, gt, id, encoder_path, fp, trigger=None):
             trigger_fn = partial(add_wanet_trigger, trigger=wanet_trigger)
         elif args.trigger == "ftrojan":
             trigger_fn = add_ftrojan_trigger
+        else:
+            trigger_fn = None
 
     """
     Prepare Dataloader
@@ -309,7 +311,7 @@ def main(args, model_source, gt, id, encoder_path, fp, trigger=None):
         model,
         test_transform,
         gt,
-        trigger_fn if trigger_fn else None,
+        trigger_fn,
     )
 
 
