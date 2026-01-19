@@ -105,6 +105,38 @@ def finalize(
 
 
 """
+Obtain clean quantiles (used before training, if l2_norm loss is used in training)
+"""
+
+
+# def get_clean_quantile_range(
+#     clean_train_loader, model, test_transform, quantile_low, quantile_high
+# ):
+#     model.eval()
+#     clean_out_all = []
+#     for clean_x_batch, _ in clean_train_loader:
+#         clean_x_batch = clean_x_batch.to(DEVICE)
+#         clean_input = torch.stack(
+#             [test_transform(img.permute(2, 0, 1) / 255.0) for img in clean_x_batch]
+#         )
+#         clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
+#         with torch.no_grad():
+#             clean_out = model(clean_input)  # [bs, 1024]
+#             clean_out_all.append(clean_out)
+
+#     clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
+#     clean_quantile_start = torch.quantile(
+#         clean_out_all, q=quantile_low, dim=0
+#     )  # [1024, ]
+#     clean_quantile_end = torch.quantile(
+#         clean_out_all, q=quantile_high, dim=0
+#     )  # [1024, ]
+#     clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
+
+#     return clean_quantile_range
+
+
+"""
 calculate distance
 Output: single value
 """
@@ -272,6 +304,21 @@ def main(args, model_source, gt, id, encoder_path, fp):
             map_location=DEVICE,
         )
     else:
+        ### This old code is not efficient, as we don't really the trigger_file, but only the trigger size
+        # trigger_file = "trigger/trigger_pt_white_185_24.npz"
+        # trigger_mask, trigger_patch = None, None
+        # with np.load(trigger_file) as data:
+        #     trigger_mask = np.reshape(data["tm"], (mask_size, mask_size, 3))
+        #     trigger_patch = np.reshape(
+        #         data["t"], (mask_size, mask_size, 3)
+        #     )  # .astype(np.uint8)
+
+        # train_mask_2d = torch.rand(trigger_mask.shape[:2], dtype=torch.float64).to(
+        #     DEVICE
+        # )  # [h, w]
+        # train_patch = torch.rand_like(
+        #     torch.tensor(trigger_patch), dtype=torch.float64
+        # ).to(DEVICE)
 
         train_mask_2d = torch.rand((mask_size, mask_size), dtype=torch.float64).to(
             DEVICE
@@ -327,7 +374,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         """
         Loss and weights
         """
-        loss_cos = None
+        loss_cos, loss_reg = None, None
         init_loss_lambda = 1e-3
         loss_lambda = init_loss_lambda  # balance between loss_cos and loss_reg
         adaptor_lambda = 5.0  # dynamically adjust the value of lambda
@@ -338,6 +385,8 @@ def main(args, model_source, gt, id, encoder_path, fp):
         epochs = 1000
 
         # early stop
+        regular_best = 1 / epsilon()
+        early_stop_reg_best = regular_best
         early_stop_cnt = 0
         early_stop_patience = None  # 2 * patience
 
@@ -349,9 +398,26 @@ def main(args, model_source, gt, id, encoder_path, fp):
         lambda_min = 1e-7
         early_stop_patience = 7 * patience  # 35
 
-        cosine_list = []
+        # print(
+        #     f"Config: lambda_min: {lambda_min}, "
+        #     f"adapt_lambda: {adaptor_lambda}, "
+        #     f"lambda_set_patience: {lambda_set_patience},"
+        #     f"succ_threshold: {succ_threshold}, "
+        #     f"early_stop_patience: {early_stop_patience},"
+        # )
+
+        regular_list, cosine_list = [], []
 
         clean_unnormalized = []  # storing clean image's information
+
+        # calculate the quantile values beforehand
+        # clean_quantile_range = get_clean_quantile_range(
+        #     clean_train_loader,
+        #     model,
+        #     test_transform,
+        #     args.quantile_low,
+        #     args.quantile_high,
+        # )
 
         for e in range(epochs):
 
@@ -359,7 +425,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
             adjust_learning_rate(optimizer, e, args)
 
             res_best = {"mask": None, "patch": None}
-            loss_list = {"loss": [], "cos": []}
+            loss_list = {"loss": [], "cos": [], "reg": []}
 
             # each batch
             for step, (clean_x_batch, _) in enumerate(clean_train_loader):
@@ -421,8 +487,16 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 loss_cos = -compute_self_cos_sim(
                     bd_out
                 )  # average of pairwise similarity
-
-                loss = loss_cos
+                loss_reg = torch.sum(torch.abs(train_mask_tanh))  # L1 norm
+                # TODO[DONE]: uncomment this and above to add loss_l2_dist
+                # loss_l2_dist = torch.norm(
+                #     (clean_out - bd_out) / clean_quantile_range, dim=1
+                # ).mean()
+                loss = (
+                    loss_cos
+                    + loss_reg * loss_lambda
+                    # - loss_l2_dist * args.coeff_l2_dist
+                )
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -430,13 +504,23 @@ def main(args, model_source, gt, id, encoder_path, fp):
 
                 loss_list["loss"].append(loss)
                 loss_list["cos"].append(loss_cos)
+                loss_list["reg"].append(loss_reg)
 
                 # record the best result so far
-                if torch.abs(loss_cos) > succ_threshold:
+                if (torch.abs(loss_cos) > succ_threshold) and (loss_reg < regular_best):
                     train_mask_tanh = torch.clip(train_mask_tanh, min=0, max=1)
                     train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
                     res_best["mask"] = train_mask_tanh
                     res_best["patch"] = train_patch_tanh
+                    regular_best = loss_reg
+
+                # check for early stop. The early_stop_cnt records the count of consecutive times that early-stop criterion is met
+                if regular_best < 1 / epsilon():  # an valid trigger has been found
+                    if regular_best >= early_stop_reg_best:
+                        early_stop_cnt += 1
+                    else:
+                        early_stop_cnt = 0
+                early_stop_reg_best = min(regular_best, early_stop_reg_best)
 
                 # adjust loss_lambda
                 if loss_lambda < lambda_min and (torch.abs(loss_cos) > succ_threshold):
@@ -480,11 +564,60 @@ def main(args, model_source, gt, id, encoder_path, fp):
                 # max L1-norm
                 clean_unnormalized_L1_norm_max = torch.max(clean_unnormalized_L1_norm)
 
+            # loss_avg_e = torch.mean(torch.stack((loss_list["loss"])))
             loss_cos_e = torch.mean(torch.stack((loss_list["cos"])))
+            # loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
+
+            # print average loss values for the current epoch
+            # print(
+            #     f"e={e}, loss={loss_avg_e:.6f}, loss_cos={loss_cos_e:.6f}, "
+            #     f"loss_reg={loss_reg_e:.6f}, cur_reg_best={regular_best:.6f}, "
+            #     f"es_reg_best:{early_stop_reg_best:.6f}"
+            # )
+
+            # record the average losses over all the epochs so far
+            # regular_list.append(str(round(float(loss_reg_e), 2)))
+            # cosine_list.append(str(round(float(-loss_cos_e), 2)))
+
+            # save images
+            # if res_best["mask"] != None and res_best["patch"] != None:
+            #     assert_range(res_best["mask"], 0, 1)
+            #     assert_range(res_best["patch"], 0, 255)
+
+            #     fusion = np.asarray(
+            #         (res_best["mask"] * res_best["patch"]).detach().cpu(), np.uint8
+            #     )
+            #     mask = np.asarray(res_best["mask"].detach().cpu() * 255, np.uint8)
+            #     patch = np.asarray(res_best["patch"].detach().cpu(), np.uint8)
+            #     # fusion = (mask / 255.0 * patch).astype(np.uint8)
+
+            #     dir = f"trigger_inv_{timestamp}/{id}"
+            #     if not os.path.exists(f"{dir}"):
+            #         os.makedirs(f"{dir}")
+
+            #     suffix = f"e{e}_reg{regular_best:.2f}"
+            #     mask_img = Image.fromarray(mask).save(f"{dir}/mask_{suffix}.png")
+            #     patch_img = Image.fromarray(patch).save(f"{dir}/patch_{suffix}.png")
+            #     fusion_img = Image.fromarray(fusion).save(f"{dir}/fus_{suffix}.png")
 
             # meet the final early-stop criterion: (1) average cos_sim is larger than succ_threshold; (2) early_stop_cnt surpasses the patience
-            if torch.abs(loss_cos_e) > succ_threshold:
+            if (
+                torch.abs(loss_cos_e) > succ_threshold
+                and early_stop_cnt > early_stop_patience
+            ):
                 print("Early stop!")
+
+                # print(f"End: {duration:.4f}s")
+                # print(f"model_ckpt_path: {model_ckpt_path}")
+                # print(f"L1: {regular_best:.4f}")
+                # print(
+                #     "reg:", ",".join(regular_list)
+                # )  # the average L1 reg loss over all the epochs so far
+                # print(
+                #     "cos:", ",".join(cosine_list)
+                # )  # the average cos_sim loss over all the epochs so far
+                # print(f"clean_unnormalized_L1_norm_max: {clean_unnormalized_L1_norm_max}")
+                # print(f"clean_normalized_L1_norm_max: {clean_normalized_L1_norm_max}")
 
                 finalize(
                     args,
@@ -496,7 +629,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
                     model,
                     test_transform,
                     gt,
-                    1,
+                    regular_best,
                     clean_unnormalized_L1_norm_max,
                 )
                 return
@@ -511,7 +644,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
             model,
             test_transform,
             gt,
-            1,
+            regular_best,
             clean_unnormalized_L1_norm_max,
         )
         return
@@ -610,17 +743,17 @@ if __name__ == "__main__":
     #         fp,
     #     )
 
-    for encoder in pretrained_clip_sources["hanxun"]:
-        encoder_info = process_hanxun_encoder(encoder)
+    # for encoder in pretrained_clip_sources["hanxun"]:
+    #     encoder_info = process_hanxun_encoder(encoder)
 
-        main(
-            args,
-            "hanxun",
-            encoder_info["gt"],
-            encoder_info["id"],
-            encoder_info["path"],
-            fp,
-        )
+    #     main(
+    #         args,
+    #         "hanxun",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         encoder_info["path"],
+    #         fp,
+    #     )
 
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)

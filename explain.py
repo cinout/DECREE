@@ -588,9 +588,6 @@ if __name__ == "__main__":
     if not os.path.exists(args.result_tsne_plots_folder):
         os.makedirs(args.result_tsne_plots_folder)
     for trigger in os.listdir(saved_encoders_folder):
-        # # TODO: remove this later
-        if trigger != "sig":
-            continue
 
         trigger_folder = os.path.join(saved_encoders_folder, trigger)
 
