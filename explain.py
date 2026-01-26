@@ -559,30 +559,30 @@ if __name__ == "__main__":
     fp = open(args.result_file, "a")
 
     # TODO: future
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
-    #     main(
-    #         args,
-    #         "hanxun",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         encoder_info["path"],
-    #         fp,
-    #     )
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
+        main(
+            args,
+            "hanxun",
+            encoder_info["gt"],
+            encoder_info["id"],
+            encoder_info["path"],
+            fp,
+        )
 
-    # for encoder in pretrained_clip_sources["openclip"]:
-    #     encoder_info = process_openclip_encoder(encoder)
-    #     arch = encoder_info["arch"]
-    #     key = encoder_info["key"]
+    for encoder in pretrained_clip_sources["openclip"]:
+        encoder_info = process_openclip_encoder(encoder)
+        arch = encoder_info["arch"]
+        key = encoder_info["key"]
 
-    #     main(
-    #         args,
-    #         "openclip",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         (arch, key),
-    #         fp,
-    #     )
+        main(
+            args,
+            "openclip",
+            encoder_info["gt"],
+            encoder_info["id"],
+            (arch, key),
+            fp,
+        )
 
     saved_encoders_folder = "saved_openclip_bd_encoders_all"
     if not os.path.exists(args.result_tsne_plots_folder):

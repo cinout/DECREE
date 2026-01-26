@@ -4,7 +4,8 @@ from sklearn.metrics import roc_auc_score
 # negative (0): clean
 
 file_names = [
-    "results/*concoct.txt",
+    "results/*concoct2.txt",
+    # "results/results_invert_onlycosine_no_mask.txt",
 ]
 
 

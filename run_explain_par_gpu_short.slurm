@@ -36,7 +36,7 @@ conda activate anogpt
 
 python -u explain.py \
   --seed 10 \
-  --learned_trigger_folder trigger_inv_decree_default \
+  --learned_trigger_folder trigger_inv_decree_wo_maskreg \
   
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
