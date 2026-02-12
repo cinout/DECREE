@@ -348,12 +348,14 @@ def run(args, encoder_arch, encoder_key, manual_id):
 
             logits_per_image = (
                 bd_model.logit_scale.exp() * image_features @ text_weights
-            )
+            )  # n*n ??
             logits_per_text = logits_per_image.t()
 
             labels = torch.arange(len(image_features), device=image_features.device)
             loss = (
-                nn.CrossEntropyLoss()(logits_per_image, labels)
+                nn.CrossEntropyLoss()(
+                    logits_per_image, labels
+                )  # choose values on diagonal ?
                 + nn.CrossEntropyLoss()(logits_per_text, labels)
             ) / 2
 

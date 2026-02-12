@@ -2,7 +2,7 @@
 read explain results
 """
 
-file_handler = open("explain_result.txt", "r")
+file_handler = open("results_20260127_103227_70_27.txt", "r")
 lines = file_handler.readlines()
 output_file = "z_explain_results.txt"
 output_acc_asr_file_handle = open(output_file, "w", encoding="utf-8")
