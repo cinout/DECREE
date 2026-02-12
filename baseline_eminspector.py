@@ -1,7 +1,10 @@
-import argparse
 import os
+
+os.environ["HF_HOME"] = os.path.abspath(
+    "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
+)
+import argparse
 import random
-from tqdm import tqdm
 import torch
 import torch.nn.functional as F
 import numpy as np
