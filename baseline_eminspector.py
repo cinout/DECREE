@@ -1,6 +1,6 @@
 import argparse
 import os
-from random import random
+import random
 from tqdm import tqdm
 import torch
 import torch.nn.functional as F
@@ -50,7 +50,7 @@ def load_visual_encoder(model_source, encoder_info):
         visual = load_model.visual
 
         # load ckpt
-        bd_model_ckpt = torch.load(enc_info["path"], map_location=DEVICE)
+        bd_model_ckpt = torch.load(encoder_info["path"], map_location=DEVICE)
         visual.load_state_dict(bd_model_ckpt)
 
         mask_size = visual.image_size
