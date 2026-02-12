@@ -160,6 +160,9 @@ def eminspector(args, arch_option, encoders):
     print(
         "Computing malicious scores over", num_images, "images and", num_enc, "encoders"
     )
+    print(
+        f"mask_size={mask_size}, visual_embedding_dim={detecet_feature_set[0][0].shape[0]}"
+    )
 
     for img_idx in range(num_images):
 
