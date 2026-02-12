@@ -112,7 +112,7 @@ def eminspector(args, arch_option, encoders):
     detecet_feature_set = [[] for _ in visuals]
 
     # "Extracting features for each encoder and image..."
-    for detect_img in tqdm(detecet_loader):
+    for detect_img in detecet_loader:
         # detect_img shape: [1, H, W, C] (un-normalized, 0..255)
         # detect_img may be (images, labels) or just images.
         batch = detect_img
@@ -158,7 +158,7 @@ def eminspector(args, arch_option, encoders):
         "Computing malicious scores over", num_images, "images and", num_enc, "encoders"
     )
 
-    for img_idx in tqdm(range(num_images)):
+    for img_idx in range(num_images):
 
         detecet_similarity_list = (
             []
