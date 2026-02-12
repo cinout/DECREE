@@ -114,13 +114,26 @@ def eminspector(args, arch_option, encoders):
     # "Extracting features for each encoder and image..."
     for detect_img in tqdm(detecet_loader):
         # detect_img shape: [1, H, W, C] (un-normalized, 0..255)
-        img = detect_img[0]
-        # convert to CHW, scale to [0,1]
-        inp = (
-            test_transform((img.permute(2, 0, 1) / 255.0))
-            .to(dtype=torch.float)
-            .to(DEVICE)
-        )
+        # detect_img may be (images, labels) or just images.
+        batch = detect_img
+        if isinstance(batch, (list, tuple)):
+            img_batch = batch[0]
+        else:
+            img_batch = batch
+
+        # img_batch may have a batch dimension (B,H,W,C) or be a single image (H,W,C)
+        if img_batch.dim() == 4:
+            img = img_batch[0]
+        else:
+            img = img_batch
+
+        # ensure we now have a 3-dim image tensor [H,W,C]
+        if img.dim() != 3:
+            raise RuntimeError(f"Unexpected image tensor shape: {tuple(img.shape)}")
+
+        # convert to CHW, scale to [0,1] and apply Normalize
+        inp = (img.permute(2, 0, 1) / 255.0).to(dtype=torch.float).to(DEVICE)
+        inp = test_transform(inp)
 
         # # apply normalization matching DECREE: subtract mean / std
         # mean = torch.tensor(_mean["imagenet"]).view(-1, 1, 1).to(DEVICE)
@@ -177,8 +190,12 @@ def eminspector(args, arch_option, encoders):
     print("ground truth labels:", gts)
     print("malicious client are:", malicious_clients_index)
 
-    auc_score = roc_auc_score(gts, malicious_score)
-    print(f"AUROC(%) {arch_option}: {auc_score*100:.1f}")
+    # Only compute AUC when both classes are present in ground-truth
+    if len(set(gts)) < 2:
+        print(f"AUROC(%) {arch_option}: N/A (single-class ground truth)")
+    else:
+        auc_score = roc_auc_score(gts, malicious_score)
+        print(f"AUROC(%) {arch_option}: {auc_score*100:.1f}")
 
 
 if __name__ == "__main__":
