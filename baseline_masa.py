@@ -1,10 +1,10 @@
 import os
 
-from sklearn.metrics import roc_auc_score
 
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
 )
+from sklearn.metrics import roc_auc_score
 from collections import defaultdict
 import open_clip
 import torch.nn as nn
@@ -20,7 +20,7 @@ from utils.encoders import (
 )
 import torch.nn.functional as F
 from torch.utils.data import Subset
-from imagenet import get_processing, getTensorImageNet, _mean, _std
+from imagenet import _mean, _std
 from torchvision import transforms
 from open_clip import get_tokenizer
 from utils.zero_shot_metadata import zero_shot_meta_dict
@@ -53,16 +53,21 @@ use_format = isinstance(templates[0], str)
 def load_clip_info(model_source, encoder_info):
 
     if model_source in ["openclip", "openclip_backdoored"]:
-        arch, key, gt = encoder_info["arch"], encoder_info["key"], encoder_info["gt"]
+        arch, key, gt, id = (
+            encoder_info["arch"],
+            encoder_info["key"],
+            encoder_info["gt"],
+            encoder_info["id"],
+        )
         load_model, _, preprocess_val = open_clip.create_model_and_transforms(
             arch, pretrained=key
         )
         load_model = load_model.to(DEVICE)
 
-        # Get mask size
-        mask_size = load_model.visual.image_size
-        if isinstance(mask_size, tuple):
-            mask_size = mask_size[0]
+        # # Get mask size
+        # mask_size = load_model.visual.image_size
+        # if isinstance(mask_size, tuple):
+        #     mask_size = mask_size[0]
 
         ###############################################
         # Freeze text encoder
@@ -90,15 +95,15 @@ def load_clip_info(model_source, encoder_info):
 
     return (
         load_model,
-        mask_size,
         gt,
+        id,
         transforms_up_to_totensor,
         last_normalize,
         clip_tokenizer,
     )
 
 
-def get_inspection_loader(args, mask_size=224, transforms_up_to_totensor=None):
+def get_inspection_loader(args, transforms_up_to_totensor=None):
     train_set = dataset_options["ImageNet"](
         "data/imagenet-1k",
         transform=transforms_up_to_totensor,
@@ -119,7 +124,7 @@ def get_inspection_loader(args, mask_size=224, transforms_up_to_totensor=None):
 
     detect_loader = DataLoader(
         train_set,
-        batch_size=64,
+        batch_size=32,
         num_workers=1,
         shuffle=True,
         drop_last=True,
@@ -184,35 +189,36 @@ def train_step_unlearning(
     return loss, clip_model
 
 
-def agg_masa(args, arch_option, selected_encoders):
+def agg_masa(args, selected_encoders):
 
     # load clip_models
     clip_models = []
     gts = []
+    ids = []
     for source, info in selected_encoders:
         (
             clip_model,
-            mask_size,
             gt,
+            id,
             transforms_up_to_totensor,
             last_normalize,
             clip_tokenizer,
         ) = load_clip_info(source, info)
         clip_models.append(clip_model)
+        ids.append(id)
         gts.append(gt)
 
     # prepare dataset
     detect_loader = get_inspection_loader(
         args=args,
-        mask_size=mask_size,
         transforms_up_to_totensor=transforms_up_to_totensor,
     )
 
     """
     Perform Individual Unlearning
     """
-    unlearning_accumulated_loss = []
-    for clip_model in clip_models:
+    # unlearning_accumulated_loss = []
+    for idx, clip_model in enumerate(clip_models):
 
         unlearning_optimizer = torch.optim.SGD(
             clip_model.visual.parameters(),
@@ -221,7 +227,7 @@ def agg_masa(args, arch_option, selected_encoders):
         )
 
         cum_unlearning_loss = 0
-        for ep in range(1, 5 + 1):
+        for ep in range(3):
             print("unlearn epoch: ", ep)
             unlearning_loss, clip_model = train_step_unlearning(
                 clip_model=clip_model,
@@ -232,22 +238,25 @@ def agg_masa(args, arch_option, selected_encoders):
             )
 
             cum_unlearning_loss += unlearning_loss
-        unlearning_accumulated_loss.append(cum_unlearning_loss)
+        print(
+            f"cumulative unlearning loss: {ids[idx]}, {gts[idx]}, {cum_unlearning_loss:.4f}"
+        )
+        # unlearning_accumulated_loss.append(cum_unlearning_loss)
 
-    loss_std = np.std(unlearning_accumulated_loss)
-    loss_med = np.median(unlearning_accumulated_loss)
-    mds = []
-    for i in range(len(unlearning_accumulated_loss)):
-        mds.append((unlearning_accumulated_loss[i] - loss_med) / loss_std)
+    # loss_std = np.std(unlearning_accumulated_loss)
+    # loss_med = np.median(unlearning_accumulated_loss)
+    # mds = []
+    # for i in range(len(unlearning_accumulated_loss)):
+    #     mds.append((unlearning_accumulated_loss[i] - loss_med) / loss_std)
 
-    print("mds scores =", mds)
+    # print("mds scores =", mds)
 
-    # Only compute AUC when both classes are present in ground-truth
-    if len(set(gts)) < 2:
-        print(f"AUROC(%) {arch_option}: N/A (single-class ground truth)")
-    else:
-        auc_score = roc_auc_score(gts, mds)
-        print(f"AUROC(%) {arch_option}: {auc_score*100:.1f}")
+    # # Only compute AUC when both classes are present in ground-truth
+    # if len(set(gts)) < 2:
+    #     print(f"AUROC(%): N/A (single-class ground truth)")
+    # else:
+    #     auc_score = roc_auc_score(gts, mds)
+    #     print(f"AUROC(%): {auc_score*100:.1f}")
 
 
 if __name__ == "__main__":
@@ -258,7 +267,7 @@ if __name__ == "__main__":
     parser.add_argument("--unlearn_moment", type=float, default=0.9)
     parser.add_argument(
         "--frac_per_class",
-        default=0.01,
+        default=0.004,
         type=float,
         help="fraction of each class for training",
     )
@@ -310,23 +319,28 @@ if __name__ == "__main__":
     # openclip clean
     for enc in pretrained_clip_sources.get("openclip", []):
         enc_info = process_openclip_encoder(enc)
-        if enc_info["arch"] in mixed_arch_options:
-            all_clean_encoders.append(("openclip", enc_info))
+        # if enc_info["arch"] in mixed_arch_options:
+        all_clean_encoders.append(("openclip", enc_info))
+
     # openclip poisoned
     for enc in poisoned_encoders:
         id, encoder_path, arch, key = enc
-        if arch in mixed_arch_options:
-            enc_info = {
-                "id": id,
-                "arch": arch,
-                "key": key,
-                "path": encoder_path,
-                "gt": 1,
-            }
-            all_bd_encoders.append(("openclip_backdoored", enc_info))
+        # if arch in mixed_arch_options:
+        enc_info = {
+            "id": id,
+            "arch": arch,
+            "key": key,
+            "path": encoder_path,
+            "gt": 1,
+        }
+        all_bd_encoders.append(("openclip_backdoored", enc_info))
 
-    for idx in range(20):
-        selected_clean = random.sample(all_clean_encoders, 15)
-        selected_bd = random.sample(all_bd_encoders, 10)
-        selected_encoders = selected_clean + selected_bd
-        agg_masa(args, f"MIXED_ARCH_{idx}", selected_encoders)
+    # for idx in range(20):
+    #     selected_clean = random.sample(all_clean_encoders, 15)
+    #     selected_bd = random.sample(all_bd_encoders, 10)
+    #     selected_encoders = selected_clean + selected_bd
+    agg_masa(args, all_clean_encoders + all_bd_encoders)
+
+"""
+# TODO: change
+"""
