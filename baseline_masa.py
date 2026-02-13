@@ -267,7 +267,7 @@ if __name__ == "__main__":
     parser.add_argument("--unlearn_moment", type=float, default=0.9)
     parser.add_argument(
         "--frac_per_class",
-        default=0.004,
+        default=0.003,
         type=float,
         help="fraction of each class for training",
     )
