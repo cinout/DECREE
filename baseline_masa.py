@@ -271,6 +271,13 @@ if __name__ == "__main__":
         type=float,
         help="fraction of each class for training",
     )
+    parser.add_argument(
+        "--clip_type",
+        default="clean",
+        type=str,
+        help="type of CLIP model to use",
+        choices=["clean", "bd"],
+    )
 
     args = parser.parse_args()
     print(args)
@@ -339,7 +346,11 @@ if __name__ == "__main__":
     #     selected_clean = random.sample(all_clean_encoders, 15)
     #     selected_bd = random.sample(all_bd_encoders, 10)
     #     selected_encoders = selected_clean + selected_bd
-    agg_masa(args, all_clean_encoders + all_bd_encoders)
+    if args.clip_type == "clean":
+        selected_encoders = all_clean_encoders
+    elif args.clip_type == "bd":
+        selected_encoders = random.sample(all_bd_encoders, 100)
+    agg_masa(args, selected_encoders)
 
 """
 # TODO: change
