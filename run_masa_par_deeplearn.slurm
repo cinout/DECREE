@@ -36,7 +36,7 @@ conda activate anogpt
 
 python -u baseline_masa.py \
   --clip_type bd \
-  --seed 10 \
+  --seed 20 \
   
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
