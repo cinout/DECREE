@@ -189,59 +189,53 @@ def train_step_unlearning(
     return loss, clip_model
 
 
-def agg_masa(args, selected_encoders):
+def agg_masa(args, selected_encoder):
 
-    # load clip_models
-    clip_models = []
-    gts = []
-    ids = []
-    for source, info in selected_encoders:
-        (
-            clip_model,
-            gt,
-            id,
-            transforms_up_to_totensor,
-            last_normalize,
-            clip_tokenizer,
-        ) = load_clip_info(source, info)
-        clip_models.append(clip_model)
-        ids.append(id)
-        gts.append(gt)
+    # load a single clip model (saves memory)
+    source, info = selected_encoder
+    (
+        clip_model,
+        gt,
+        id,
+        transforms_up_to_totensor,
+        last_normalize,
+        clip_tokenizer,
+    ) = load_clip_info(source, info)
 
-    # prepare dataset
+    # prepare dataset for this model's expected preprocessing
     detect_loader = get_inspection_loader(
         args=args,
         transforms_up_to_totensor=transforms_up_to_totensor,
     )
 
-    """
-    Perform Individual Unlearning
-    """
-    # unlearning_accumulated_loss = []
-    for idx, clip_model in enumerate(clip_models):
+    unlearning_optimizer = torch.optim.SGD(
+        clip_model.visual.parameters(),
+        lr=args.unlearn_lr,
+        momentum=args.unlearn_moment,
+    )
 
-        unlearning_optimizer = torch.optim.SGD(
-            clip_model.visual.parameters(),
-            lr=args.unlearn_lr,
-            momentum=args.unlearn_moment,
+    cum_unlearning_loss = 0
+    for ep in range(args.unlearn_ep):
+        print("unlearn epoch: ", ep)
+        unlearning_loss, clip_model = train_step_unlearning(
+            clip_model=clip_model,
+            optimizer=unlearning_optimizer,
+            data_loader=detect_loader,
+            last_normalize=last_normalize,
+            clip_tokenizer=clip_tokenizer,
         )
 
-        cum_unlearning_loss = 0
-        for ep in range(args.unlearn_ep):
-            print("unlearn epoch: ", ep)
-            unlearning_loss, clip_model = train_step_unlearning(
-                clip_model=clip_model,
-                optimizer=unlearning_optimizer,
-                data_loader=detect_loader,
-                last_normalize=last_normalize,
-                clip_tokenizer=clip_tokenizer,
-            )
+        cum_unlearning_loss += unlearning_loss
 
-            cum_unlearning_loss += unlearning_loss
-        print(
-            f"cumulative unlearning loss: {ids[idx]}, {gts[idx]}, {cum_unlearning_loss:.4f}"
-        )
-        # unlearning_accumulated_loss.append(cum_unlearning_loss)
+    print(f"cumulative unlearning loss: {id}, {gt}, {cum_unlearning_loss:.4f}")
+
+    # Cleanup to free GPU memory between encoders
+    try:
+        clip_model.to("cpu")
+    except Exception:
+        pass
+    del clip_model
+    torch.cuda.empty_cache()
 
     # loss_std = np.std(unlearning_accumulated_loss)
     # loss_med = np.median(unlearning_accumulated_loss)
@@ -343,16 +337,11 @@ if __name__ == "__main__":
         }
         all_bd_encoders.append(("openclip_backdoored", enc_info))
 
-    # for idx in range(20):
-    #     selected_clean = random.sample(all_clean_encoders, 15)
-    #     selected_bd = random.sample(all_bd_encoders, 10)
-    #     selected_encoders = selected_clean + selected_bd
+    # Process encoders one-at-a-time to avoid positional embedding / memory issues
     if args.clip_type == "clean":
-        selected_encoders = all_clean_encoders
+        for enc in all_clean_encoders:
+            agg_masa(args, enc)
     elif args.clip_type == "bd":
-        selected_encoders = random.sample(all_bd_encoders, 100)
-    agg_masa(args, selected_encoders)
-
-"""
-# TODO: change
-"""
+        sampled = random.sample(all_bd_encoders, 100)
+        for enc in sampled:
+            agg_masa(args, enc)
