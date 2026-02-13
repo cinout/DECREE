@@ -227,7 +227,7 @@ def agg_masa(args, selected_encoders):
         )
 
         cum_unlearning_loss = 0
-        for ep in range(3):
+        for ep in range(args.unlearn_ep):
             print("unlearn epoch: ", ep)
             unlearning_loss, clip_model = train_step_unlearning(
                 clip_model=clip_model,
@@ -264,6 +264,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="pass in a parameter")
     parser.add_argument("--seed", default=80, type=int, help="random seed")
     parser.add_argument("--unlearn_lr", type=float, default=0.001)
+    parser.add_argument("--unlearn_ep", type=int, default=3)
     parser.add_argument("--unlearn_moment", type=float, default=0.9)
     parser.add_argument(
         "--frac_per_class",
