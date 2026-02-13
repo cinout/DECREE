@@ -160,9 +160,9 @@ def eminspector(args, arch_option, encoders):
     print(
         "Computing malicious scores over", num_images, "images and", num_enc, "encoders"
     )
-    print(
-        f"mask_size={mask_size}, visual_embedding_dim={detecet_feature_set[0][0].shape[0]}"
-    )
+    # print(
+    #     f"mask_size={mask_size}, visual_embedding_dim={detecet_feature_set[0][0].shape[0]}"
+    # )
 
     for img_idx in range(num_images):
 
@@ -226,6 +226,9 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+    """
+    Setup poisoned encoders
+    """
     poisoned_encoders = []
     saved_encoders_folder = "saved_openclip_bd_encoders_all"
     for trigger in os.listdir(saved_encoders_folder):
@@ -312,7 +315,6 @@ if __name__ == "__main__":
             all_bd_encoders.append(("openclip_backdoored", enc_info))
 
     for idx in range(20):
-        # randomly choose 5 clean encoders and 5 poisoned encoders for each run
         selected_clean = random.sample(all_clean_encoders, 15)
         selected_bd = random.sample(all_bd_encoders, 10)
         selected_encoders = selected_clean + selected_bd

@@ -131,7 +131,9 @@ imagenet_prompts = [
     "a tattoo of the {}.",
 ]
 
-imagenet_path = "./data/imagenet"
+imagenet_path = (
+    "./data/imagenet"  # a subset with 10 classes. The full one is imagenet-1k
+)
 
 
 # called during backdoor ATTACK
