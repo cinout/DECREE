@@ -35,7 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u baseline_masa.py \
-  --clip_type clean \
+  --clip_type bd \
   --seed 10 \
 
 ##Log this job's resource usage stats###
