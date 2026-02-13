@@ -224,7 +224,7 @@ def agg_masa(args, arch_option, selected_encoders):
         for ep in range(1, 5 + 1):
             print("unlearn epoch: ", ep)
             unlearning_loss, clip_model = train_step_unlearning(
-                model=clip_model,
+                clip_model=clip_model,
                 optimizer=unlearning_optimizer,
                 data_loader=detect_loader,
                 last_normalize=last_normalize,

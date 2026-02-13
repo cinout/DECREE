@@ -11,7 +11,7 @@
 ###SBATCH --qos=gpgpudeeplearn
 ###SBATCH --constraint=dlg4|dlg5|dlg6
 
-#SBATCH --job-name="invt"
+#SBATCH --job-name="masa"
 #SBATCH --account=punim1623
 #SBATCH --time=0-04:00:00
 
