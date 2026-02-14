@@ -271,7 +271,7 @@ if __name__ == "__main__":
         default="clean",
         type=str,
         help="type of CLIP model to use",
-        choices=["clean", "bd"],
+        choices=["clean", "bd_set_1", "bd_set_2", "bd_set_3"],
     )
 
     args = parser.parse_args()
@@ -341,7 +341,17 @@ if __name__ == "__main__":
     if args.clip_type == "clean":
         for enc in all_clean_encoders:
             agg_masa(args, enc)
-    elif args.clip_type == "bd":
-        sampled = random.sample(all_bd_encoders, 100)
+    elif args.clip_type == "bd_set_1":
+        sampled = all_bd_encoders[: len(all_bd_encoders) // 3]
+        for enc in sampled:
+            agg_masa(args, enc)
+    elif args.clip_type == "bd_set_2":
+        sampled = all_bd_encoders[
+            len(all_bd_encoders) // 3 : 2 * len(all_bd_encoders) // 3
+        ]
+        for enc in sampled:
+            agg_masa(args, enc)
+    elif args.clip_type == "bd_set_3":
+        sampled = all_bd_encoders[2 * len(all_bd_encoders) // 3 :]
         for enc in sampled:
             agg_masa(args, enc)
