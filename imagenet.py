@@ -297,11 +297,8 @@ def get_processing(dataset, augment=True, is_tensor=False, need_norm=True, size=
         #     transforms_list.append(transforms.RandomCrop(resize_value, padding=4))
         transforms_list.append(transforms.RandomHorizontalFlip())
     else:
-
         # arrive here
-
         if dataset in ["imagenet", "CLIP"]:
-
             transforms_list.append(transforms.Resize(resize_value if size else 256))
             transforms_list.append(transforms.CenterCrop(resize_value))
         # elif dataset in ['celeba', 'gtsrb']:
