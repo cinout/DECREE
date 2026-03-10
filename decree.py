@@ -4,6 +4,8 @@ Include DECREE's trigger inversion and score assigning stages
 
 import os
 
+import torchvision
+
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
 )
@@ -35,6 +37,20 @@ timestamp = (
     + "_"
     + str(random.randint(0, 100))
 )
+
+
+class CC3MTensorDataset(torch.utils.data.Dataset):
+    def __init__(self, subset):
+        self.subset = subset
+
+    def __len__(self):
+        return len(self.subset)
+
+    def __getitem__(self, idx):
+        img, _ = self.subset[idx]  # img: Tensor [C,H,W] in 0..1
+        img_tensor = (img.permute(1, 2, 0) * 255).to(dtype=torch.uint8)  # [H,W,C] uint8
+        return img_tensor, 0
+
 
 """
 Helper function for computing LID
@@ -289,19 +305,47 @@ def main(args, model_source, gt, id, encoder_path, fp):
     """
     Prepare Dataloader
     """
-    test_transform = transforms.Compose(
-        [transforms.Normalize(_mean["imagenet"], _std["imagenet"])]
-    )
-    pre_transform, _ = get_processing(
-        "imagenet", augment=False, is_tensor=False, need_norm=False, size=mask_size
-    )  # get un-normalized tensor
-    clean_train_data = getTensorImageNet(
-        pre_transform
-    )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
-    clean_train_data.rand_sample(0.2)
-    clean_train_loader = DataLoader(
-        clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=True
-    )
+
+    if args.eval_dataset == "imagenet":
+        test_transform = transforms.Compose(
+            [transforms.Normalize(_mean["imagenet"], _std["imagenet"])]
+        )
+        pre_transform, _ = get_processing(
+            "imagenet", augment=False, is_tensor=False, need_norm=False, size=mask_size
+        )  # get un-normalized tensor
+        clean_train_data = getTensorImageNet(
+            pre_transform
+        )  # when later get_item, the returned image is in range [0, 255] and shape (H,W,C)
+        clean_train_data.rand_sample(0.2)
+        clean_train_loader = DataLoader(
+            clean_train_data, batch_size=args.batch_size, pin_memory=True, shuffle=True
+        )
+    elif args.eval_dataset == "cc3m":
+        test_transform = transforms.Compose(
+            [transforms.Normalize(_mean["cc3m"], _std["cc3m"])]
+        )
+        pre_transform, _ = get_processing(
+            "cc3m",
+            augment=False,
+            is_tensor=False,
+            need_norm=False,
+            size=mask_size,
+        )  # get un-normalized tensor
+
+        full_cc3m = torchvision.datasets.ImageFolder(cc3m_root, transform=pre_transform)
+        if len(full_cc3m) < 700:
+            raise ValueError(
+                f"CC3M root {cc3m_root} contains fewer than 700 images ({len(full_cc3m)})"
+            )
+        subset_idx = random.sample(range(len(full_cc3m)), 700)
+        cc3m_subset = torch.utils.data.Subset(full_cc3m, subset_idx)
+
+        clean_train_loader = DataLoader(
+            CC3MTensorDataset(cc3m_subset),
+            batch_size=args.batch_size,
+            pin_memory=True,
+            shuffle=True,
+        )
 
     if args.learned_trigger_folder:
         #  use previously saved triggers
@@ -577,6 +621,14 @@ if __name__ == "__main__":
         ],  # TODO: other metrics
         default="l2_norm",
         help="our evaluation metric",
+    )
+    # TODO: add to slurm
+    parser.add_argument(
+        "--eval_dataset",
+        type=str,
+        choices=["imagenet", "cc3m"],
+        default="imagenet",
+        help="dataset to evaluate on",
     )
     args = parser.parse_args()
     print(args)

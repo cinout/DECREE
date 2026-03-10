@@ -8,3 +8,4 @@ archive/
 *.pth
 *.txt
 *.out
+Train_GCC-training.tsv

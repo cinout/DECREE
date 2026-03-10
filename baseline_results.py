@@ -4,6 +4,9 @@ import statistics
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
+"""
+eminspector, all archs random
+"""
 auc_results_eminspector = [
     58.3,
     69.7,
@@ -32,6 +35,10 @@ auc_std = statistics.stdev(auc_results_eminspector)
 
 print(f"eminspector: mean: {auc_mean:.4f}, std: {auc_std:.4f}")
 
+
+"""
+MASA, all archs random
+"""
 cumulative_loss_masa_clean = [
     261.6056,
     228.4758,
@@ -343,3 +350,762 @@ for _ in range(20):
 auc_mean = statistics.mean(auc_results_masa)
 auc_std = statistics.stdev(auc_results_masa)
 print(f"masa: mean: {auc_mean:.4f}, std: {auc_std:.4f}")
+
+
+"""
+Eminspector with arch info
+"""
+auc_results_eminspector = [
+    55.6,
+    66.7,
+    77.8,
+    100.0,
+    83.3,
+    25.0,
+    100.0,
+    100.0,
+    100.0,
+    50.0,
+    100.0,
+    0.0,
+    100.0,
+    100.0,
+    0.0,
+    75.6,
+    68.3,
+    73.9,
+    62.2,
+    44.4,
+    46.9,
+    54.2,
+    56.2,
+    70.8,
+    62.5,
+    52.1,
+    66.0,
+    84.0,
+    68.1,
+    68.1,
+]
+auc_mean = statistics.mean(auc_results_eminspector)
+auc_std = statistics.stdev(auc_results_eminspector)
+
+print(f"eminspector [by arch]: mean: {auc_mean:.4f}, std: {auc_std:.4f}")
+
+"""
+MASA with arch info
+"""
+clean_masa = [
+    ("OPENCLIP_RN50_openai", 0, 261.6056),
+    ("OPENCLIP_RN50_yfcc15m", 0, 228.4758),
+    ("OPENCLIP_RN50_cc12m", 0, 190.5057),
+    ("OPENCLIP_RN101_openai", 0, 254.2496),
+    ("OPENCLIP_RN101_yfcc15m", 0, 228.378),
+    ("OPENCLIP_ViT-B-16_openai", 0, 86.2858),
+    ("OPENCLIP_ViT-B-16_laion400m_e31", 0, 85.2105),
+    ("OPENCLIP_ViT-B-16_laion400m_e32", 0, 78.8944),
+    ("OPENCLIP_ViT-B-16_laion2b_s34b_b88k", 0, 125.6376),
+    ("OPENCLIP_ViT-B-16_datacomp_xl_s13b_b90k", 0, 138.3382),
+    ("OPENCLIP_ViT-B-16_datacomp_l_s1b_b8k", 0, 153.3834),
+    ("OPENCLIP_ViT-B-16_commonpool_l_clip_s1b_b8k", 0, 69.0103),
+    ("OPENCLIP_ViT-B-16_commonpool_l_laion_s1b_b8k", 0, 176.768),
+    ("OPENCLIP_ViT-B-16_commonpool_l_image_s1b_b8k", 0, 146.3074),
+    ("OPENCLIP_ViT-B-16_commonpool_l_text_s1b_b8k", 0, 172.8224),
+    ("OPENCLIP_ViT-B-16_commonpool_l_basic_s1b_b8k", 0, 131.385),
+    ("OPENCLIP_ViT-B-16_commonpool_l_s1b_b8k", 0, 51.7343),
+    ("OPENCLIP_ViT-B-16_dfn2b", 0, 80.4057),
+    ("OPENCLIP_ViT-B-16_metaclip_400m", 0, 37.6146),
+    ("OPENCLIP_ViT-B-16_metaclip_fullcc", 0, 96.2943),
+    ("OPENCLIP_ViT-B-32_openai", 0, 196.4009),
+    ("OPENCLIP_ViT-B-32_laion400m_e31", 0, 130.2815),
+    ("OPENCLIP_ViT-B-32_laion400m_e32", 0, 110.4866),
+    ("OPENCLIP_ViT-B-32_laion2b_e16", 0, 117.4729),
+    ("OPENCLIP_ViT-B-32_laion2b_s34b_b79k", 0, 136.846),
+    ("OPENCLIP_ViT-B-32_datacomp_xl_s13b_b90k", 0, 176.8856),
+    ("OPENCLIP_ViT-B-32_metaclip_400m", 0, 43.3789),
+    ("OPENCLIP_ViT-B-32_metaclip_fullcc", 0, 102.816),
+    ("OPENCLIP_RN50x4_openai", 0, 252.1665),
+    ("OPENCLIP_ViT-L-14_openai", 0, 171.847),
+    ("OPENCLIP_ViT-L-14_laion400m_e31", 0, 97.0452),
+    ("OPENCLIP_ViT-L-14_laion400m_e32", 0, 103.1992),
+    ("OPENCLIP_ViT-L-14_laion2b_s32b_b82k", 0, 105.2679),
+    ("OPENCLIP_ViT-L-14_datacomp_xl_s13b_b90k", 0, 174.486),
+    ("OPENCLIP_ViT-L-14_commonpool_xl_clip_s13b_b90k", 0, 166.3303),
+    ("OPENCLIP_ViT-L-14_commonpool_xl_laion_s13b_b90k", 0, 193.8879),
+    ("OPENCLIP_ViT-L-14_commonpool_xl_s13b_b90k", 0, 78.9237),
+    ("OPENCLIP_ViT-L-14_metaclip_400m", 0, 102.0713),
+    ("OPENCLIP_ViT-L-14_metaclip_fullcc", 0, 79.5872),
+    ("OPENCLIP_ViT-L-14_dfn2b", 0, 16.0245),
+    ("OPENCLIP_ViT-L-14_dfn2b_s39b", 0, 144.2101),
+]
+
+bd_masa = [
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-32_laion2b_e16", 1, 139.0629),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_metaclip_400m", 1, 104.4501),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_laion400m_e31", 1, 97.7517),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-32_metaclip_400m", 1, 113.3105),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_RN50_yfcc15m", 1, 211.9534),
+    ("OPENCLIP_BD_badnets_trainsetp_0.2_epoch_0_RN50x4_openai", 1, 230.9330),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-32_laion400m_e31", 1, 185.4604),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_image_s1b_b8k",
+        1,
+        144.5258,
+    ),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-32_laion400m_e32", 1, 148.4461),
+    ("OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_fullcc", 1, 49.6406),
+    ("OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_RN101_yfcc15m", 1, 177.6296),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_s13b_b90k",
+        1,
+        176.8176,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_s1b_b8k",
+        1,
+        138.5751,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_datacomp_xl_s13b_b90k",
+        1,
+        124.3831,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-32_datacomp_xl_s13b_b90k",
+        1,
+        145.5486,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_text_s1b_b8k",
+        1,
+        175.5183,
+    ),
+    ("OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e31", 1, 113.2915),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_laion_s1b_b8k",
+        1,
+        100.4082,
+    ),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_dfn2b", 1, 100.4868),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-32_openai", 1, 110.3954),
+    ("OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_openai", 1, 137.0061),
+    ("OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b_s39b", 1, 169.6909),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_datacomp_xl_s13b_b90k",
+        1,
+        73.8703,
+    ),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_metaclip_fullcc", 1, 99.4655),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_laion2b_s32b_b82k",
+        1,
+        166.0064,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_laion_s13b_b90k",
+        1,
+        150.0,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_laion2b_s34b_b88k",
+        1,
+        120.8809,
+    ),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_RN101_openai", 1, 252.3238),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_clip_s13b_b90k",
+        1,
+        170.0,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-32_metaclip_fullcc",
+        1,
+        130.7098,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_basic_s1b_b8k",
+        1,
+        162.4384,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_datacomp_l_s1b_b8k",
+        1,
+        123.8687,
+    ),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_clip_s1b_b8k",
+        1,
+        149.8398,
+    ),
+    ("OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b", 1, 16.8159),
+    ("OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_400m", 1, 90.5122),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_RN50_openai", 1, 222.1263),
+    (
+        "OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-32_laion2b_s34b_b79k",
+        1,
+        189.0486,
+    ),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_openai", 1, 71.7093),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_ViT-B-16_laion400m_e32", 1, 170.6821),
+    ("OPENCLIP_BD_badnets_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e32", 1, 109.1548),
+    ("OPENCLIP_BD_badnets_trainsetp_0.01_epoch_0_RN50_cc12m", 1, 163.7314),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b_s39b", 1, 149.7959),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_fullcc", 1, 144.0277),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-32_datacomp_xl_s13b_b90k",
+        1,
+        203.5469,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.2_epoch_0_ViT-B-32_metaclip_fullcc", 1, 57.7128),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e31", 1, 85.1253),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_laion2b_s32b_b82k", 1, 76.7846),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_l_s1b_b8k",
+        1,
+        157.9250,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_400m", 1, 132.7013),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_dfn2b", 1, 139.6129),
+    ("OPENCLIP_BD_wanet_trainsetp_0.2_epoch_0_RN50x4_openai", 1, 244.7194),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_laion2b_s34b_b88k", 1, 59.7896),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_RN101_openai", 1, 199.5660),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_xl_s13b_b90k",
+        1,
+        118.4115,
+    ),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_s1b_b8k",
+        1,
+        138.3365,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_RN101_yfcc15m", 1, 133.0426),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_basic_s1b_b8k",
+        1,
+        107.9435,
+    ),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_text_s1b_b8k",
+        1,
+        120.5617,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.2_epoch_0_ViT-B-32_metaclip_400m", 1, 50.0649),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_datacomp_xl_s13b_b90k",
+        1,
+        104.6799,
+    ),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_laion_s13b_b90k",
+        1,
+        80.9160,
+    ),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_clip_s13b_b90k",
+        1,
+        124.2284,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_laion400m_e31", 1, 97.9973),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_laion400m_e32", 1, 153.9901),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-32_laion2b_s34b_b79k",
+        1,
+        132.5186,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_metaclip_400m", 1, 147.7938),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_RN50_openai", 1, 252.9457),
+    ("OPENCLIP_BD_wanet_trainsetp_0.2_epoch_0_ViT-B-32_laion400m_e32", 1, 154.9049),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_clip_s1b_b8k",
+        1,
+        151.3344,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_openai", 1, 153.4037),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_metaclip_fullcc", 1, 61.4575),
+    ("OPENCLIP_BD_wanet_trainsetp_0.2_epoch_0_ViT-B-32_laion2b_e16", 1, 168.2131),
+    ("OPENCLIP_BD_wanet_trainsetp_0.2_epoch_0_ViT-L-14_dfn2b", 1, 21.0395),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e32", 1, 73.4341),
+    ("OPENCLIP_BD_wanet_trainsetp_0.5_epoch_0_ViT-B-32_openai", 1, 192.5198),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-32_laion400m_e31", 1, 140.6605),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_image_s1b_b8k",
+        1,
+        138.1765,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_RN50_cc12m", 1, 166.7553),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_RN50_yfcc15m", 1, 187.1552),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_s13b_b90k",
+        1,
+        148.4622,
+    ),
+    ("OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_openai", 1, 92.1524),
+    (
+        "OPENCLIP_BD_wanet_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_laion_s1b_b8k",
+        1,
+        165.6678,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-32_laion2b_s34b_b79k",
+        1,
+        111.7039,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-32_laion400m_e31",
+        1,
+        188.8172,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_RN50_openai", 1, 218.2744),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.2_epoch_0_ViT-B-32_datacomp_xl_s13b_b90k",
+        1,
+        168.6425,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.2_epoch_0_RN50x4_openai", 1, 244.4424),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_s13b_b90k",
+        1,
+        178.0443,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-32_laion400m_e32",
+        1,
+        171.9309,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_s1b_b8k",
+        1,
+        139.6575,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.2_epoch_0_ViT-L-14_laion2b_s32b_b82k",
+        1,
+        143.0379,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_RN101_yfcc15m", 1, 187.1835),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-L-14_openai", 1, 202.9387),
+    ("OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-16_laion400m_e32", 1, 87.5101),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-16_dfn2b", 1, 91.1425),
+    ("OPENCLIP_BD_nashville_trainsetp_0.2_epoch_0_ViT-L-14_laion400m_e32", 1, 104.5619),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_clip_s13b_b90k",
+        1,
+        126.0,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_text_s1b_b8k",
+        1,
+        80.4031,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.2_epoch_0_ViT-L-14_dfn2b", 1, 14.0401),
+    ("OPENCLIP_BD_nashville_trainsetp_0.2_epoch_0_RN50_yfcc15m", 1, 143.8124),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_RN101_openai", 1, 251.1533),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_laion_s1b_b8k",
+        1,
+        69.9358,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.2_epoch_0_ViT-L-14_datacomp_xl_s13b_b90k",
+        1,
+        124.0972,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-16_laion400m_e31", 1, 63.0362),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_laion_s13b_b90k",
+        1,
+        131.0,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-16_metaclip_fullcc",
+        1,
+        114.1499,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_xl_s13b_b90k",
+        1,
+        85.3564,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e31", 1, 93.4760),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_fullcc",
+        1,
+        65.4082,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_basic_s1b_b8k",
+        1,
+        61.4041,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-32_metaclip_400m",
+        1,
+        116.6463,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-16_openai", 1, 88.5443),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_image_s1b_b8k",
+        1,
+        175.0,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-32_laion2b_e16", 1, 179.7112),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_clip_s1b_b8k",
+        1,
+        100.7512,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-16_laion2b_s34b_b88k",
+        1,
+        166.0835,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_400m", 1, 69.3849),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-32_metaclip_fullcc",
+        1,
+        154.8629,
+    ),
+    (
+        "OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_l_s1b_b8k",
+        1,
+        184.7954,
+    ),
+    ("OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-32_openai", 1, 90.4417),
+    ("OPENCLIP_BD_nashville_trainsetp_0.01_epoch_0_ViT-B-16_metaclip_400m", 1, 86.5447),
+    ("OPENCLIP_BD_nashville_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b_s39b", 1, 89.6202),
+    ("OPENCLIP_BD_nashville_trainsetp_0.2_epoch_0_RN50_cc12m", 1, 179.4392),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-32_laion2b_s34b_b79k",
+        1,
+        70.8411,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_RN101_openai", 1, 253.0068),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-32_metaclip_400m", 1, 55.1811),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-32_laion2b_e16", 1, 116.8918),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_400m", 1, 149.4837),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e32", 1, 135.6200),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_text_s1b_b8k",
+        1,
+        171.3289,
+    ),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_basic_s1b_b8k",
+        1,
+        142.5936,
+    ),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_laion2b_s32b_b82k",
+        1,
+        175.7965,
+    ),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_l_s1b_b8k",
+        1,
+        164.6777,
+    ),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-32_metaclip_fullcc",
+        1,
+        130.1276,
+    ),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_clip_s1b_b8k",
+        1,
+        160.9258,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_RN101_yfcc15m", 1, 186.2959),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_laion400m_e31", 1, 155.8079),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-32_laion400m_e31", 1, 160.1005),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_dfn2b", 1, 174.3924),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_fullcc",
+        1,
+        119.2451,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_laion400m_e32", 1, 154.5559),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_openai", 1, 83.2130),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e31", 1, 85.5326),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_laion2b_s34b_b88k",
+        1,
+        83.7878,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_RN50_cc12m", 1, 161.0899),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_s13b_b90k",
+        1,
+        148.1927,
+    ),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_clip_s13b_b90k",
+        1,
+        47.4136,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_RN50_openai", 1, 246.6411),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_xl_s13b_b90k",
+        1,
+        159.5977,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b", 1, 18.8379),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_datacomp_xl_s13b_b90k",
+        1,
+        174.7158,
+    ),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_laion_s13b_b90k",
+        1,
+        87.0,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_openai", 1, 120.8945),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-32_openai", 1, 129.6316),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_RN50_yfcc15m", 1, 187.6776),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b_s39b", 1, 180.4299),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_laion_s1b_b8k",
+        1,
+        111.3250,
+    ),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_s1b_b8k",
+        1,
+        123.6918,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_metaclip_400m", 1, 79.8104),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-32_datacomp_xl_s13b_b90k",
+        1,
+        192.8052,
+    ),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-32_laion400m_e32", 1, 160.0259),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_metaclip_fullcc", 1, 58.9528),
+    ("OPENCLIP_BD_ftrojan_trainsetp_0.2_epoch_0_RN50x4_openai", 1, 242.4266),
+    (
+        "OPENCLIP_BD_ftrojan_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_image_s1b_b8k",
+        1,
+        72.6591,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-32_metaclip_fullcc", 1, 75.7371),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_datacomp_xl_s13b_b90k",
+        1,
+        140.0356,
+    ),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_text_s1b_b8k",
+        1,
+        69.5518,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-B-32_metaclip_400m", 1, 49.6316),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e32", 1, 134.9739),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b_s39b", 1, 149.3443),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_RN101_yfcc15m", 1, 172.0727),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-32_datacomp_xl_s13b_b90k",
+        1,
+        145.7926,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_400m", 1, 163.8189),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_metaclip_400m", 1, 71.5166),
+    ("OPENCLIP_BD_blend_trainsetp_0.2_epoch_0_RN50x4_openai", 1, 245.9803),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e31", 1, 92.1335),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_l_s1b_b8k",
+        1,
+        130.7595,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-32_openai", 1, 158.6940),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-32_laion400m_e32", 1, 177.1221),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-32_laion2b_e16", 1, 159.4519),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_laion_s1b_b8k",
+        1,
+        164.0362,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_openai", 1, 95.6163),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_laion400m_e32", 1, 65.8901),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_RN50_openai", 1, 252.3243),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_openai", 1, 175.8371),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_dfn2b", 1, 85.6079),
+    ("OPENCLIP_BD_blend_trainsetp_0.2_epoch_0_RN50_yfcc15m", 1, 167.1871),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_laion400m_e31", 1, 175.3833),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_laion2b_s34b_b88k", 1, 52.1853),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_RN101_openai", 1, 247.2257),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_s1b_b8k",
+        1,
+        123.5131,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b", 1, 15.7501),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_laion_s13b_b90k",
+        1,
+        155.4307,
+    ),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_image_s1b_b8k",
+        1,
+        129.3834,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_fullcc", 1, 104.3815),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_clip_s13b_b90k",
+        1,
+        122.4900,
+    ),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_s13b_b90k",
+        1,
+        142.4180,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_metaclip_fullcc", 1, 28.6270),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_datacomp_xl_s13b_b90k",
+        1,
+        115.7889,
+    ),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-32_laion2b_s34b_b79k",
+        1,
+        136.9669,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.2_epoch_0_RN50_cc12m", 1, 157.6918),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.05_epoch_0_ViT-L-14_laion2b_s32b_b82k",
+        1,
+        181.5019,
+    ),
+    ("OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-32_laion400m_e31", 1, 106.8493),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_clip_s1b_b8k",
+        1,
+        79.7510,
+    ),
+    (
+        "OPENCLIP_BD_blend_trainsetp_0.01_epoch_0_ViT-B-16_commonpool_l_basic_s1b_b8k",
+        1,
+        140.6164,
+    ),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-32_metaclip_fullcc", 1, 194.6193),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_400m", 1, 64.0549),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_metaclip_fullcc", 1, 102.6498),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_clip_s13b_b90k",
+        1,
+        62.5414,
+    ),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_image_s1b_b8k",
+        1,
+        145.3560,
+    ),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-32_laion400m_e31", 1, 129.8477),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-32_datacomp_xl_s13b_b90k",
+        1,
+        103.2954,
+    ),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_openai", 1, 101.7285),
+    ("OPENCLIP_BD_sig_trainsetp_0.2_epoch_0_RN50_cc12m", 1, 180.4906),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_datacomp_xl_s13b_b90k",
+        1,
+        175.6428,
+    ),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_text_s1b_b8k",
+        1,
+        101.5009,
+    ),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_laion2b_s34b_b88k", 1, 137.9293),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_laion400m_e32", 1, 112.0197),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-32_metaclip_400m", 1, 116.6494),
+    ("OPENCLIP_BD_sig_trainsetp_0.2_epoch_0_RN50_yfcc15m", 1, 193.1037),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_laion_s1b_b8k",
+        1,
+        136.0486,
+    ),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_s1b_b8k",
+        1,
+        104.7197,
+    ),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_s13b_b90k",
+        1,
+        127.5225,
+    ),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_metaclip_fullcc", 1, 119.1061),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_metaclip_400m", 1, 107.2387),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e31", 1, 133.0959),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_RN101_openai", 1, 252.5840),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_openai", 1, 162.0420),
+    ("OPENCLIP_BD_sig_trainsetp_0.2_epoch_0_RN101_yfcc15m", 1, 166.3617),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_dfn2b_s39b", 1, 175.8875),
+    ("OPENCLIP_BD_sig_trainsetp_0.2_epoch_0_RN50x4_openai", 1, 245.0249),
+    ("OPENCLIP_BD_sig_trainsetp_0.2_epoch_0_ViT-L-14_dfn2b", 1, 15.1809),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_laion2b_s32b_b82k", 1, 157.4591),
+    ("OPENCLIP_BD_sig_trainsetp_0.2_epoch_0_RN50_openai", 1, 238.4503),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_basic_s1b_b8k",
+        1,
+        90.1999,
+    ),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-32_laion2b_e16", 1, 107.3106),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_commonpool_l_clip_s1b_b8k",
+        1,
+        132.1018,
+    ),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-32_laion2b_s34b_b79k", 1, 94.6336),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_xl_s13b_b90k",
+        1,
+        121.5987,
+    ),
+    (
+        "OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_commonpool_xl_laion_s13b_b90k",
+        1,
+        142.1552,
+    ),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_datacomp_l_s1b_b8k", 1, 188.7378),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_dfn2b", 1, 77.0455),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-32_laion400m_e32", 1, 78.4176),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-16_laion400m_e31", 1, 94.6270),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-L-14_laion400m_e32", 1, 102.2347),
+    ("OPENCLIP_BD_sig_trainsetp_0.05_epoch_0_ViT-B-32_openai", 1, 89.9886),
+]
+
+all_archs = ["_RN50_", "_RN101_", "_RN50x4_", "_ViT-B-16_", "_ViT-B-32_", "_ViT-L-14_"]
+auc_results_masa = []
+for arch in all_archs:
+    all_clean_encoder_losses = []
+    all_bd_encoder_losses = []
+
+    for name, _, score in clean_masa:
+        if arch in name:
+            all_clean_encoder_losses.append(score)
+    for name, _, score in bd_masa:
+        if arch in name:
+            all_bd_encoder_losses.append(score)
+
+    num_clean = len(all_clean_encoder_losses)
+    for idx in range(5):
+        selected_bd_losses = random.sample(all_bd_encoder_losses, min(6, num_clean))
+
+        all_losses = all_clean_encoder_losses + selected_bd_losses
+        all_gts = [0] * num_clean + [1] * len(selected_bd_losses)
+        loss_std = np.std(all_losses)
+        loss_med = np.median(all_losses)
+        mds = []
+        for i in range(len(all_losses)):
+            mds.append((all_losses[i] - loss_med) / loss_std if loss_std else 0)
+        auc_score = roc_auc_score(all_gts, mds) * 100
+        auc_results_masa.append(auc_score)
+auc_mean = statistics.mean(auc_results_masa)
+auc_std = statistics.stdev(auc_results_masa)
+print(f"masa [by arch]: mean: {auc_mean:.4f}, std: {auc_std:.4f}")

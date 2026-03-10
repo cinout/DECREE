@@ -12,7 +12,7 @@ from torch.utils.data import random_split, DataLoader, Dataset
 from utils.utils import dump_img
 
 #  import Compose, Resize, CenterCrop, ToTensor, Normalize
-_dataset_name = ["default", "cifar10", "gtsrb", "imagenet", "celeba", "CLIP"]
+_dataset_name = ["default", "cifar10", "gtsrb", "imagenet", "celeba", "CLIP", "cc3m"]
 
 _mean = {
     "default": [0.5, 0.5, 0.5],
@@ -21,6 +21,7 @@ _mean = {
     "imagenet": [0.485, 0.456, 0.406],
     "celeba": [0.5, 0.5, 0.5],
     "CLIP": [0.48145466, 0.4578275, 0.40821073],
+    "cc3m": [0.48145466, 0.4578275, 0.40821073],
 }
 
 _std = {
@@ -30,6 +31,7 @@ _std = {
     "imagenet": [0.229, 0.224, 0.225],
     "celeba": [0.5, 0.5, 0.5],
     "CLIP": [0.26862954, 0.26130258, 0.27577711],
+    "cc3m": [0.26862954, 0.26130258, 0.27577711],
 }
 
 # image size is adjusted when called dy decree.py
@@ -287,7 +289,7 @@ def get_processing(dataset, augment=True, is_tensor=False, need_norm=True, size=
     #     transforms_list.append(get_resize(size))
 
     if augment:
-        if dataset in ["imagenet", "CLIP"]:
+        if dataset in ["imagenet", "CLIP", "cc3m"]:
             transforms_list.append(
                 transforms.RandomResizedCrop(resize_value, scale=(0.2, 1.0))
             )
@@ -298,7 +300,7 @@ def get_processing(dataset, augment=True, is_tensor=False, need_norm=True, size=
         transforms_list.append(transforms.RandomHorizontalFlip())
     else:
         # arrive here
-        if dataset in ["imagenet", "CLIP"]:
+        if dataset in ["imagenet", "CLIP", "cc3m"]:
             transforms_list.append(transforms.Resize(resize_value if size else 256))
             transforms_list.append(transforms.CenterCrop(resize_value))
         # elif dataset in ['celeba', 'gtsrb']:
