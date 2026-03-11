@@ -38,8 +38,11 @@ img2dataset \
   --url_list cc3m_sample_700.tsv \
   --input_format tsv \
   --url_col url \
-  --output_folder cc3m_images \
-  --output_format files \
+  --caption_col caption \
+  --output_format webdataset\
+  --output_folder cc3m \
+  --enable_wandb True \
+  --resize_mode no \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
