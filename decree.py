@@ -332,16 +332,12 @@ def main(args, model_source, gt, id, encoder_path, fp):
             size=mask_size,
         )  # get un-normalized tensor
 
-        full_cc3m = torchvision.datasets.ImageFolder(cc3m_root, transform=pre_transform)
-        if len(full_cc3m) < 700:
-            raise ValueError(
-                f"CC3M root {cc3m_root} contains fewer than 700 images ({len(full_cc3m)})"
-            )
-        subset_idx = random.sample(range(len(full_cc3m)), 700)
-        cc3m_subset = torch.utils.data.Subset(full_cc3m, subset_idx)
+        cc3m_800 = torchvision.datasets.ImageFolder(
+            "./data/cc3m_800", transform=pre_transform
+        )
 
         clean_train_loader = DataLoader(
-            CC3MTensorDataset(cc3m_subset),
+            CC3MTensorDataset(cc3m_800),
             batch_size=args.batch_size,
             pin_memory=True,
             shuffle=True,
@@ -622,7 +618,6 @@ if __name__ == "__main__":
         default="l2_norm",
         help="our evaluation metric",
     )
-    # TODO: add to slurm
     parser.add_argument(
         "--eval_dataset",
         type=str,

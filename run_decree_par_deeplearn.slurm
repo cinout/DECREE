@@ -37,7 +37,8 @@ conda activate anogpt
 python -u decree.py \
   --seed 10 \
   --eval_metric cos_sim \
-  --note "eval_metric: cos_sim" \
+  --eval_dataset cc3m \
+  --note "dataset:cc3m, eval_metric: cos_sim" \
   # --learned_trigger_folder trigger_inv_decree_default \
   
 ##Log this job's resource usage stats###
