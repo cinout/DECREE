@@ -37,10 +37,9 @@ conda activate anogpt
 img2dataset \
   --url_list cc3m_sample_700.tsv \
   --input_format tsv \
-  --url_col 1 \
+  --url_col url \
   --output_folder cc3m_images \
   --output_format files \
-  --resize_mode no
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
