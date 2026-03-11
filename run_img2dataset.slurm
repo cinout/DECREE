@@ -39,8 +39,11 @@ img2dataset \
   --input_format tsv \
   --url_col url \
   --output_folder cc3m_images \
-  --output_format files
-    
+  --output_format files \
+  --image_size 0 \
+  --thread_count 32 \
+  --timeout 10 \
+  --retries 2
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

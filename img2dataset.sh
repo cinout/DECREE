@@ -3,4 +3,5 @@ img2dataset \
   --input_format tsv \
   --url_col url \
   --output_folder cc3m_images \
-  --output_format files
+  --output_format files \
+  --image_size 256 \
