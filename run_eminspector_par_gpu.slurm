@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="emni"
 #SBATCH --account=punim1623
-#SBATCH --time=0-10:00:00
+#SBATCH --time=0-02:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -36,7 +36,7 @@ conda activate anogpt
 
 python -u baseline_eminspector.py \
   --seed 10 \
-  --note "rn101 only, run all" \
+  --note "vit-b-16/32 only, run all" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

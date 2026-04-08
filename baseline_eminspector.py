@@ -319,8 +319,8 @@ if __name__ == "__main__":
     Mode 2: Selective (input:224, output:512)
     """
     # mixed_arch_options = ["RN101", "ViT-B-16", "ViT-B-32"]
-    mixed_arch_options = ["RN101"]
-    # mixed_arch_options = ["RN101", "ViT-B-16", "ViT-B-32"]
+    # mixed_arch_options = ["RN101"]
+    mixed_arch_options = ["ViT-B-16", "ViT-B-32"]
     all_clean_encoders = []  # should be 25 in total (2+15+8)
     all_bd_encoders = []
 
