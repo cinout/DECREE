@@ -39,7 +39,12 @@ def load_visual_encoder(model_source, encoder_info):
     #     visual = load_model.visual
     #     mask_size = 224
     if model_source == "openclip":
-        arch, key, gt = encoder_info["arch"], encoder_info["key"], encoder_info["gt"]
+        arch, key, gt, id = (
+            encoder_info["arch"],
+            encoder_info["key"],
+            encoder_info["gt"],
+            encoder_info["id"],
+        )
         load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
         load_model = load_model.to(DEVICE)
         visual = load_model.visual
@@ -47,7 +52,12 @@ def load_visual_encoder(model_source, encoder_info):
         if isinstance(mask_size, tuple):
             mask_size = mask_size[0]
     elif model_source == "openclip_backdoored":
-        arch, key, gt = encoder_info["arch"], encoder_info["key"], encoder_info["gt"]
+        arch, key, gt, id = (
+            encoder_info["arch"],
+            encoder_info["key"],
+            encoder_info["gt"],
+            encoder_info["id"],
+        )
         load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
         load_model = load_model.to(DEVICE)
         visual = load_model.visual
@@ -65,7 +75,7 @@ def load_visual_encoder(model_source, encoder_info):
         raise ValueError("unsupported model source: " + str(model_source))
 
     visual.eval()
-    return visual, mask_size, gt
+    return visual, mask_size, gt, id
 
 
 def get_inspection_loader(sample_percent=0.2, mask_size=224):
@@ -99,11 +109,13 @@ def eminspector(args, arch_option, encoders):
     # load visuals
     visuals = []
     gts = []
+    ids = []
 
     for source, info in encoders:
-        visual, mask_size, gt = load_visual_encoder(source, info)
+        visual, mask_size, gt, id = load_visual_encoder(source, info)
         visuals.append(visual)
         gts.append(gt)
+        ids.append(id)
 
     # prepare inspection loader and normalization transform (same as DECREE)
     # maske_size should be per-encoder, but since in each eminspector() iteration, we only compare encoders of the same arch, we can assume they have the same mask_size
@@ -192,6 +204,11 @@ def eminspector(args, arch_option, encoders):
                 malicious_score[idx] -= 1
 
     print("malicious scores =", malicious_score)
+
+    # print out (id,gt,0, score) for each encoder, used in paper
+    for id, gt, score in zip(ids, gts, malicious_score):
+        print(f"{id},{gt},0,{score}")
+
     malicious_clients_index = [i for i, s in enumerate(malicious_score) if s > 0]
     print("ground truth labels:", gts)
     print("malicious client are:", malicious_clients_index)
@@ -256,68 +273,71 @@ if __name__ == "__main__":
     """
     Mode 1: Compare all encoders of the same architecture together
     """
-    arch_options = ["RN50", "RN101", "RN50x4", "ViT-B-16", "ViT-B-32", "ViT-L-14"]
-    # for each encoder arch (openclip clean and poisoned)
-    for arch_option in arch_options:
-        all_clean_encoders = []
-        all_bd_encoders = []
+    # arch_options = ["RN50", "RN101", "RN50x4", "ViT-B-16", "ViT-B-32", "ViT-L-14"]
+    # # for each encoder arch (openclip clean and poisoned)
+    # for arch_option in arch_options:
+    #     all_clean_encoders = []
+    #     all_bd_encoders = []
 
-        #  # hanxun
-        # for enc in pretrained_clip_sources.get("hanxun", []):
-        #     enc_info = process_hanxun_encoder(enc)
-        #     encoders.append(("hanxun", enc_info))
+    #     #  # hanxun
+    #     # for enc in pretrained_clip_sources.get("hanxun", []):
+    #     #     enc_info = process_hanxun_encoder(enc)
+    #     #     encoders.append(("hanxun", enc_info))
 
-        # openclip clean
-        for enc in pretrained_clip_sources.get("openclip", []):
-            enc_info = process_openclip_encoder(enc)
-            if enc_info["arch"] == arch_option:
-                all_clean_encoders.append(("openclip", enc_info))
+    #     # openclip clean
+    #     for enc in pretrained_clip_sources.get("openclip", []):
+    #         enc_info = process_openclip_encoder(enc)
+    #         if enc_info["arch"] == arch_option:
+    #             all_clean_encoders.append(("openclip", enc_info))
 
-        # openclip poisoned
-        for enc in poisoned_encoders:
-            id, encoder_path, arch, key = enc
-            if arch == arch_option:
-                enc_info = {
-                    "id": id,
-                    "arch": arch,
-                    "key": key,
-                    "path": encoder_path,
-                    "gt": 1,
-                }
-                all_bd_encoders.append(("openclip_backdoored", enc_info))
+    #     # openclip poisoned
+    #     for enc in poisoned_encoders:
+    #         id, encoder_path, arch, key = enc
+    #         if arch == arch_option:
+    #             enc_info = {
+    #                 "id": id,
+    #                 "arch": arch,
+    #                 "key": key,
+    #                 "path": encoder_path,
+    #                 "gt": 1,
+    #             }
+    #             all_bd_encoders.append(("openclip_backdoored", enc_info))
 
-        num_clean = len(all_clean_encoders)
-        for idx in range(5):
-            selected_bd = random.sample(all_bd_encoders, min(6, num_clean))
-            selected_encoders = all_clean_encoders + selected_bd
-            eminspector(args, f"{arch_option}_selected_{idx}", selected_encoders)
+    #     num_clean = len(all_clean_encoders)
+    #     for idx in range(5):
+    #         selected_bd = random.sample(all_bd_encoders, min(6, num_clean))
+    #         selected_encoders = all_clean_encoders + selected_bd
+    #         eminspector(args, f"{arch_option}_selected_{idx}", selected_encoders)
 
     """
     Mode 2: Selective (input:224, output:512)
     """
-    # mixed_arch_options = ["RN101", "ViT-B-16", "ViT-B-32"]
-    # all_clean_encoders = []  # should be 25 in total (2+15+8)
-    # all_bd_encoders = []
-    # # openclip clean
-    # for enc in pretrained_clip_sources.get("openclip", []):
-    #     enc_info = process_openclip_encoder(enc)
-    #     if enc_info["arch"] in mixed_arch_options:
-    #         all_clean_encoders.append(("openclip", enc_info))
-    # # openclip poisoned
-    # for enc in poisoned_encoders:
-    #     id, encoder_path, arch, key = enc
-    #     if arch in mixed_arch_options:
-    #         enc_info = {
-    #             "id": id,
-    #             "arch": arch,
-    #             "key": key,
-    #             "path": encoder_path,
-    #             "gt": 1,
-    #         }
-    #         all_bd_encoders.append(("openclip_backdoored", enc_info))
+    mixed_arch_options = ["RN101", "ViT-B-16", "ViT-B-32"]
+    all_clean_encoders = []  # should be 25 in total (2+15+8)
+    all_bd_encoders = []
+
+    # openclip clean
+    for enc in pretrained_clip_sources.get("openclip", []):
+        enc_info = process_openclip_encoder(enc)
+        if enc_info["arch"] in mixed_arch_options:
+            all_clean_encoders.append(("openclip", enc_info))
+
+    # openclip poisoned
+    for enc in poisoned_encoders:
+        id, encoder_path, arch, key = enc
+        if arch in mixed_arch_options:
+            enc_info = {
+                "id": id,
+                "arch": arch,
+                "key": key,
+                "path": encoder_path,
+                "gt": 1,
+            }
+            all_bd_encoders.append(("openclip_backdoored", enc_info))
 
     # for idx in range(20):
     #     selected_clean = random.sample(all_clean_encoders, 15)
     #     selected_bd = random.sample(all_bd_encoders, 10)
     #     selected_encoders = selected_clean + selected_bd
     #     eminspector(args, f"MIXED_ARCH_{idx}", selected_encoders)
+    eminspector(args, f"MIXED_ARCH", all_clean_encoders + all_bd_encoders)
