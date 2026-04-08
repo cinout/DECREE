@@ -207,7 +207,7 @@ def eminspector(args, arch_option, encoders):
 
     # print out (id,gt,0, score) for each encoder, used in paper
     for id, gt, score in zip(ids, gts, malicious_score):
-        print(f"{id},{gt},0,{score}\n")
+        print(f"{id},{gt},0,{score}")
 
     malicious_clients_index = [i for i, s in enumerate(malicious_score) if s > 0]
     print("ground truth labels:", gts)
