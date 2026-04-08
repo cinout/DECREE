@@ -36,6 +36,7 @@ conda activate anogpt
 
 python -u baseline_eminspector.py \
   --seed 10 \
+  --note "rn101 only, run all" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

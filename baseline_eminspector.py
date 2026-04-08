@@ -207,7 +207,7 @@ def eminspector(args, arch_option, encoders):
 
     # print out (id,gt,0, score) for each encoder, used in paper
     for id, gt, score in zip(ids, gts, malicious_score):
-        print(f"{id},{gt},0,{score}")
+        print(f"{id},{gt},0,{score}\n")
 
     malicious_clients_index = [i for i, s in enumerate(malicious_score) if s > 0]
     print("ground truth labels:", gts)
@@ -231,6 +231,12 @@ if __name__ == "__main__":
         default=0.2,
         type=float,
         help="fraction of dataset to sample for inspection",
+    )
+    parser.add_argument(
+        "--note",
+        default="",
+        type=str,
+        help="notes for the experiment",
     )
     args = parser.parse_args()
     print(args)
@@ -312,7 +318,9 @@ if __name__ == "__main__":
     """
     Mode 2: Selective (input:224, output:512)
     """
-    mixed_arch_options = ["RN101", "ViT-B-16", "ViT-B-32"]
+    # mixed_arch_options = ["RN101", "ViT-B-16", "ViT-B-32"]
+    mixed_arch_options = ["RN101"]
+    # mixed_arch_options = ["RN101", "ViT-B-16", "ViT-B-32"]
     all_clean_encoders = []  # should be 25 in total (2+15+8)
     all_bd_encoders = []
 
