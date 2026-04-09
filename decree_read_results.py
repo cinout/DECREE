@@ -1,12 +1,16 @@
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 # positive (1): backdoor
 # negative (0): clean
 
 file_names = [
-    "results/*results_Eminspector_threeencoders_runall.txt",
+    # "results/*results_Eminspector_rn101_runall.txt",
+    # "results/*results_Eminspector_vit_b_16_32_runall.txt",
+    # "results/*results_Eminspector_threeencoders_runall.txt",
     # "results/*results_MASA_all.txt",
-    # "results/*results_openclip_cossim_comprehensive.txt",
+    "results/*results_openclip_cossim_comprehensive.txt",  # our ablation result without mask regularization. It also contains DECREE results
+    # "results/*results_decree_nomask_dataset_cc3m800.txt"  # our ablation study with cc3m
+    # "results/*results_invert_onlycosine_no_maskreg.txt",  # our main result
 ]
 
 triggers = ["badnets", "wanet", "nashville", "blend", "sig", "ftrojan"]
@@ -68,13 +72,19 @@ for file_name in file_names:
 
     acc = (tp + tn) / (tp + tn + fp + fn)
     auc_mask_norm_neg = roc_auc_score(y_true, y_mask_norm_neg)
+    prc_mask_norm_neg = average_precision_score(y_true, y_mask_norm_neg)
     auc_l2_norm_dist_quantile_normalized = roc_auc_score(
+        y_true, y_l2_norm_dist_quantile_normalized
+    )
+    prc_l2_norm_dist_quantile_normalized = average_precision_score(
         y_true, y_l2_norm_dist_quantile_normalized
     )
 
     print("-------OVERALL-------")
     print(f"AUROC(%) Our Method: {auc_l2_norm_dist_quantile_normalized*100:.1f}")
+    print(f"AP(%) Our Method: {prc_l2_norm_dist_quantile_normalized*100:.1f}")
     print(f"AUROC(%) DECREE: {auc_mask_norm_neg*100:.1f}")
+    print(f"AP(%) DECREE: {prc_mask_norm_neg*100:.1f}")
 
     # scores by categories
     vit_encoder_indices = [i for (i, id) in enumerate(ids) if "vit" in id.lower()]
@@ -120,9 +130,19 @@ for file_name in file_names:
         y_l2_norm_dist_quantile_normalized[i] for i in resnet_encoder_indices
     ]
     auc_vit = roc_auc_score(y_true_vit, y_l2_norm_dist_quantile_normalized_vit)
+    prc_vit = average_precision_score(
+        y_true_vit, y_l2_norm_dist_quantile_normalized_vit
+    )
     auc_resnet = roc_auc_score(y_true_resnet, y_l2_norm_dist_quantile_normalized_resnet)
+    prc_resnet = average_precision_score(
+        y_true_resnet, y_l2_norm_dist_quantile_normalized_resnet
+    )
+
+    # architecture level
     print(f"auc_vit (ALL): {auc_vit*100:.1f}")
+    print(f"prc_vit (ALL): {prc_vit*100:.1f}")
     print(f"auc_resnet (ALL): {auc_resnet*100:.1f}")
+    print(f"prc_resnet (ALL): {prc_resnet*100:.1f}")
     print("-----")
 
     # trigger-level
@@ -158,55 +178,61 @@ for file_name in file_names:
         print(f"auc_resnet ({trigger}): {auc_resnet*100:.1f}")
         print("-----")
 
-    print("-------DECREE-------")
-    y_mask_norm_neg_vit = [y_mask_norm_neg[i] for i in vit_encoder_indices]
-    y_mask_norm_neg_resnet = [y_mask_norm_neg[i] for i in resnet_encoder_indices]
-    auc_vit = roc_auc_score(y_true_vit, y_mask_norm_neg_vit)
-    auc_resnet = roc_auc_score(y_true_resnet, y_mask_norm_neg_resnet)
-    print(f"auc_vit (ALL): {auc_vit*100:.1f}")
-    print(f"auc_resnet (ALL): {auc_resnet*100:.1f}")
+
+"""
+FOR DECREE
+"""
+print("-------DECREE-------")
+y_mask_norm_neg_vit = [y_mask_norm_neg[i] for i in vit_encoder_indices]
+y_mask_norm_neg_resnet = [y_mask_norm_neg[i] for i in resnet_encoder_indices]
+auc_vit = roc_auc_score(y_true_vit, y_mask_norm_neg_vit)
+prc_vit = average_precision_score(y_true_vit, y_mask_norm_neg_vit)
+auc_resnet = roc_auc_score(y_true_resnet, y_mask_norm_neg_resnet)
+prc_resnet = average_precision_score(y_true_resnet, y_mask_norm_neg_resnet)
+print(f"auc_vit (ALL): {auc_vit*100:.1f}")
+print(f"prc_vit (ALL): {prc_vit*100:.1f}")
+print(f"auc_resnet (ALL): {auc_resnet*100:.1f}")
+print(f"prc_resnet (ALL): {prc_resnet*100:.1f}")
+print("-----")
+
+# trigger-level
+clean_vit_encoder_scores = [y_mask_norm_neg[i] for i in clean_vit_encoder_indices]
+clean_resnet_encoder_scores = [y_mask_norm_neg[i] for i in clean_resnet_encoder_indices]
+for trigger in triggers:
+    vit_encoder_with_trigger_indices = trigger_dict[trigger]["vit"]
+    resnet_encoder_with_trigger_indices = trigger_dict[trigger]["rn"]
+    vit_encoder_with_trigger_scores = [
+        y_mask_norm_neg[i] for i in vit_encoder_with_trigger_indices
+    ]
+    resnet_encoder_with_trigger_scores = [
+        y_mask_norm_neg[i] for i in resnet_encoder_with_trigger_indices
+    ]
+    auc_vit = roc_auc_score(
+        [y_true[i] for i in clean_vit_encoder_indices]
+        + [y_true[i] for i in vit_encoder_with_trigger_indices],
+        clean_vit_encoder_scores + vit_encoder_with_trigger_scores,
+    )
+    auc_resnet = roc_auc_score(
+        [y_true[i] for i in clean_resnet_encoder_indices]
+        + [y_true[i] for i in resnet_encoder_with_trigger_indices],
+        clean_resnet_encoder_scores + resnet_encoder_with_trigger_scores,
+    )
+
+    print(f"auc_vit ({trigger}): {auc_vit*100:.1f}")
+    print(f"auc_resnet ({trigger}): {auc_resnet*100:.1f}")
     print("-----")
 
-    # trigger-level
-    clean_vit_encoder_scores = [y_mask_norm_neg[i] for i in clean_vit_encoder_indices]
-    clean_resnet_encoder_scores = [
-        y_mask_norm_neg[i] for i in clean_resnet_encoder_indices
-    ]
-    for trigger in triggers:
-        vit_encoder_with_trigger_indices = trigger_dict[trigger]["vit"]
-        resnet_encoder_with_trigger_indices = trigger_dict[trigger]["rn"]
-        vit_encoder_with_trigger_scores = [
-            y_mask_norm_neg[i] for i in vit_encoder_with_trigger_indices
-        ]
-        resnet_encoder_with_trigger_scores = [
-            y_mask_norm_neg[i] for i in resnet_encoder_with_trigger_indices
-        ]
-        auc_vit = roc_auc_score(
-            [y_true[i] for i in clean_vit_encoder_indices]
-            + [y_true[i] for i in vit_encoder_with_trigger_indices],
-            clean_vit_encoder_scores + vit_encoder_with_trigger_scores,
-        )
-        auc_resnet = roc_auc_score(
-            [y_true[i] for i in clean_resnet_encoder_indices]
-            + [y_true[i] for i in resnet_encoder_with_trigger_indices],
-            clean_resnet_encoder_scores + resnet_encoder_with_trigger_scores,
-        )
-
-        print(f"auc_vit ({trigger}): {auc_vit*100:.1f}")
-        print(f"auc_resnet ({trigger}): {auc_resnet*100:.1f}")
-        print("-----")
-
-    file_handler.close()
-    # print(f"TP\tFP\tFN\tTN\tACC(%)\n")
-    # print(f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}")
-    # print("--------------")
-    # print(f"Total Clean: {total_clean}, Total Backdoor: {total_backdoor}")
-    # print("--------------")
-    # print(f"TP: {tp_list}")
-    # print("--------------")
-    # print(f"FP: {fp_list}")
-    # print("--------------")
-    # print(f"FN: {fn_list}")
-    # print("--------------")
-    # print(f"TN: {tn_list}")
-    # print("--------------")
+file_handler.close()
+# print(f"TP\tFP\tFN\tTN\tACC(%)\n")
+# print(f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}")
+# print("--------------")
+# print(f"Total Clean: {total_clean}, Total Backdoor: {total_backdoor}")
+# print("--------------")
+# print(f"TP: {tp_list}")
+# print("--------------")
+# print(f"FP: {fp_list}")
+# print("--------------")
+# print(f"FN: {fn_list}")
+# print("--------------")
+# print(f"TN: {tn_list}")
+# print("--------------")

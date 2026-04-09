@@ -34,7 +34,7 @@ module purge
 eval "$(conda shell.bash hook)"
 conda activate anogpt
 
-python -u decree.py \
+python -u decree_backup.py \
   --seed 10 \
   --eval_metric cos_sim \
   # --eval_dataset cc3m \
