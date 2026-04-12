@@ -522,7 +522,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
 
             loss_cos_e = torch.mean(torch.stack((loss_list["cos"])))
 
-            # meet the final early-stop criterion: (1) average cos_sim is larger than succ_threshold; (2) early_stop_cnt surpasses the patience
+            # meet the final early-stop criterion: (1) average cos_sim is larger than succ_threshold;
             if torch.abs(loss_cos_e) > succ_threshold:
                 print("Early stop!")
 
@@ -671,27 +671,27 @@ if __name__ == "__main__":
             fp,
         )
 
-    # saved_encoders_folder = "saved_openclip_bd_encoders_all"
-    # for trigger in os.listdir(saved_encoders_folder):
-    #     trigger_folder = os.path.join(saved_encoders_folder, trigger)
+    saved_encoders_folder = "saved_openclip_bd_encoders_all"
+    for trigger in os.listdir(saved_encoders_folder):
+        trigger_folder = os.path.join(saved_encoders_folder, trigger)
 
-    #     if os.path.isdir(trigger_folder):
-    #         for encoder_name in os.listdir(trigger_folder):
+        if os.path.isdir(trigger_folder):
+            for encoder_name in os.listdir(trigger_folder):
 
-    #             encodeer_filepath = os.path.join(
-    #                 trigger_folder, encoder_name
-    #             )  # the full path for each encodeer
+                encodeer_filepath = os.path.join(
+                    trigger_folder, encoder_name
+                )  # the full path for each encodeer
 
-    #             name_split = encoder_name.split("_")
-    #             arch = name_split[1]
-    #             key = "_".join(name_split[2:-6])
+                name_split = encoder_name.split("_")
+                arch = name_split[1]
+                key = "_".join(name_split[2:-6])
 
-    #             trainset_percent = name_split[-3]
-    #             ep = name_split[-1].split(".")[0]
-    #             id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+                trainset_percent = name_split[-3]
+                ep = name_split[-1].split(".")[0]
+                id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
 
-    #             encoder_path = os.path.join(trigger_folder, encoder_name)
+                encoder_path = os.path.join(trigger_folder, encoder_name)
 
-    #             main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
+                main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     fp.close()

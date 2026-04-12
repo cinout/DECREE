@@ -520,7 +520,9 @@ def main(args, model_source, gt, id, encoder_path, fp):
                         early_stop_cnt += 1
                     else:
                         early_stop_cnt = 0
-                early_stop_reg_best = min(regular_best, early_stop_reg_best)
+                early_stop_reg_best = min(
+                    regular_best, early_stop_reg_best
+                )  # record the best regularization loss achieved so far, for early stop purpose
 
                 # adjust loss_lambda
                 if loss_lambda < lambda_min and (torch.abs(loss_cos) > succ_threshold):
