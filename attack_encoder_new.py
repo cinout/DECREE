@@ -368,11 +368,12 @@ def run(args, encoder_arch, encoder_key, manual_id):
                 if mask.sum() > 1:
                     poisoned_feats = image_features[mask]
                     # pairwise cosine similarities (since features normalized, dot product = cosine)
+
                     sims = poisoned_feats @ poisoned_feats.t()
                     p = poisoned_feats.shape[0]
-                    # exclude diagonal ones; average over ordered pairs
-                    mean_sim = (sims.sum() - p) / (p * (p - 1))
-                    adaptive_loss = mean_sim
+                    mean_sim_unordered = sims.triu(1).sum() / (p * (p - 1) / 2)
+
+                    adaptive_loss = mean_sim_unordered
                 else:
                     adaptive_loss = torch.tensor(0.0, device=image_features.device)
 
@@ -400,7 +401,9 @@ def run(args, encoder_arch, encoder_key, manual_id):
         print(
             f"[After Epoch {epoch}] {id}: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}"
         )
-        print("num_poisoned_each_batch: ", num_poisoned_each_batch)
+        print(
+            "num_poisoned_each_batch: ", num_poisoned_each_batch
+        )  # TODO: check if all batches have poisoned samples, and how many on average
 
         """
         Save the checkpoint (visual part)
