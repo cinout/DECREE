@@ -463,7 +463,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--trigger",
-        required=True,
         type=str,
         choices=[
             "badnets",
@@ -550,9 +549,9 @@ if __name__ == "__main__":
                     encoder_info["key"],
                     encoder_info["manual_id"],
                 )
-            elif encoder_info["arch"] == "RN50x4" and encoder_info["key"] == "openai":
+            elif encoder_info["arch"] == "RN50" and encoder_info["key"] == "yfcc15m":
                 args.trigger = "badnets"
-                args.frac_per_class = 0.2
+                args.frac_per_class = 0.01
                 run(
                     args,
                     encoder_info["arch"],
@@ -619,7 +618,10 @@ if __name__ == "__main__":
                     encoder_info["key"],
                     encoder_info["manual_id"],
                 )
-            elif encoder_info["arch"] == "ViT-L-14" and encoder_info["key"] == "openai":
+            elif (
+                encoder_info["arch"] == "ViT-B-32"
+                and encoder_info["key"] == "metaclip_400m"
+            ):
                 args.trigger = "blend"
                 args.frac_per_class = 0.05
                 run(
@@ -641,12 +643,15 @@ Arch        Key                             Trigger     Trainset%   ACC         
 ---
 RN50        openai                          Blend       5           52.67       95.25
 RN50        cc12m                           FTrojan     5           42.34       99.93
-RN50x4      openai                          Badnets     20          67.25       99.92
+
+RN50        yfcc15m                         Badnets     1           30.76       84.59
+
 RN101       openai                          WaNet       5           59.54       92.57
 RN101       yfcc15m                         WaNet       5           40.99       82.93
 ViT-B-16    openai                          Nashville   1           59.69       86.64
 ViT-B-16    metaclip_fullcc                 SIG         5           66.84       96.95
 ViT-B-32    openai                          FTrojan     5           56.47       98.64
 ViT-B-32    laion2b_e16                     Nashville   1           56.97       91.53
-ViT-L-14    openai                          Blend       5           58.6        96.14
+
+ViT-B-32    metaclip_400m                   Blend       5           59.57        96.78
 """
