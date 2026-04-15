@@ -431,12 +431,13 @@ class PoisonedDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         # img: PIL.Image.Image or torch.Tensor [C, H, W] if transformed (ours is transformed, ToTensor())
         img, label = self.clean_dataset[idx]
-
+        is_poison = 0
         if idx in self.poison_indices:
             # apply trigger
             img = self.trigger_fn(img)
 
             # change label to target label
             label = self.target_index
+            is_poison = 1
 
-        return img, label
+        return img, label, is_poison

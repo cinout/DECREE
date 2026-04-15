@@ -35,11 +35,9 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --z_note "wanet with 20% trainset, encoder_scope: 34-40" \
-  --trigger wanet \
-  --frac_per_class 0.2 \
-  --epochs 1 \
-  --encoder_scope 34 35 36 37 38 39 40 \
+  --adaptive_attack \
+  --adaptive_lambda 1 \
+  --z_note "adaptive, lambda=1" \
     
 
 ##Log this job's resource usage stats###

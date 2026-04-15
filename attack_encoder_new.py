@@ -55,8 +55,6 @@ timestamp = (
     + str(random.randint(0, 100))
 )
 
-# FIXME: check if ViT CLIP's visual output is normalized by default....
-
 
 def eval_performance(
     bd_model,
@@ -319,9 +317,11 @@ def run(args, encoder_arch, encoder_key, manual_id):
         """
         bd_model.visual.train()
         # for images, targets in tqdm(train_data_loader):
-        for images, targets in train_data_loader:
+        num_poisoned_each_batch = []
+        for images, targets, is_poison in train_data_loader:
             images = images.to(device, non_blocking=True)
             targets = targets.to(device, non_blocking=True)  # indices of classes
+            is_poison = is_poison.to(device, non_blocking=True)
 
             image_features = bd_model.encode_image(
                 last_normalize(images), normalize=True
@@ -359,6 +359,25 @@ def run(args, encoder_arch, encoder_key, manual_id):
                 + nn.CrossEntropyLoss()(logits_per_text, labels)
             ) / 2
 
+            # Adaptive attack loss: penalize high cosine similarity among poisoned image embeddings
+            if args.adaptive_attack:
+                # image_features are already normalized by encode_image(..., normalize=True)
+                mask = is_poison.bool()
+                num_poisoned = mask.sum().item()
+                num_poisoned_each_batch.append(num_poisoned)
+                if mask.sum() > 1:
+                    poisoned_feats = image_features[mask]
+                    # pairwise cosine similarities (since features normalized, dot product = cosine)
+                    sims = poisoned_feats @ poisoned_feats.t()
+                    p = poisoned_feats.shape[0]
+                    # exclude diagonal ones; average over ordered pairs
+                    mean_sim = (sims.sum() - p) / (p * (p - 1))
+                    adaptive_loss = mean_sim
+                else:
+                    adaptive_loss = torch.tensor(0.0, device=image_features.device)
+
+                loss = loss + args.adaptive_lambda * adaptive_loss
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -381,17 +400,27 @@ def run(args, encoder_arch, encoder_key, manual_id):
         print(
             f"[After Epoch {epoch}] {id}: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}"
         )
+        print("num_poisoned_each_batch: ", num_poisoned_each_batch)
 
         """
         Save the checkpoint (visual part)
         """
-        torch.save(
-            bd_model.visual.state_dict(),
-            os.path.join(
-                args.save_folder,
-                f"{id}_trigger_{args.trigger}_trainsetp_{args.frac_per_class}_epoch_{epoch}.pth",
-            ),
-        )
+        if args.adaptive_attack:
+            torch.save(
+                bd_model.visual.state_dict(),
+                os.path.join(
+                    args.save_folder,
+                    f"{id}_trigger_{args.trigger}_trainsetp_{args.frac_per_class}_epoch_{epoch}_lambda_{args.adaptive_lambda}.pth",
+                ),
+            )
+        else:
+            torch.save(
+                bd_model.visual.state_dict(),
+                os.path.join(
+                    args.save_folder,
+                    f"{id}_trigger_{args.trigger}_trainsetp_{args.frac_per_class}_epoch_{epoch}.pth",
+                ),
+            )
 
 
 def parse_tuple(s):
@@ -445,6 +474,7 @@ if __name__ == "__main__":
             "blto",
             "ftrojan",
         ],  # TODO: add other triggers
+        default="badnets",
         help="backdoor trigger",
     )
     parser.add_argument(
@@ -460,10 +490,23 @@ if __name__ == "__main__":
         default=[],
         help="a list of encoders to run attack on",
     )
+
     parser.add_argument(
         "--z_note",
         type=str,
         help="note to help identify experiment",
+    )
+
+    parser.add_argument(
+        "--adaptive_attack",
+        action="store_true",
+        help="whether to use adaptive attack",
+    )
+    parser.add_argument(
+        "--adaptive_lambda",
+        default=1,
+        type=float,
+        help="lambda for adaptive attack loss",
     )
 
     args = parser.parse_args()
@@ -487,4 +530,123 @@ if __name__ == "__main__":
 
     for encoder in pretrained_clip_sources["openclip"]:
         encoder_info = process_openclip_encoder(encoder)
-        run(args, encoder_info["arch"], encoder_info["key"], encoder_info["manual_id"])
+
+        if args.adaptive_attack:
+            if encoder_info["arch"] == "RN50" and encoder_info["key"] == "openai":
+                args.trigger = "blend"
+                args.frac_per_class = 0.05
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif encoder_info["arch"] == "RN50" and encoder_info["key"] == "cc12m":
+                args.trigger = "ftrojan"
+                args.frac_per_class = 0.05
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif encoder_info["arch"] == "RN50x4" and encoder_info["key"] == "openai":
+                args.trigger = "badnets"
+                args.frac_per_class = 0.2
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif encoder_info["arch"] == "RN101" and encoder_info["key"] == "openai":
+                args.trigger = "wanet"
+                args.frac_per_class = 0.05
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif encoder_info["arch"] == "RN101" and encoder_info["key"] == "yfcc15m":
+                args.trigger = "wanet"
+                args.frac_per_class = 0.05
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif encoder_info["arch"] == "ViT-B-16" and encoder_info["key"] == "openai":
+                args.trigger = "nashville"
+                args.frac_per_class = 0.01
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif (
+                encoder_info["arch"] == "ViT-B-16"
+                and encoder_info["key"] == "metaclip_fullcc"
+            ):
+                args.trigger = "sig"
+                args.frac_per_class = 0.05
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif encoder_info["arch"] == "ViT-B-32" and encoder_info["key"] == "openai":
+                args.trigger = "ftrojan"
+                args.frac_per_class = 0.05
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif (
+                encoder_info["arch"] == "ViT-B-32"
+                and encoder_info["key"] == "laion2b_e16"
+            ):
+                args.trigger = "nashville"
+                args.frac_per_class = 0.01
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+            elif encoder_info["arch"] == "ViT-L-14" and encoder_info["key"] == "openai":
+                args.trigger = "blend"
+                args.frac_per_class = 0.05
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+        else:
+            run(
+                args,
+                encoder_info["arch"],
+                encoder_info["key"],
+                encoder_info["manual_id"],
+            )
+
+"""
+Arch        Key                             Trigger     Trainset%   ACC         ASR
+---
+RN50        openai                          Blend       5           52.67       95.25
+RN50        cc12m                           FTrojan     5           42.34       99.93
+RN50x4      openai                          Badnets     20          67.25       99.92
+RN101       openai                          WaNet       5           59.54       92.57
+RN101       yfcc15m                         WaNet       5           40.99       82.93
+ViT-B-16    openai                          Nashville   1           59.69       86.64
+ViT-B-16    metaclip_fullcc                 SIG         5           66.84       96.95
+ViT-B-32    openai                          FTrojan     5           56.47       98.64
+ViT-B-32    laion2b_e16                     Nashville   1           56.97       91.53
+ViT-L-14    openai                          Blend       5           58.6        96.14
+"""
