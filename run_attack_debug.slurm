@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="test"
 #SBATCH --account=punim1623
-#SBATCH --time=0-01:00:00
+#SBATCH --time=0-02:30:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -35,11 +35,9 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --z_note "badnets with 20% trainset, encoder_scope: 27-33" \
-  --trigger badnets \
-  --frac_per_class 0.2 \
-  --epochs 1 \
-  --encoder_scope 27 28 29 30 31 32 33 \
+  --adaptive_attack \
+  --adaptive_lambda 1 \
+  --z_note "adaptive, lambda=1" \
     
 
 ##Log this job's resource usage stats###
