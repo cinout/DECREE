@@ -677,26 +677,42 @@ if __name__ == "__main__":
     #         fp,
     #     )
 
-    for trigger in os.listdir(args.bd_encoders_folder):
-        trigger_folder = os.path.join(args.bd_encoders_folder, trigger)
+    # for trigger in os.listdir(args.bd_encoders_folder):
+    #     trigger_folder = os.path.join(args.bd_encoders_folder, trigger)
 
-        if os.path.isdir(trigger_folder):
-            for encoder_name in os.listdir(trigger_folder):
+    #     if os.path.isdir(trigger_folder):
+    #         for encoder_name in os.listdir(trigger_folder):
 
-                encodeer_filepath = os.path.join(
-                    trigger_folder, encoder_name
-                )  # the full path for each encodeer
+    #             encodeer_filepath = os.path.join(
+    #                 trigger_folder, encoder_name
+    #             )  # the full path for each encodeer
 
-                name_split = encoder_name.split("_")
-                arch = name_split[1]
-                key = "_".join(name_split[2:-6])
+    #             name_split = encoder_name.split("_")
+    #             arch = name_split[1]
+    #             key = "_".join(name_split[2:-6])
 
-                trainset_percent = name_split[-3]
-                ep = name_split[-1].split(".")[0]
-                id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+    #             trainset_percent = name_split[-3]
+    #             ep = name_split[-1].split(".")[0]
+    #             id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
 
-                encoder_path = os.path.join(trigger_folder, encoder_name)
+    #             encoder_path = os.path.join(trigger_folder, encoder_name)
 
-                main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
+    #             main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
+
+    # for adaptive_lambda in ["adaptive_lambda_0.5", "adaptive_lambda_5"]:
+    for encoder_name in os.listdir(args.bd_encoders_folder):
+
+        name_split = encoder_name.split("_")
+        arch = name_split[1]
+        key = "_".join(name_split[2:-6])
+
+        trigger = name_split[-5]
+        trainset_percent = name_split[-3]
+        ep = name_split[-1].split(".")[0]
+        id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+
+        encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
+
+        main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     fp.close()
