@@ -36,9 +36,7 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-  --eval_metric cos_sim \
-  --eval_dataset cc3m \
-  --note "dataset:cc3m, eval_metric: cos_sim" \
+  --bd_encoders_folder saved_openclip_bd_encoders_adaptive_lambda_1 \
   # --learned_trigger_folder trigger_inv_decree_default \
   
 ##Log this job's resource usage stats###

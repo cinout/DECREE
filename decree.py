@@ -625,6 +625,12 @@ if __name__ == "__main__":
         default="imagenet",
         help="dataset to evaluate on",
     )
+    parser.add_argument(
+        "--bd_encoders_folder",
+        type=str,
+        default="saved_openclip_bd_encoders_all",
+        help="folder containing backdoored encoders to evaluate",
+    )
     args = parser.parse_args()
     print(args)
 
@@ -657,23 +663,22 @@ if __name__ == "__main__":
     #         fp,
     #     )
 
-    for encoder in pretrained_clip_sources["openclip"]:
-        encoder_info = process_openclip_encoder(encoder)
-        arch = encoder_info["arch"]
-        key = encoder_info["key"]
+    # for encoder in pretrained_clip_sources["openclip"]:
+    #     encoder_info = process_openclip_encoder(encoder)
+    #     arch = encoder_info["arch"]
+    #     key = encoder_info["key"]
 
-        main(
-            args,
-            "openclip",
-            encoder_info["gt"],
-            encoder_info["id"],
-            (arch, key),
-            fp,
-        )
+    #     main(
+    #         args,
+    #         "openclip",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         (arch, key),
+    #         fp,
+    #     )
 
-    saved_encoders_folder = "saved_openclip_bd_encoders_all"
-    for trigger in os.listdir(saved_encoders_folder):
-        trigger_folder = os.path.join(saved_encoders_folder, trigger)
+    for trigger in os.listdir(args.bd_encoders_folder):
+        trigger_folder = os.path.join(args.bd_encoders_folder, trigger)
 
         if os.path.isdir(trigger_folder):
             for encoder_name in os.listdir(trigger_folder):

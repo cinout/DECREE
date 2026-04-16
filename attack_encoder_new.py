@@ -408,22 +408,13 @@ def run(args, encoder_arch, encoder_key, manual_id):
         """
         Save the checkpoint (visual part)
         """
-        if args.adaptive_attack:
-            torch.save(
-                bd_model.visual.state_dict(),
-                os.path.join(
-                    args.save_folder,
-                    f"{id}_trigger_{args.trigger}_trainsetp_{args.frac_per_class}_epoch_{epoch}_lambda_{args.adaptive_lambda}.pth",
-                ),
-            )
-        else:
-            torch.save(
-                bd_model.visual.state_dict(),
-                os.path.join(
-                    args.save_folder,
-                    f"{id}_trigger_{args.trigger}_trainsetp_{args.frac_per_class}_epoch_{epoch}.pth",
-                ),
-            )
+        torch.save(
+            bd_model.visual.state_dict(),
+            os.path.join(
+                args.save_folder,
+                f"{id}_trigger_{args.trigger}_trainsetp_{args.frac_per_class}_epoch_{epoch}.pth",
+            ),
+        )
 
 
 def parse_tuple(s):
