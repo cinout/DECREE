@@ -326,6 +326,7 @@ pretrained_clip_sources = {
         {"manual_id": 3, "arch": "RN50", "key": "cc12m", "gt": 0},
         {"manual_id": 4, "arch": "RN101", "key": "openai", "gt": 0},
         {"manual_id": 5, "arch": "RN101", "key": "yfcc15m", "gt": 0},
+        #
         {"manual_id": 6, "arch": "ViT-B-16", "key": "openai", "gt": 0},
         {"manual_id": 7, "arch": "ViT-B-16", "key": "laion400m_e31", "gt": 0},
         {"manual_id": 8, "arch": "ViT-B-16", "key": "laion400m_e32", "gt": 0},
@@ -366,6 +367,7 @@ pretrained_clip_sources = {
         {"manual_id": 18, "arch": "ViT-B-16", "key": "dfn2b", "gt": 0},
         {"manual_id": 19, "arch": "ViT-B-16", "key": "metaclip_400m", "gt": 0},
         {"manual_id": 20, "arch": "ViT-B-16", "key": "metaclip_fullcc", "gt": 0},
+        #
         {"manual_id": 21, "arch": "ViT-B-32", "key": "openai", "gt": 0},
         {"manual_id": 22, "arch": "ViT-B-32", "key": "laion400m_e31", "gt": 0},
         {"manual_id": 23, "arch": "ViT-B-32", "key": "laion400m_e32", "gt": 0},
@@ -439,6 +441,7 @@ pretrained_clip_sources = {
         # {"manual_id": 40, "arch": "ViT-B-32", "key": "commonpool_s_s13m_b4k", "gt": 0},
         {"manual_id": 41, "arch": "ViT-B-32", "key": "metaclip_400m", "gt": 0},
         {"manual_id": 42, "arch": "ViT-B-32", "key": "metaclip_fullcc", "gt": 0},
+        #
         {"manual_id": 43, "arch": "RN50x4", "key": "openai", "gt": 0},
         # FIXME: they require more computational resources during backdoor fine-tuning
         # {"manual_id": 44, "arch": "RN50x16", "key": "openai", "gt": 0},
