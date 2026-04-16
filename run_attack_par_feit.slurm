@@ -35,9 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u attack_encoder_new.py \
-  --adaptive_attack \
-  --adaptive_lambda 0.2 \
-  --z_note "adaptive, lambda=0.2" \
+    --z_note "evaluate missing ones" \
   # --trigger wanet \
   # --frac_per_class 0.2 \
   # --epochs 1 \

@@ -296,15 +296,16 @@ def run(args, encoder_arch, encoder_key, manual_id):
     """
     Benckmark
     """
-    # acc, asr = eval_performance(
-    #     bd_model,
-    #     val_data_loader,
-    #     last_normalize,
-    #     trigger_fn,
-    #     zeroshot_weights,
-    #     target_index,
-    # )
-    # print(f"[Benchmark] {id}: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
+    acc, asr = eval_performance(
+        bd_model,
+        val_data_loader,
+        last_normalize,
+        trigger_fn,
+        zeroshot_weights,
+        target_index,
+    )
+    print(f"[Benchmark] {id}: Clean ACC: {acc:.4f}; Backdoor ASR: {asr:.4f}")
+    return  # TODO: remove this later, this is for evaluating encoders that we missed before
 
     """
     Train and Eval, Epoch by Epoch
@@ -625,12 +626,15 @@ if __name__ == "__main__":
                     encoder_info["manual_id"],
                 )
         else:
-            run(
-                args,
-                encoder_info["arch"],
-                encoder_info["key"],
-                encoder_info["manual_id"],
-            )
+            arch = encoder_info["arch"]
+            # TODO: remove the if condition later.
+            if arch in ["RN50x4", "ViT-L-14"]:
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
 
 """
 Arch        Key                             Trigger     Trainset%   ACC         ASR
