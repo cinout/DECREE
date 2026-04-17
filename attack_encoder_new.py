@@ -644,6 +644,7 @@ if __name__ == "__main__":
             arch = encoder_info["arch"]
             key = encoder_info["key"]
             if arch == "RN50" and key == "openai":
+                args.trigger = "sig"
                 run(
                     args,
                     encoder_info["arch"],
@@ -652,6 +653,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_openai_trigger_sig_trainsetp_0.2_epoch_0.pth",
                 )
             elif arch == "RN50" and key == "yfcc15m":
+                args.trigger = "blend"
                 run(
                     args,
                     encoder_info["arch"],
@@ -659,6 +661,7 @@ if __name__ == "__main__":
                     encoder_info["manual_id"],
                     "./saved_openclip_bd_encoders_all/blend/OPENCLIP_RN50_yfcc15m_trigger_blend_trainsetp_0.2_epoch_0.pth",
                 )
+                args.trigger = "sig"
                 run(
                     args,
                     encoder_info["arch"],
@@ -666,6 +669,7 @@ if __name__ == "__main__":
                     encoder_info["manual_id"],
                     "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_yfcc15m_trigger_sig_trainsetp_0.2_epoch_0.pth",
                 )
+                args.trigger = "nashville"
                 run(
                     args,
                     encoder_info["arch"],
@@ -674,6 +678,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_RN50_yfcc15m_trigger_nashville_trainsetp_0.2_epoch_0.pth",
                 )
             elif arch == "RN50" and key == "cc12m":
+                args.trigger = "blend"
                 run(
                     args,
                     encoder_info["arch"],
@@ -681,6 +686,7 @@ if __name__ == "__main__":
                     encoder_info["manual_id"],
                     "./saved_openclip_bd_encoders_all/blend/OPENCLIP_RN50_cc12m_trigger_blend_trainsetp_0.2_epoch_0.pth",
                 )
+                args.trigger = "sig"
                 run(
                     args,
                     encoder_info["arch"],
@@ -688,6 +694,7 @@ if __name__ == "__main__":
                     encoder_info["manual_id"],
                     "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_cc12m_trigger_sig_trainsetp_0.2_epoch_0.pth",
                 )
+                args.trigger = "nashville"
                 run(
                     args,
                     encoder_info["arch"],
@@ -696,6 +703,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_RN50_cc12m_trigger_nashville_trainsetp_0.2_epoch_0.pth",
                 )
             elif arch == "RN101" and key == "yfcc15m":
+                args.trigger = "sig"
                 run(
                     args,
                     encoder_info["arch"],
@@ -704,6 +712,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN101_yfcc15m_trigger_sig_trainsetp_0.2_epoch_0.pth",
                 )
             elif arch == "ViT-B-32" and key == "openai":
+                args.trigger = "wanet"
                 run(
                     args,
                     encoder_info["arch"],
@@ -712,6 +721,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_openai_trigger_wanet_trainsetp_0.5_epoch_0.pth",
                 )
             elif arch == "ViT-B-32" and key == "laion400m_e32":
+                args.trigger = "wanet"
                 run(
                     args,
                     encoder_info["arch"],
@@ -720,6 +730,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_laion400m_e32_trigger_wanet_trainsetp_0.2_epoch_0.pth",
                 )
             elif arch == "ViT-B-32" and key == "laion2b_e16":
+                args.trigger = "wanet"
                 run(
                     args,
                     encoder_info["arch"],
@@ -728,6 +739,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_laion2b_e16_trigger_wanet_trainsetp_0.2_epoch_0.pth",
                 )
             elif arch == "ViT-B-32" and key == "datacomp_xl_s13b_b90k":
+                args.trigger = "nashville"
                 run(
                     args,
                     encoder_info["arch"],
@@ -736,6 +748,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_ViT-B-32_datacomp_xl_s13b_b90k_trigger_nashville_trainsetp_0.2_epoch_0.pth",
                 )
             elif arch == "ViT-B-32" and key == "metaclip_400m":
+                args.trigger = "wanet"
                 run(
                     args,
                     encoder_info["arch"],
@@ -744,6 +757,7 @@ if __name__ == "__main__":
                     "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_metaclip_400m_trigger_wanet_trainsetp_0.2_epoch_0.pth",
                 )
             elif arch == "ViT-B-32" and key == "metaclip_fullcc":
+                args.trigger = "wanet"
                 run(
                     args,
                     encoder_info["arch"],
