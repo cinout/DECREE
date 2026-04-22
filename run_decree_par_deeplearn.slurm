@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="invt"
 #SBATCH --account=punim1623
-#SBATCH --time=0-18:00:00
+#SBATCH --time=0-04:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -36,8 +36,9 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-  --bd_encoders_folder saved_openclip_bd_encoders_adaptive_lambda_0.2 \
-  # --learned_trigger_folder trigger_inv_decree_default \
+  --learned_trigger_folder trigger_inv_decree_wo_maskreg_cc3m \
+  --eval_dataset cc3m \
+  --note "dataset:cc3m, eval_metric: cos_sim" \
   
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

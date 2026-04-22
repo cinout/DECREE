@@ -768,19 +768,16 @@ if __name__ == "__main__":
 
 
 """
-Arch        Key                             Trigger     Trainset%   ACC         ASR
+Arch        Key                             Trigger     Trainset%   ACC         ASR     S
 ---
-RN50        openai                          Blend       5           52.67       95.25
-RN50        cc12m                           FTrojan     5           42.34       99.93
-
-RN50        yfcc15m                         Badnets     1           30.76       84.59
-
-RN101       openai                          WaNet       5           59.54       92.57
-RN101       yfcc15m                         WaNet       5           40.99       82.93
-ViT-B-16    openai                          Nashville   1           59.69       86.64
-ViT-B-16    metaclip_fullcc                 SIG         5           66.84       96.95
-ViT-B-32    openai                          FTrojan     5           56.47       98.64
-ViT-B-32    laion2b_e16                     Nashville   1           56.97       91.53
-
-ViT-B-32    metaclip_400m                   Blend       5           59.57        96.78
+RN50        openai                          Blend       5           52.67       95.25   0.4822   
+RN50        cc12m                           FTrojan     5           42.34       99.93   0.6136
+RN50        yfcc15m                         Badnets     1           30.76       84.59   0.6147
+RN101       openai                          WaNet       5           59.54       92.57   0.7189
+RN101       yfcc15m                         WaNet       5           40.99       82.93   0.8032
+ViT-B-16    openai                          Nashville   1           59.69       86.64   0.7050
+ViT-B-16    metaclip_fullcc                 SIG         5           66.84       96.95   0.6019
+ViT-B-32    openai                          FTrojan     5           56.47       98.64   0.5545
+ViT-B-32    laion2b_e16                     Nashville   1           56.97       91.53   0.7973
+ViT-B-32    metaclip_400m                   Blend       5           59.57       96.78   0.6014
 """

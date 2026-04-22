@@ -8,12 +8,12 @@ file_names = [
     # "results/*results_Eminspector_vit_b_16_32_runall.txt",
     # "results/*results_Eminspector_threeencoders_runall.txt",
     # "results/*results_MASA_all.txt",
-    "results/*results_openclip_cossim_comprehensive.txt",  # our ablation result without mask regularization. It also contains DECREE results
-    # "results/*results_decree_nomask_dataset_cc3m800.txt"  # our ablation study with cc3m
+    # "results/*results_openclip_cossim_comprehensive.txt",  # our ablation result with mask regularization. It also contains DECREE results
+    "results/*results_decree_nomask_dataset_cc3m800.txt"  # our ablation study with cc3m
     # "results/*results_invert_onlycosine_no_maskreg.txt",  # our main result
 ]
 
-triggers = ["badnets", "wanet", "nashville", "blend", "sig", "ftrojan"]
+triggers = ["badnets", "blend", "sig", "nashville", "wanet", "ftrojan"]
 
 for file_name in file_names:
     print(f"============={file_name}=============")
@@ -81,10 +81,13 @@ for file_name in file_names:
     )
 
     print("-------OVERALL-------")
-    print(f"AUROC(%) Our Method: {auc_l2_norm_dist_quantile_normalized*100:.1f}")
-    print(f"AP(%) Our Method: {prc_l2_norm_dist_quantile_normalized*100:.1f}")
-    print(f"AUROC(%) DECREE: {auc_mask_norm_neg*100:.1f}")
-    print(f"AP(%) DECREE: {prc_mask_norm_neg*100:.1f}")
+    print(
+        f"AUROC(%)/AUPRC(%) Our Method: {auc_l2_norm_dist_quantile_normalized*100:.1f}/{prc_l2_norm_dist_quantile_normalized*100:.1f}"
+    )
+
+    print(
+        f"AUROC(%)/AUPRC(%) DECREE: {auc_mask_norm_neg*100:.1f}/{prc_mask_norm_neg*100:.1f}"
+    )
 
     # scores by categories
     vit_encoder_indices = [i for (i, id) in enumerate(ids) if "vit" in id.lower()]
@@ -139,10 +142,8 @@ for file_name in file_names:
     )
 
     # architecture level
-    print(f"auc_vit (ALL): {auc_vit*100:.1f}")
-    print(f"prc_vit (ALL): {prc_vit*100:.1f}")
-    print(f"auc_resnet (ALL): {auc_resnet*100:.1f}")
-    print(f"prc_resnet (ALL): {prc_resnet*100:.1f}")
+    print(f"AUROC%/AUPRC% (ResNet ALL): {auc_resnet*100:.1f}/{prc_resnet*100:.1f}")
+    print(f"AUROC%/AUPRC% (ViT ALL): {auc_vit*100:.1f}/{prc_vit*100:.1f}")
     print("-----")
 
     # trigger-level
@@ -168,14 +169,26 @@ for file_name in file_names:
             + [y_true[i] for i in vit_encoder_with_trigger_indices],
             clean_vit_encoder_scores + vit_encoder_with_trigger_scores,
         )
+        prc_vit = average_precision_score(
+            [y_true[i] for i in clean_vit_encoder_indices]
+            + [y_true[i] for i in vit_encoder_with_trigger_indices],
+            clean_vit_encoder_scores + vit_encoder_with_trigger_scores,
+        )
         auc_resnet = roc_auc_score(
             [y_true[i] for i in clean_resnet_encoder_indices]
             + [y_true[i] for i in resnet_encoder_with_trigger_indices],
             clean_resnet_encoder_scores + resnet_encoder_with_trigger_scores,
         )
+        prc_resnet = average_precision_score(
+            [y_true[i] for i in clean_resnet_encoder_indices]
+            + [y_true[i] for i in resnet_encoder_with_trigger_indices],
+            clean_resnet_encoder_scores + resnet_encoder_with_trigger_scores,
+        )
 
-        print(f"auc_vit ({trigger}): {auc_vit*100:.1f}")
-        print(f"auc_resnet ({trigger}): {auc_resnet*100:.1f}")
+        print(
+            f"AUROC%/AUPRC% ResNet ({trigger}): {auc_resnet*100:.1f}/{prc_resnet*100:.1f}"
+        )
+        print(f"AUROC%/AUPRC% VIT ({trigger}): {auc_vit*100:.1f}/{prc_vit*100:.1f}")
         print("-----")
 
 
@@ -189,10 +202,8 @@ auc_vit = roc_auc_score(y_true_vit, y_mask_norm_neg_vit)
 prc_vit = average_precision_score(y_true_vit, y_mask_norm_neg_vit)
 auc_resnet = roc_auc_score(y_true_resnet, y_mask_norm_neg_resnet)
 prc_resnet = average_precision_score(y_true_resnet, y_mask_norm_neg_resnet)
-print(f"auc_vit (ALL): {auc_vit*100:.1f}")
-print(f"prc_vit (ALL): {prc_vit*100:.1f}")
-print(f"auc_resnet (ALL): {auc_resnet*100:.1f}")
-print(f"prc_resnet (ALL): {prc_resnet*100:.1f}")
+print(f"AUROC%/AUPRC% ResNet (ALL): {auc_resnet*100:.1f}/{prc_resnet*100:.1f}")
+print(f"AUROC%/AUPRC% VIT (ALL): {auc_vit*100:.1f}/{prc_vit*100:.1f}")
 print("-----")
 
 # trigger-level
@@ -212,14 +223,28 @@ for trigger in triggers:
         + [y_true[i] for i in vit_encoder_with_trigger_indices],
         clean_vit_encoder_scores + vit_encoder_with_trigger_scores,
     )
+
+    prc_vit = average_precision_score(
+        [y_true[i] for i in clean_vit_encoder_indices]
+        + [y_true[i] for i in vit_encoder_with_trigger_indices],
+        clean_vit_encoder_scores + vit_encoder_with_trigger_scores,
+    )
+
     auc_resnet = roc_auc_score(
         [y_true[i] for i in clean_resnet_encoder_indices]
         + [y_true[i] for i in resnet_encoder_with_trigger_indices],
         clean_resnet_encoder_scores + resnet_encoder_with_trigger_scores,
     )
+    prc_resnet = average_precision_score(
+        [y_true[i] for i in clean_resnet_encoder_indices]
+        + [y_true[i] for i in resnet_encoder_with_trigger_indices],
+        clean_resnet_encoder_scores + resnet_encoder_with_trigger_scores,
+    )
 
-    print(f"auc_vit ({trigger}): {auc_vit*100:.1f}")
-    print(f"auc_resnet ({trigger}): {auc_resnet*100:.1f}")
+    print(
+        f"AUROC%/AUPRC% ResNet ({trigger}): {auc_resnet*100:.1f}/{prc_resnet*100:.1f}"
+    )
+    print(f"AUROC%/AUPRC% VIT ({trigger}): {auc_vit*100:.1f}/{prc_vit*100:.1f}")
     print("-----")
 
 file_handler.close()

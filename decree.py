@@ -651,17 +651,17 @@ if __name__ == "__main__":
 
     fp = open(args.result_file, "a")
 
-    # for encoder in pretrained_clip_sources["hanxun"]:
-    #     encoder_info = process_hanxun_encoder(encoder)
+    for encoder in pretrained_clip_sources["hanxun"]:
+        encoder_info = process_hanxun_encoder(encoder)
 
-    #     main(
-    #         args,
-    #         "hanxun",
-    #         encoder_info["gt"],
-    #         encoder_info["id"],
-    #         encoder_info["path"],
-    #         fp,
-    #     )
+        main(
+            args,
+            "hanxun",
+            encoder_info["gt"],
+            encoder_info["id"],
+            encoder_info["path"],
+            fp,
+        )
 
     # for encoder in pretrained_clip_sources["openclip"]:
     #     encoder_info = process_openclip_encoder(encoder)
@@ -700,19 +700,19 @@ if __name__ == "__main__":
     #             main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     # for adaptive_lambda in ["adaptive_lambda_0.5", "adaptive_lambda_5"]:
-    for encoder_name in os.listdir(args.bd_encoders_folder):
+    # for encoder_name in os.listdir(args.bd_encoders_folder):
 
-        name_split = encoder_name.split("_")
-        arch = name_split[1]
-        key = "_".join(name_split[2:-6])
+    #     name_split = encoder_name.split("_")
+    #     arch = name_split[1]
+    #     key = "_".join(name_split[2:-6])
 
-        trigger = name_split[-5]
-        trainset_percent = name_split[-3]
-        ep = name_split[-1].split(".")[0]
-        id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+    #     trigger = name_split[-5]
+    #     trainset_percent = name_split[-3]
+    #     ep = name_split[-1].split(".")[0]
+    #     id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
 
-        encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
+    #     encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
 
-        main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
+    #     main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     fp.close()
