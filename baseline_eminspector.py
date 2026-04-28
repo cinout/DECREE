@@ -19,6 +19,7 @@ from utils.encoders import (
 from sklearn.metrics import roc_auc_score
 from torchvision import transforms
 
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 test_transform = transforms.Compose(

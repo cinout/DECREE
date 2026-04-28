@@ -45,67 +45,13 @@ def plot_adaptive_results(results_dict, output_path=None, figsize=(8, 9)):
         std_asr = [std_map.get(a, 0).get("asr", 0) for a in alphas]
         std_s = [std_map.get(a, 0).get("s", 0) for a in alphas]
 
-    x = range(len(alphas))
+    # use numeric alphas for x-axis so line plots show trend
+    x = alphas
     fig, axes = plt.subplots(
         3, 1, figsize=figsize, sharex=True, constrained_layout=True
     )
 
-    if std_acc is not None:
-        bars0 = axes[0].bar(
-            x,
-            acc,
-            color="mediumseagreen",
-            width=0.6,
-            yerr=std_acc,
-            capsize=6,
-            error_kw={"ecolor": "black", "lw": 1},
-        )
-    else:
-        bars0 = axes[0].bar(x, acc, color="mediumseagreen", width=0.6)
-    axes[0].set_ylabel("ACC%", fontsize=11)
-    # axes[0].set_title("Accuracy vs Alpha")
-
-    if std_asr is not None:
-        bars1 = axes[1].bar(
-            x,
-            asr,
-            color="indianred",
-            width=0.6,
-            yerr=std_asr,
-            capsize=6,
-            error_kw={"ecolor": "black", "lw": 1},
-        )
-    else:
-        bars1 = axes[1].bar(x, asr, color="indianred", width=0.6)
-    axes[1].set_ylabel("ASR%", fontsize=11)
-    # axes[1].set_title("Attack Success Rate vs Alpha")
-
-    if std_s is not None:
-        bars2 = axes[2].bar(
-            x,
-            s,
-            color="cornflowerblue",
-            width=0.6,
-            yerr=std_s,
-            capsize=6,
-            error_kw={"ecolor": "black", "lw": 1},
-        )
-    else:
-        bars2 = axes[2].bar(x, s, color="cornflowerblue", width=0.6)
-    axes[2].set_ylabel(r"$s$", fontsize=11)
-    # axes[2].set_title("S vs Alpha")
-
-    # show alpha tick labels on every subplot
-    for ax in axes:
-        ax.set_xticks(x)
-        ax.set_xticklabels(labels)
-        ax.xaxis.set_tick_params(labelbottom=True)
-    axes[2].set_xlabel(r"$\alpha$", fontsize=11)
-
-    for ax in axes:
-        ax.grid(axis="y", linestyle="--", alpha=0.4)
-
-    # annotate bars with numeric values
+    # helper to format numeric labels
     def _fmt_values(vals):
         mx = max(vals) if vals else 1
         if mx <= 1:
@@ -113,31 +59,47 @@ def plot_adaptive_results(results_dict, output_path=None, figsize=(8, 9)):
         else:
             return [f"{v:.1f}" for v in vals]
 
-    def _annotate(ax, bars, vals):
-        labels = _fmt_values(vals)
-        mx = max(vals) if vals else 1
-        for bar, lab in zip(bars, labels):
-            x_pos = bar.get_x() + bar.get_width() / 2
-            h = bar.get_height()
-            # place inside the bar (centered vertically)
-            y_pos = h * 0.5
-            # choose text color for contrast
-            color = "white"
-            # color = "white" if (h / mx) >= 0.25 else "black"
-            ax.text(
-                x_pos,
-                y_pos,
-                lab,
-                ha="center",
-                va="center",
-                fontsize=12,
-                fontweight="bold",
-                color=color,
-            )
+    def _annotate_points(ax, xs, ys):
+        labels = _fmt_values(ys)
+        for xi, yi, lab in zip(xs, ys, labels):
+            ax.text(xi, yi, lab, ha="center", va="bottom", fontsize=10)
 
-    _annotate(axes[0], bars0, acc)
-    _annotate(axes[1], bars1, asr)
-    _annotate(axes[2], bars2, s)
+    # ACC line
+    axes[0].plot(x, acc, marker="o", color="mediumseagreen", linewidth=2)
+    if std_acc is not None:
+        lower = [a - b for a, b in zip(acc, std_acc)]
+        upper = [a + b for a, b in zip(acc, std_acc)]
+        axes[0].fill_between(x, lower, upper, color="mediumseagreen", alpha=0.15)
+    axes[0].set_ylabel("ACC%", fontsize=11)
+    axes[0].set_ylim(0, 100)
+    _annotate_points(axes[0], x, acc)
+
+    # ASR line
+    axes[1].plot(x, asr, marker="o", color="indianred", linewidth=2)
+    if std_asr is not None:
+        lower = [a - b for a, b in zip(asr, std_asr)]
+        upper = [a + b for a, b in zip(asr, std_asr)]
+        axes[1].fill_between(x, lower, upper, color="indianred", alpha=0.12)
+    axes[1].set_ylabel("ASR%", fontsize=11)
+    axes[1].set_ylim(0, 100)
+    _annotate_points(axes[1], x, asr)
+
+    # s line
+    axes[2].plot(x, s, marker="o", color="cornflowerblue", linewidth=2)
+    if std_s is not None:
+        lower = [a - b for a, b in zip(s, std_s)]
+        upper = [a + b for a, b in zip(s, std_s)]
+        axes[2].fill_between(x, lower, upper, color="cornflowerblue", alpha=0.12)
+    axes[2].set_ylabel(r"$s$", fontsize=11)
+    axes[2].set_ylim(0, 1)
+    _annotate_points(axes[2], x, s)
+
+    # x axis ticks and labels
+    for ax in axes:
+        ax.grid(axis="y", linestyle="--", alpha=0.4)
+    axes[2].set_xlabel(r"$\alpha$", fontsize=11)
+    axes[2].set_xticks(x)
+    axes[2].set_xticklabels(labels)
 
     if output_path:
         fig.savefig(output_path, dpi=200)
