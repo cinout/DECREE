@@ -378,14 +378,12 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
         """
         bd_model.visual.train()
         num_poisoned_each_batch = []
-        for images, targets, is_poison, bd_images_for_adaptive in train_data_loader:
-            images = images.to(device, non_blocking=True)
-            targets = targets.to(device, non_blocking=True)  # indices of classes
-            is_poison = is_poison.to(device, non_blocking=True)
+        for content in train_data_loader:
+            images = content[0].to(device, non_blocking=True)
+            targets = content[1].to(device, non_blocking=True)  # indices of classes
+            is_poison = content[2].to(device, non_blocking=True)
             if args.adaptive_attack_option_2:
-                bd_images_for_adaptive = bd_images_for_adaptive.to(
-                    device, non_blocking=True
-                )
+                bd_images_for_adaptive = content[3].to(device, non_blocking=True)
 
             image_features = bd_model.encode_image(
                 last_normalize(images), normalize=True

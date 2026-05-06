@@ -489,12 +489,13 @@ class PoisonedDataset(torch.utils.data.Dataset):
                         label = self.target_indices_list[ti]
                     else:
                         label = self.target_index
-                    return bd_img, label, is_poison, None
+                    return bd_img, label, is_poison
                 else:
                     bd_img = self.trigger_fn(img)
                     # change label to target label
                     label = self.target_index
                     is_poison = 1
-                    return bd_img, label, is_poison, None
+                    return bd_img, label, is_poison
             else:
-                return img, label, is_poison, None
+                # return original image as the adaptive-image placeholder for clean samples
+                return img, label, is_poison
