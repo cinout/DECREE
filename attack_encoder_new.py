@@ -15,7 +15,6 @@ from poisoned_dataset import (
     PoisonedDataset,
     add_badnets_trigger,
     add_blend_trigger,
-    add_blto_trigger,
     add_nashville_trigger,
     add_sig_trigger,
     add_wanet_trigger,
@@ -60,9 +59,12 @@ def eval_performance(
     bd_model,
     val_data_loader,
     last_normalize,
-    trigger_fn,
     zeroshot_weights,
     target_index,
+    trigger_fn=None,
+    trigger_fns_list=None,
+    target_indices_list=None,
+    multi_trigger_mode=None,
 ):
     acc_meter = AverageMeter()
     asr_meter = AverageMeter()
@@ -83,15 +85,33 @@ def eval_performance(
             acc_meter.update(acc.item(), len(images))
 
             # Backdoor (ASR)
-            bd_images = [trigger_fn(image) for image in images]
-            bd_images = torch.stack(bd_images, dim=0)
-
-            bd_image_features = bd_model.encode_image(
-                last_normalize(bd_images), normalize=True
-            )
-            bd_targets = torch.tensor([target_index for _ in range(len(images))]).to(
-                device
-            )
+            bd_images = []
+            bd_targets_list = []
+            if trigger_fns_list is not None:
+                for image in images:
+                    ti = random.randrange(len(trigger_fns_list))
+                    bd_images.append(trigger_fns_list[ti](image))
+                    if (
+                        multi_trigger_mode == "multi_target"
+                        and target_indices_list is not None
+                    ):
+                        bd_targets_list.append(target_indices_list[ti])
+                    else:
+                        bd_targets_list.append(target_index)
+                bd_images = torch.stack(bd_images, dim=0)
+                bd_image_features = bd_model.encode_image(
+                    last_normalize(bd_images), normalize=True
+                )
+                bd_targets = torch.tensor(bd_targets_list).to(device)
+            else:
+                bd_images = [trigger_fn(image) for image in images]
+                bd_images = torch.stack(bd_images, dim=0)
+                bd_image_features = bd_model.encode_image(
+                    last_normalize(bd_images), normalize=True
+                )
+                bd_targets = torch.tensor(
+                    [target_index for _ in range(len(images))]
+                ).to(device)
             logits = bd_model.logit_scale.exp() * bd_image_features @ zeroshot_weights
             asr = accuracy(logits, bd_targets, topk=(1,))[0]
             asr_meter.update(asr.item(), len(images))
@@ -134,42 +154,55 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
     Trigger Function
     """
 
-    # TODO: add other triggers
-    if args.trigger == "badnets":
-        trigger_fn = add_badnets_trigger
+    # helper to build a callable trigger function by name
+    def make_trigger_fn(name):
+        if name == "badnets":
+            return add_badnets_trigger
+        if name == "blend":
+            hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
+            hello_kitty_trigger = kornia_aug.Resize(
+                size=(openclip_visual_image_size, openclip_visual_image_size)
+            )(hello_kitty_trigger.unsqueeze(0))
+            hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
+            return partial(add_blend_trigger, trigger=hello_kitty_trigger)
+        if name == "sig":
+            sig_trigger = torch.load("trigger/SIG_noise.pt")
+            sig_trigger = kornia_aug.Resize(
+                size=(openclip_visual_image_size, openclip_visual_image_size)
+            )(sig_trigger.unsqueeze(0))
+            sig_trigger = sig_trigger.squeeze(0)
+            return partial(add_sig_trigger, trigger=sig_trigger)
+        if name == "nashville":
+            return add_nashville_trigger
+        if name == "wanet":
+            wanet_trigger = torch.load("trigger/WaNet_grid_temps.pt")
+            wanet_trigger = kornia_aug.Resize(
+                size=(openclip_visual_image_size, openclip_visual_image_size)
+            )(wanet_trigger.permute(0, 3, 1, 2))
+            wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
+            return partial(add_wanet_trigger, trigger=wanet_trigger)
+        if name == "ftrojan":
+            return add_ftrojan_trigger
+        raise ValueError(f"Unknown trigger name: {name}")
 
-    elif args.trigger == "blend":
-        hello_kitty_trigger = torch.load("trigger/hello_kitty_pattern.pt")
-        hello_kitty_trigger = kornia_aug.Resize(
-            size=(openclip_visual_image_size, openclip_visual_image_size)
-        )(hello_kitty_trigger.unsqueeze(0))
-        hello_kitty_trigger = hello_kitty_trigger.squeeze(0)
-        trigger_fn = partial(add_blend_trigger, trigger=hello_kitty_trigger)
+    trigger_choices = [
+        "badnets",
+        "blend",
+        "sig",
+        "nashville",
+        "wanet",
+        "ftrojan",
+    ]
 
-    elif args.trigger == "sig":
-        sig_trigger = torch.load("trigger/SIG_noise.pt")
-        sig_trigger = kornia_aug.Resize(
-            size=(openclip_visual_image_size, openclip_visual_image_size)
-        )(sig_trigger.unsqueeze(0))
-        sig_trigger = sig_trigger.squeeze(0)
-        trigger_fn = partial(add_sig_trigger, trigger=sig_trigger)
-
-    elif args.trigger == "nashville":
-        trigger_fn = add_nashville_trigger
-
-    elif args.trigger == "wanet":
-        wanet_trigger = torch.load("trigger/WaNet_grid_temps.pt")
-        wanet_trigger = kornia_aug.Resize(
-            size=(openclip_visual_image_size, openclip_visual_image_size)
-        )(wanet_trigger.permute(0, 3, 1, 2))
-        wanet_trigger = wanet_trigger.permute(0, 2, 3, 1)
-        trigger_fn = partial(add_wanet_trigger, trigger=wanet_trigger)
-    elif args.trigger == "ftrojan":
-        trigger_fn = add_ftrojan_trigger
-
-    # not used
-    elif args.trigger == "blto":
-        trigger_fn = add_blto_trigger
+    trigger_fn = None
+    trigger_fns_list = None
+    selected_trigger_names = None
+    if getattr(args, "multi_triggers", False):
+        k = min(getattr(args, "num_triggers", 3), len(trigger_choices))
+        selected_trigger_names = random.sample(trigger_choices, k)
+        trigger_fns_list = [make_trigger_fn(n) for n in selected_trigger_names]
+    else:
+        trigger_fn = make_trigger_fn(args.trigger)
 
     ###############################################
     # Freeze text encoder
@@ -236,12 +269,32 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
 
     # Get target label index
     target_index = classnames.index(args.target_class)
+    # prepare multi-trigger target mapping if requested
+    target_indices_list = None
+    if getattr(args, "multi_triggers", False):
+        if args.multi_trigger_mode == "multi_target":
+            k = min(getattr(args, "num_triggers", 3), len(classnames))
+            chosen_targets = random.sample(classnames, k)
+            target_indices_list = [classnames.index(t) for t in chosen_targets]
+        else:
+            # single_target mode: all triggers map to same target
+            target_indices_list = [
+                target_index
+                for _ in range(
+                    len(trigger_fns_list) if trigger_fns_list is not None else 1
+                )
+            ]
 
     # Wrap dataset with our poisoning wrapper
     poisoned_train = PoisonedDataset(
         clean_dataset=train_set,
         target_index=target_index,
         trigger_fn=trigger_fn,
+        trigger_fns_list=trigger_fns_list,
+        target_indices_list=target_indices_list,
+        multi_trigger_mode=(
+            args.multi_trigger_mode if getattr(args, "multi_triggers", False) else None
+        ),
         poison_rate=args.poi_rate,
         adaptive_attack_option_2=args.adaptive_attack_option_2,
     )
@@ -420,9 +473,18 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
             bd_model,
             val_data_loader,
             last_normalize,
-            trigger_fn,
             zeroshot_weights,
             target_index,
+            trigger_fn=trigger_fn,
+            trigger_fns_list=trigger_fns_list,
+            target_indices_list=(
+                target_indices_list if "target_indices_list" in locals() else None
+            ),
+            multi_trigger_mode=(
+                args.multi_trigger_mode
+                if getattr(args, "multi_triggers", False)
+                else None
+            ),
         )
 
         print(
@@ -491,11 +553,28 @@ if __name__ == "__main__":
             "sig",
             "nashville",
             "wanet",
-            "blto",
             "ftrojan",
-        ],  # TODO: add other triggers
+        ],
         default="badnets",
         help="backdoor trigger",
+    )
+    parser.add_argument(
+        "--multi_triggers",
+        action="store_true",
+        help="use multiple random triggers (num_triggers) instead of a single --trigger",
+    )
+    parser.add_argument(
+        "--multi_trigger_mode",
+        type=str,
+        choices=["single_target", "multi_target"],
+        default="single_target",
+        help="when using --multi_triggers: 'single_target' uses same target label; 'multi_target' maps each trigger to a different target label",
+    )
+    parser.add_argument(
+        "--num_triggers",
+        type=int,
+        default=3,
+        help="number of random triggers to use when --multi_triggers is set",
     )
     parser.add_argument(
         "--frac_per_class",
@@ -553,242 +632,308 @@ if __name__ == "__main__":
     if not os.path.exists(args.save_folder):
         os.makedirs(args.save_folder)
 
-    for encoder in pretrained_clip_sources["openclip"]:
-        encoder_info = process_openclip_encoder(encoder)
-
-        if args.adaptive_attack or args.adaptive_attack_option_2:
-            if encoder_info["arch"] == "RN50" and encoder_info["key"] == "openai":
-                args.trigger = "blend"
-                args.frac_per_class = 0.05
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif encoder_info["arch"] == "RN50" and encoder_info["key"] == "cc12m":
-                args.trigger = "ftrojan"
-                args.frac_per_class = 0.05
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif encoder_info["arch"] == "RN50" and encoder_info["key"] == "yfcc15m":
-                args.trigger = "badnets"
-                args.frac_per_class = 0.01
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif encoder_info["arch"] == "RN101" and encoder_info["key"] == "openai":
-                args.trigger = "wanet"
-                args.frac_per_class = 0.05
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif encoder_info["arch"] == "RN101" and encoder_info["key"] == "yfcc15m":
-                args.trigger = "wanet"
-                args.frac_per_class = 0.05
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif encoder_info["arch"] == "ViT-B-16" and encoder_info["key"] == "openai":
-                args.trigger = "nashville"
-                args.frac_per_class = 0.01
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif (
-                encoder_info["arch"] == "ViT-B-16"
-                and encoder_info["key"] == "metaclip_fullcc"
-            ):
-                args.trigger = "sig"
-                args.frac_per_class = 0.05
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif encoder_info["arch"] == "ViT-B-32" and encoder_info["key"] == "openai":
-                args.trigger = "ftrojan"
-                args.frac_per_class = 0.05
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif (
-                encoder_info["arch"] == "ViT-B-32"
-                and encoder_info["key"] == "laion2b_e16"
-            ):
-                args.trigger = "nashville"
-                args.frac_per_class = 0.01
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-            elif (
-                encoder_info["arch"] == "ViT-B-32"
-                and encoder_info["key"] == "metaclip_400m"
-            ):
-                args.trigger = "blend"
-                args.frac_per_class = 0.05
-                run(
-                    args,
-                    encoder_info["arch"],
-                    encoder_info["key"],
-                    encoder_info["manual_id"],
-                )
-        else:
+    if args.multi_triggers:
+        # only run 10 encoders
+        encoder_infos = [
+            {"manual_id": 4, "arch": "RN101", "key": "openai", "gt": 0},
+            {"manual_id": 5, "arch": "RN101", "key": "yfcc15m", "gt": 0},
+            {"manual_id": 6, "arch": "ViT-B-16", "key": "openai", "gt": 0},
+            {
+                "manual_id": 7,
+                "arch": "ViT-B-16",
+                "key": "laion400m_e31",
+                "gt": 0,
+            },
+            {
+                "manual_id": 8,
+                "arch": "ViT-B-16",
+                "key": "laion400m_e32",
+                "gt": 0,
+            },
+            {
+                "manual_id": 9,
+                "arch": "ViT-B-16",
+                "key": "laion2b_s34b_b88k",
+                "gt": 0,
+            },
+            {"manual_id": 21, "arch": "ViT-B-32", "key": "openai", "gt": 0},
+            {
+                "manual_id": 22,
+                "arch": "ViT-B-32",
+                "key": "laion400m_e31",
+                "gt": 0,
+            },
+            {
+                "manual_id": 23,
+                "arch": "ViT-B-32",
+                "key": "laion400m_e32",
+                "gt": 0,
+            },
+            {
+                "manual_id": 24,
+                "arch": "ViT-B-32",
+                "key": "laion2b_e16",
+                "gt": 0,
+            },
+        ]
+        for encoder_info in encoder_infos:
             run(
                 args,
                 encoder_info["arch"],
                 encoder_info["key"],
                 encoder_info["manual_id"],
             )
+    else:
 
-            # TODO: remove this later, this is for evaluating encoders that we missed before
-            # arch = encoder_info["arch"]
-            # key = encoder_info["key"]
-            # if arch == "RN50" and key == "openai":
-            #     args.trigger = "sig"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_openai_trigger_sig_trainsetp_0.2_epoch_0.pth",
-            #     )
-            # elif arch == "RN50" and key == "yfcc15m":
-            #     args.trigger = "blend"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/blend/OPENCLIP_RN50_yfcc15m_trigger_blend_trainsetp_0.2_epoch_0.pth",
-            #     )
-            #     args.trigger = "sig"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_yfcc15m_trigger_sig_trainsetp_0.2_epoch_0.pth",
-            #     )
-            #     args.trigger = "nashville"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_RN50_yfcc15m_trigger_nashville_trainsetp_0.2_epoch_0.pth",
-            #     )
-            # elif arch == "RN50" and key == "cc12m":
-            #     args.trigger = "blend"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/blend/OPENCLIP_RN50_cc12m_trigger_blend_trainsetp_0.2_epoch_0.pth",
-            #     )
-            #     args.trigger = "sig"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_cc12m_trigger_sig_trainsetp_0.2_epoch_0.pth",
-            #     )
-            #     args.trigger = "nashville"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_RN50_cc12m_trigger_nashville_trainsetp_0.2_epoch_0.pth",
-            #     )
-            # elif arch == "RN101" and key == "yfcc15m":
-            #     args.trigger = "sig"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN101_yfcc15m_trigger_sig_trainsetp_0.2_epoch_0.pth",
-            #     )
-            # elif arch == "ViT-B-32" and key == "openai":
-            #     args.trigger = "wanet"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_openai_trigger_wanet_trainsetp_0.5_epoch_0.pth",
-            #     )
-            # elif arch == "ViT-B-32" and key == "laion400m_e32":
-            #     args.trigger = "wanet"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_laion400m_e32_trigger_wanet_trainsetp_0.2_epoch_0.pth",
-            #     )
-            # elif arch == "ViT-B-32" and key == "laion2b_e16":
-            #     args.trigger = "wanet"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_laion2b_e16_trigger_wanet_trainsetp_0.2_epoch_0.pth",
-            #     )
-            # elif arch == "ViT-B-32" and key == "datacomp_xl_s13b_b90k":
-            #     args.trigger = "nashville"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_ViT-B-32_datacomp_xl_s13b_b90k_trigger_nashville_trainsetp_0.2_epoch_0.pth",
-            #     )
-            # elif arch == "ViT-B-32" and key == "metaclip_400m":
-            #     args.trigger = "wanet"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_metaclip_400m_trigger_wanet_trainsetp_0.2_epoch_0.pth",
-            #     )
-            # elif arch == "ViT-B-32" and key == "metaclip_fullcc":
-            #     args.trigger = "wanet"
-            #     run(
-            #         args,
-            #         encoder_info["arch"],
-            #         encoder_info["key"],
-            #         encoder_info["manual_id"],
-            #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_metaclip_fullcc_trigger_wanet_trainsetp_0.2_epoch_0.pth",
-            #     )
+        for encoder in pretrained_clip_sources["openclip"]:
+            encoder_info = process_openclip_encoder(encoder)
+
+            if args.adaptive_attack or args.adaptive_attack_option_2:
+                if encoder_info["arch"] == "RN50" and encoder_info["key"] == "openai":
+                    args.trigger = "blend"
+                    args.frac_per_class = 0.05
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif encoder_info["arch"] == "RN50" and encoder_info["key"] == "cc12m":
+                    args.trigger = "ftrojan"
+                    args.frac_per_class = 0.05
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif (
+                    encoder_info["arch"] == "RN50" and encoder_info["key"] == "yfcc15m"
+                ):
+                    args.trigger = "badnets"
+                    args.frac_per_class = 0.01
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif (
+                    encoder_info["arch"] == "RN101" and encoder_info["key"] == "openai"
+                ):
+                    args.trigger = "wanet"
+                    args.frac_per_class = 0.05
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif (
+                    encoder_info["arch"] == "RN101" and encoder_info["key"] == "yfcc15m"
+                ):
+                    args.trigger = "wanet"
+                    args.frac_per_class = 0.05
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif (
+                    encoder_info["arch"] == "ViT-B-16"
+                    and encoder_info["key"] == "openai"
+                ):
+                    args.trigger = "nashville"
+                    args.frac_per_class = 0.01
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif (
+                    encoder_info["arch"] == "ViT-B-16"
+                    and encoder_info["key"] == "metaclip_fullcc"
+                ):
+                    args.trigger = "sig"
+                    args.frac_per_class = 0.05
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif (
+                    encoder_info["arch"] == "ViT-B-32"
+                    and encoder_info["key"] == "openai"
+                ):
+                    args.trigger = "ftrojan"
+                    args.frac_per_class = 0.05
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif (
+                    encoder_info["arch"] == "ViT-B-32"
+                    and encoder_info["key"] == "laion2b_e16"
+                ):
+                    args.trigger = "nashville"
+                    args.frac_per_class = 0.01
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+                elif (
+                    encoder_info["arch"] == "ViT-B-32"
+                    and encoder_info["key"] == "metaclip_400m"
+                ):
+                    args.trigger = "blend"
+                    args.frac_per_class = 0.05
+                    run(
+                        args,
+                        encoder_info["arch"],
+                        encoder_info["key"],
+                        encoder_info["manual_id"],
+                    )
+            else:
+
+                run(
+                    args,
+                    encoder_info["arch"],
+                    encoder_info["key"],
+                    encoder_info["manual_id"],
+                )
+
+                #  remove this later, this is for evaluating encoders that we missed before
+                # arch = encoder_info["arch"]
+                # key = encoder_info["key"]
+                # if arch == "RN50" and key == "openai":
+                #     args.trigger = "sig"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_openai_trigger_sig_trainsetp_0.2_epoch_0.pth",
+                #     )
+                # elif arch == "RN50" and key == "yfcc15m":
+                #     args.trigger = "blend"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/blend/OPENCLIP_RN50_yfcc15m_trigger_blend_trainsetp_0.2_epoch_0.pth",
+                #     )
+                #     args.trigger = "sig"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_yfcc15m_trigger_sig_trainsetp_0.2_epoch_0.pth",
+                #     )
+                #     args.trigger = "nashville"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_RN50_yfcc15m_trigger_nashville_trainsetp_0.2_epoch_0.pth",
+                #     )
+                # elif arch == "RN50" and key == "cc12m":
+                #     args.trigger = "blend"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/blend/OPENCLIP_RN50_cc12m_trigger_blend_trainsetp_0.2_epoch_0.pth",
+                #     )
+                #     args.trigger = "sig"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN50_cc12m_trigger_sig_trainsetp_0.2_epoch_0.pth",
+                #     )
+                #     args.trigger = "nashville"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_RN50_cc12m_trigger_nashville_trainsetp_0.2_epoch_0.pth",
+                #     )
+                # elif arch == "RN101" and key == "yfcc15m":
+                #     args.trigger = "sig"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/sig/OPENCLIP_RN101_yfcc15m_trigger_sig_trainsetp_0.2_epoch_0.pth",
+                #     )
+                # elif arch == "ViT-B-32" and key == "openai":
+                #     args.trigger = "wanet"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_openai_trigger_wanet_trainsetp_0.5_epoch_0.pth",
+                #     )
+                # elif arch == "ViT-B-32" and key == "laion400m_e32":
+                #     args.trigger = "wanet"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_laion400m_e32_trigger_wanet_trainsetp_0.2_epoch_0.pth",
+                #     )
+                # elif arch == "ViT-B-32" and key == "laion2b_e16":
+                #     args.trigger = "wanet"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_laion2b_e16_trigger_wanet_trainsetp_0.2_epoch_0.pth",
+                #     )
+                # elif arch == "ViT-B-32" and key == "datacomp_xl_s13b_b90k":
+                #     args.trigger = "nashville"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/nashville/OPENCLIP_ViT-B-32_datacomp_xl_s13b_b90k_trigger_nashville_trainsetp_0.2_epoch_0.pth",
+                #     )
+                # elif arch == "ViT-B-32" and key == "metaclip_400m":
+                #     args.trigger = "wanet"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_metaclip_400m_trigger_wanet_trainsetp_0.2_epoch_0.pth",
+                #     )
+                # elif arch == "ViT-B-32" and key == "metaclip_fullcc":
+                #     args.trigger = "wanet"
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #         "./saved_openclip_bd_encoders_all/wanet/OPENCLIP_ViT-B-32_metaclip_fullcc_trigger_wanet_trainsetp_0.2_epoch_0.pth",
+                #     )
 
 
 """

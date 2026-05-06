@@ -414,16 +414,23 @@ class PoisonedDataset(torch.utils.data.Dataset):
     def __init__(
         self,
         clean_dataset,
-        target_index,
-        trigger_fn,
+        target_index=None,
+        trigger_fn=None,
+        trigger_fns_list=None,
+        target_indices_list=None,
+        multi_trigger_mode=None,
         poison_rate=0.05,
         adaptive_attack_option_2=False,
     ):
         self.clean_dataset = clean_dataset
         self.poison_rate = poison_rate
         self.trigger_fn = trigger_fn
+        self.trigger_fns_list = trigger_fns_list
+        self.target_indices_list = target_indices_list
+        self.multi_trigger_mode = multi_trigger_mode
         self.adaptive_attack_option_2 = adaptive_attack_option_2
 
+        # single target (legacy) stored here
         self.target_index = target_index
 
         self.num_poison = int(len(clean_dataset) * poison_rate)
@@ -442,23 +449,52 @@ class PoisonedDataset(torch.utils.data.Dataset):
         is_poison = 0
 
         if self.adaptive_attack_option_2:
-            bd_img = self.trigger_fn(img)
-            if idx in self.poison_indices:
-                # change label to target label
-                label = self.target_index
-                is_poison = 1
-                return bd_img, label, is_poison, bd_img
+            # build bd_img according to whether we have multiple triggers
+            if self.trigger_fns_list is not None:
+                ti = random.randrange(len(self.trigger_fns_list))
+                bd_img = self.trigger_fns_list[ti](img)
+                if idx in self.poison_indices:
+                    is_poison = 1
+                    if (
+                        self.multi_trigger_mode == "multi_target"
+                        and self.target_indices_list is not None
+                    ):
+                        label = self.target_indices_list[ti]
+                    else:
+                        label = self.target_index
+                    return bd_img, label, is_poison, bd_img
+                else:
+                    return img, label, is_poison, bd_img
             else:
-                return img, label, is_poison, bd_img
+                bd_img = self.trigger_fn(img)
+                if idx in self.poison_indices:
+                    # change label to target label
+                    label = self.target_index
+                    is_poison = 1
+                    return bd_img, label, is_poison, bd_img
+                else:
+                    return img, label, is_poison, bd_img
         else:
 
             if idx in self.poison_indices:
-                # apply trigger
-                bd_img = self.trigger_fn(img)
-
-                # change label to target label
-                label = self.target_index
-                is_poison = 1
-                return bd_img, label, is_poison, None
+                # apply trigger (single or multi)
+                if self.trigger_fns_list is not None:
+                    ti = random.randrange(len(self.trigger_fns_list))
+                    bd_img = self.trigger_fns_list[ti](img)
+                    is_poison = 1
+                    if (
+                        self.multi_trigger_mode == "multi_target"
+                        and self.target_indices_list is not None
+                    ):
+                        label = self.target_indices_list[ti]
+                    else:
+                        label = self.target_index
+                    return bd_img, label, is_poison, None
+                else:
+                    bd_img = self.trigger_fn(img)
+                    # change label to target label
+                    label = self.target_index
+                    is_poison = 1
+                    return bd_img, label, is_poison, None
             else:
                 return img, label, is_poison, None
