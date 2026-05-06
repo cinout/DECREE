@@ -123,12 +123,12 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
     if isinstance(openclip_visual_image_size, tuple):
         openclip_visual_image_size = openclip_visual_image_size[0]
 
-    # TODO: remove this later, this is for evaluating encoders that we missed before
-    # load ckpt
-    print("bd_model_path: ", bd_model_path)
-    bd_model_ckpt = torch.load(bd_model_path, map_location=device)
-    bd_model.visual.load_state_dict(bd_model_ckpt)
-    bd_model = bd_model.to(device)
+    # # TODO: remove this later, this is for evaluating encoders that we missed before
+    # # load ckpt
+    # print("bd_model_path: ", bd_model_path)
+    # bd_model_ckpt = torch.load(bd_model_path, map_location=device)
+    # bd_model.visual.load_state_dict(bd_model_ckpt)
+    # bd_model = bd_model.to(device)
 
     """
     Trigger Function
