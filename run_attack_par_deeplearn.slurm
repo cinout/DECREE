@@ -36,8 +36,8 @@ conda activate anogpt
 
 python -u attack_encoder_new.py \
     --adaptive_attack_option_2 \
-    --adaptive_lambda 0.5 \
-    --z_note "adaptive option 2, lambda=0.5" \
+    --adaptive_lambda 0.2 \
+    --z_note "adaptive option 2, lambda=0.2" \
 
     
 
