@@ -671,11 +671,19 @@ print(f"{np.mean(our_set_bds):.2f} {np.std(our_set_bds):.2f}")
 print(f"{np.mean(hanxun_bd):.2f} {np.std(hanxun_bd):.2f}")
 
 # Plot distributions for the three lists in the same figure
-sns.set(style="whitegrid")
+# sns.set(style="whitegrid")
 plt.figure(figsize=(8, 6))
-sns.kdeplot(clean, label="clean", color="C0", fill=True, alpha=0.35)
-sns.kdeplot(our_set_bds, label="backdoored (ours)", color="C1", fill=True, alpha=0.35)
-sns.kdeplot(hanxun_bd, label="backdoored (unseen)", color="C2", fill=True, alpha=0.35)
+sns.kdeplot(clean, label="clean", color="mediumseagreen", fill=True, alpha=0.35)
+sns.kdeplot(
+    our_set_bds, label="backdoored (ours)", color="indianred", fill=True, alpha=0.35
+)
+sns.kdeplot(
+    hanxun_bd,
+    label="backdoored (unseen)",
+    color="plum",
+    fill=True,
+    alpha=0.35,
+)
 plt.xlabel(r"s")
 plt.ylabel("Density")
 # plt.title("Distributions of three lists")

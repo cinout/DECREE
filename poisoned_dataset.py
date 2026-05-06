@@ -411,10 +411,18 @@ class PoisonedDataset(torch.utils.data.Dataset):
     target_label: index of target label
     """
 
-    def __init__(self, clean_dataset, target_index, trigger_fn, poison_rate=0.05):
+    def __init__(
+        self,
+        clean_dataset,
+        target_index,
+        trigger_fn,
+        poison_rate=0.05,
+        adaptive_attack_option_2=False,
+    ):
         self.clean_dataset = clean_dataset
         self.poison_rate = poison_rate
         self.trigger_fn = trigger_fn
+        self.adaptive_attack_option_2 = adaptive_attack_option_2
 
         self.target_index = target_index
 
@@ -432,12 +440,25 @@ class PoisonedDataset(torch.utils.data.Dataset):
         # img: PIL.Image.Image or torch.Tensor [C, H, W] if transformed (ours is transformed, ToTensor())
         img, label = self.clean_dataset[idx]
         is_poison = 0
-        if idx in self.poison_indices:
-            # apply trigger
-            img = self.trigger_fn(img)
 
-            # change label to target label
-            label = self.target_index
-            is_poison = 1
+        if self.adaptive_attack_option_2:
+            bd_img = self.trigger_fn(img)
+            if idx in self.poison_indices:
+                # change label to target label
+                label = self.target_index
+                is_poison = 1
+                return bd_img, label, is_poison, bd_img
+            else:
+                return img, label, is_poison, bd_img
+        else:
 
-        return img, label, is_poison
+            if idx in self.poison_indices:
+                # apply trigger
+                bd_img = self.trigger_fn(img)
+
+                # change label to target label
+                label = self.target_index
+                is_poison = 1
+                return bd_img, label, is_poison, None
+            else:
+                return img, label, is_poison, None
