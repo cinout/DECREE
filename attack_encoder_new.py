@@ -200,6 +200,7 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
     if getattr(args, "multi_triggers", False):
         k = min(getattr(args, "num_triggers", 3), len(trigger_choices))
         selected_trigger_names = random.sample(trigger_choices, k)
+        print(f"Using multiple triggers: {selected_trigger_names}")
         trigger_fns_list = [make_trigger_fn(n) for n in selected_trigger_names]
     else:
         trigger_fn = make_trigger_fn(args.trigger)
@@ -275,6 +276,9 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
         if args.multi_trigger_mode == "multi_target":
             k = min(getattr(args, "num_triggers", 3), len(classnames))
             chosen_targets = random.sample(classnames, k)
+            print(
+                f"Multi-target mode: mapping each trigger to a different target class: {chosen_targets}"
+            )
             target_indices_list = [classnames.index(t) for t in chosen_targets]
         else:
             # single_target mode: all triggers map to same target
@@ -500,7 +504,12 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
             bd_model.visual.state_dict(),
             os.path.join(
                 args.save_folder,
-                f"{id}_trigger_{args.trigger}_trainsetp_{args.frac_per_class}_epoch_{epoch}.pth",
+                (
+                    f"{id}_triggers_{'_'.join(selected_trigger_names)}_targets_{'_'.join([classnames[i] for i in target_indices_list])}_trainsetp_{args.frac_per_class}_epoch_{epoch}.pth"
+                    if getattr(args, "multi_triggers", False)
+                    and trigger_fns_list is not None
+                    else f"{id}_trigger_{args.trigger}_target_{args.target_class}_trainsetp_{args.frac_per_class}_epoch_{epoch}.pth"
+                ),
             ),
         )
 
