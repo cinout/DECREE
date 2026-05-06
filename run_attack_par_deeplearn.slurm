@@ -38,7 +38,7 @@ python -u attack_encoder_new.py \
     --multi_triggers \
     --multi_trigger_mode single_target \
     --frac_per_class 0.1 \
-    --z_note "multo_triggers, single_target, frac=10%" \
+    --z_note "multi_triggers, single_target, frac=10%" \
 
     
 
