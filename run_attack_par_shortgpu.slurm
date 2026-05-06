@@ -36,9 +36,9 @@ conda activate anogpt
 
 python -u attack_encoder_new.py \
     --multi_triggers \
-    --multi_trigger_mode multi_target \
+    --multi_trigger_mode single_target \
     --frac_per_class 0.1 \
-    --z_note "multi_triggers, multi_target, frac=10%" \
+    --z_note "multi_triggers, single_target, frac=10%" \
 
     
 
