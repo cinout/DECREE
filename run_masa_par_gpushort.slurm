@@ -35,7 +35,7 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u baseline_masa.py \
-    --bd_encoders_folder saved_openclip_bd_encoders_multi_trigger_single_target \
+    --bd_encoders_folder saved_openclip_bd_encoders_multi_trigger_multi_target \
 
 
 ##Log this job's resource usage stats###
