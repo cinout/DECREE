@@ -114,6 +114,7 @@ def finalize(
     result = f"{id},{gt},{regular_best/clean_unnormalized_L1_norm_max:.4f},{l2_dist_quantile_normalized:.4f}\n"
 
     print(result)
+    print(clean_unnormalized_L1_norm_max)
 
     fp.write(result)
     fp.flush()  # Manually flush after each write

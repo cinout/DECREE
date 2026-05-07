@@ -36,8 +36,8 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-  --bd_encoders_folder saved_openclip_bd_encoders_adaptive_opt2_lambda_1 \
-  --note "adaptive_opt2 lambda=1" \
+  --bd_encoders_folder saved_openclip_bd_encoders_multi_trigger_multi_target \
+  --note "multi trigger multi target" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
