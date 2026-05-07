@@ -19,7 +19,6 @@ from utils.encoders import (
 from sklearn.metrics import roc_auc_score
 from torchvision import transforms
 
-
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 test_transform = transforms.Compose(
@@ -239,6 +238,12 @@ if __name__ == "__main__":
         type=str,
         help="notes for the experiment",
     )
+    parser.add_argument(
+        "--bd_encoders_folder",
+        type=str,
+        default="saved_openclip_bd_encoders_all",
+        help="folder containing backdoored encoders to evaluate",
+    )
     args = parser.parse_args()
     print(args)
 
@@ -249,6 +254,50 @@ if __name__ == "__main__":
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+    """
+    multi trigger special cases (TODO: remove later)
+    """
+    multi_trigger_encoder_infos = [
+        ("RN101", "openai"),
+        ("RN101", "yfcc15m"),
+        ("ViT-B-16", "openai"),
+        ("ViT-B-16", "laion400m_e31"),
+        ("ViT-B-16", "laion400m_e32"),
+        ("ViT-B-16", "laion2b_s34b_b88k"),
+        ("ViT-B-32", "openai"),
+        ("ViT-B-32", "laion400m_e31"),
+        ("ViT-B-32", "laion400m_e32"),
+        ("ViT-B-32", "laion2b_e16"),
+    ]
+    all_clean_encoders = []
+    for enc in pretrained_clip_sources.get("openclip", []):
+        enc_info = process_openclip_encoder(enc)
+        if (enc_info["arch"], enc_info["key"]) in multi_trigger_encoder_infos:
+            all_clean_encoders.append(("openclip", enc_info))
+
+    all_bd_encoders = []
+    for encoder_name in os.listdir(args.bd_encoders_folder):
+
+        name_split = encoder_name.split("_")
+        arch = name_split[1]
+        key = "_".join(name_split[2:]).split("_trigger")[0]
+
+        id = f"OPENCLIP_BD_{arch}_{key}"
+
+        encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
+        enc_info = {
+            "id": id,
+            "arch": arch,
+            "key": key,
+            "path": encoder_path,
+            "gt": 1,
+        }
+
+        all_bd_encoders.append(("openclip_backdoored", enc_info))
+    eminspector(args, f"MIXED_ARCH", all_clean_encoders + all_bd_encoders)
+
+    exit()
 
     """
     Setup poisoned encoders
