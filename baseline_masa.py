@@ -272,6 +272,12 @@ if __name__ == "__main__":
         help="type of CLIP model to use",
         choices=["clean", "bd_set_1", "bd_set_2", "bd_set_3"],
     )
+    parser.add_argument(
+        "--bd_encoders_folder",
+        type=str,
+        default="saved_openclip_bd_encoders_all",
+        help="folder containing backdoored encoders to evaluate",
+    )
 
     args = parser.parse_args()
     print(args)
@@ -287,9 +293,8 @@ if __name__ == "__main__":
     """
     multi trigger special cases (TODO: remove later)
     """
-    saved_encoders_folder = "saved_openclip_bd_encoders_multi_trigger_multi_target"
     all_bd_encoders = []
-    for encoder_name in os.listdir(saved_encoders_folder):
+    for encoder_name in os.listdir(args.bd_encoders_folder):
 
         name_split = encoder_name.split("_")
         arch = name_split[1]
@@ -297,7 +302,7 @@ if __name__ == "__main__":
 
         id = f"OPENCLIP_BD_{arch}_{key}"
 
-        encoder_path = os.path.join(saved_encoders_folder, encoder_name)
+        encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
         enc_info = {
             "id": id,
             "arch": arch,
