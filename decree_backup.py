@@ -26,7 +26,6 @@ from utils.encoders import (
     process_openclip_encoder,
 )
 
-
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 timestamp = (
     datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -35,23 +34,6 @@ timestamp = (
     + "_"
     + str(random.randint(0, 100))
 )
-
-"""
-Helper function for computing LID
-"""
-
-
-def lid_mle(data, reference, k=20, compute_mode="use_mm_for_euclid_dist_if_necessary"):
-    b = data.shape[0]
-    k = min(k, b - 2)
-
-    data = torch.flatten(data, start_dim=1)
-    reference = torch.flatten(reference, start_dim=1)
-
-    r = torch.cdist(data, reference, p=2, compute_mode=compute_mode)
-    a, idx = torch.sort(r, dim=1)
-    lids = -k / torch.sum(torch.log(a[:, 1:k] / a[:, k].view(-1, 1) + 1.0e-4), dim=1)
-    return lids  # [bs,]
 
 
 """
@@ -76,18 +58,6 @@ def finalize(
     train_mask_tanh = torch.clip(train_mask_tanh, min=0, max=1)
     train_patch_tanh = torch.clip(train_patch_tanh, min=0, max=255)
 
-    l2_dist_quantile_normalized = calculate_distance_metric(
-        args.eval_metric,
-        clean_train_loader,
-        train_mask_tanh,
-        train_patch_tanh,
-        model,
-        DEVICE,
-        test_transform,
-        args.quantile_low,
-        args.quantile_high,
-    )
-
     if not args.learned_trigger_folder:
         # save trigger locally
         inv_trigger_save_file_name = f"trigger_inv_{timestamp}/{id}"
@@ -96,7 +66,7 @@ def finalize(
             train_patch_tanh, inv_trigger_save_file_name + "_inv_trigger_patch.pt"
         )
 
-    result = f"{id},{gt},{regular_best/clean_unnormalized_L1_norm_max:.4f},{l2_dist_quantile_normalized:.4f}\n"
+    result = f"{id},{gt},{regular_best/clean_unnormalized_L1_norm_max:.4f}\n"
 
     print(result)
 
@@ -142,90 +112,6 @@ Output: single value
 """
 
 
-def calculate_distance_metric(
-    our_metric,
-    clean_train_loader,
-    mask,
-    patch,
-    model,
-    DEVICE,
-    test_transform,
-    quantile_low,
-    quantile_high,
-):
-    # fusion = mask * patch.detach()  # (0, 255), [h, w, 3]
-    model.eval()
-
-    clean_out_all, bd_out_all = [], []
-
-    # each batch
-    for clean_x_batch, _ in clean_train_loader:
-        clean_x_batch = clean_x_batch.to(DEVICE)
-
-        bd_x_batch = (1 - mask) * clean_x_batch + mask * patch
-        bd_x_batch = torch.clip(bd_x_batch, min=0, max=255)
-
-        clean_input = torch.stack(
-            [test_transform(img.permute(2, 0, 1) / 255.0) for img in clean_x_batch]
-        )
-        bd_input = torch.stack(
-            [test_transform(img.permute(2, 0, 1) / 255.0) for img in bd_x_batch]
-        )
-        clean_input = clean_input.to(dtype=torch.float).to(DEVICE)
-        bd_input = bd_input.to(dtype=torch.float).to(DEVICE)
-
-        # extract the visual representations
-        with torch.no_grad():
-            clean_out = model(
-                clean_input
-            )  # [bs, 1024], value range may depend on visual encoder's arch
-            bd_out = model(bd_input)
-
-            clean_out_all.append(clean_out)
-            bd_out_all.append(bd_out)
-
-    clean_out_all = torch.cat(clean_out_all, dim=0)  # [total, 1024]
-    bd_out_all = torch.cat(bd_out_all, dim=0)  # [total, 1024]
-
-    if our_metric == "l2":
-        l2_dist = torch.norm((clean_out_all - bd_out_all), dim=1).detach().tolist()
-        l2_dist = np.mean(l2_dist)
-        return l2_dist
-    elif our_metric == "l2_norm":
-        clean_quantile_start = torch.quantile(
-            clean_out_all, q=quantile_low, dim=0
-        )  # [1024, ]
-        clean_quantile_end = torch.quantile(
-            clean_out_all, q=quantile_high, dim=0
-        )  # [1024, ]
-        clean_quantile_range = clean_quantile_end - clean_quantile_start + epsilon()
-
-        l2_dist_quantile_normalized = (
-            torch.norm((clean_out_all - bd_out_all) / clean_quantile_range, dim=1)
-            .detach()
-            .tolist()
-        )
-        l2_dist_quantile_normalized = np.mean(l2_dist_quantile_normalized)
-
-        return l2_dist_quantile_normalized
-    elif our_metric == "lid":
-        lids = lid_mle(bd_out_all, bd_out_all).detach().tolist()
-        return np.mean(lids)
-    elif our_metric == "lid_on_clean":
-        lids = lid_mle(clean_out_all, clean_out_all).detach().tolist()
-        return np.mean(lids)
-    elif our_metric == "cos_sim":
-        cos_sim = (
-            F.cosine_similarity(clean_out_all.flatten(1), bd_out_all.flatten(1), dim=1)
-            .detach()
-            .tolist()
-        )  # [bs]
-
-        # print("cosine similarity average:", compute_self_cos_sim(bd_out_all))
-
-        return np.mean(cos_sim)
-
-
 """
 adjust learning rate
 """
@@ -266,7 +152,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         load_model = load_model.to(DEVICE)
         mask_size = 224
     elif model_source == "openclip":
-        (model_name, pretrained_key) = encoder_path
+        model_name, pretrained_key = encoder_path
         model_ckpt_path = model_name + "_" + pretrained_key
         load_model, _, _ = open_clip.create_model_and_transforms(
             model_name, pretrained=pretrained_key
@@ -277,7 +163,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
             mask_size = mask_size[0]
 
     elif model_source == "openclip_backdoored":
-        (bd_model_path, arch, key) = encoder_path
+        bd_model_path, arch, key = encoder_path
         load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
 
         mask_size = load_model.visual.image_size
@@ -304,21 +190,6 @@ def main(args, model_source, gt, id, encoder_path, fp):
             map_location=DEVICE,
         )
     else:
-        ### This old code is not efficient, as we don't really the trigger_file, but only the trigger size
-        # trigger_file = "trigger/trigger_pt_white_185_24.npz"
-        # trigger_mask, trigger_patch = None, None
-        # with np.load(trigger_file) as data:
-        #     trigger_mask = np.reshape(data["tm"], (mask_size, mask_size, 3))
-        #     trigger_patch = np.reshape(
-        #         data["t"], (mask_size, mask_size, 3)
-        #     )  # .astype(np.uint8)
-
-        # train_mask_2d = torch.rand(trigger_mask.shape[:2], dtype=torch.float64).to(
-        #     DEVICE
-        # )  # [h, w]
-        # train_patch = torch.rand_like(
-        #     torch.tensor(trigger_patch), dtype=torch.float64
-        # ).to(DEVICE)
 
         train_mask_2d = torch.rand((mask_size, mask_size), dtype=torch.float64).to(
             DEVICE
@@ -570,56 +441,12 @@ def main(args, model_source, gt, id, encoder_path, fp):
             loss_cos_e = torch.mean(torch.stack((loss_list["cos"])))
             # loss_reg_e = torch.mean(torch.stack((loss_list["reg"])))
 
-            # print average loss values for the current epoch
-            # print(
-            #     f"e={e}, loss={loss_avg_e:.6f}, loss_cos={loss_cos_e:.6f}, "
-            #     f"loss_reg={loss_reg_e:.6f}, cur_reg_best={regular_best:.6f}, "
-            #     f"es_reg_best:{early_stop_reg_best:.6f}"
-            # )
-
-            # record the average losses over all the epochs so far
-            # regular_list.append(str(round(float(loss_reg_e), 2)))
-            # cosine_list.append(str(round(float(-loss_cos_e), 2)))
-
-            # save images
-            # if res_best["mask"] != None and res_best["patch"] != None:
-            #     assert_range(res_best["mask"], 0, 1)
-            #     assert_range(res_best["patch"], 0, 255)
-
-            #     fusion = np.asarray(
-            #         (res_best["mask"] * res_best["patch"]).detach().cpu(), np.uint8
-            #     )
-            #     mask = np.asarray(res_best["mask"].detach().cpu() * 255, np.uint8)
-            #     patch = np.asarray(res_best["patch"].detach().cpu(), np.uint8)
-            #     # fusion = (mask / 255.0 * patch).astype(np.uint8)
-
-            #     dir = f"trigger_inv_{timestamp}/{id}"
-            #     if not os.path.exists(f"{dir}"):
-            #         os.makedirs(f"{dir}")
-
-            #     suffix = f"e{e}_reg{regular_best:.2f}"
-            #     mask_img = Image.fromarray(mask).save(f"{dir}/mask_{suffix}.png")
-            #     patch_img = Image.fromarray(patch).save(f"{dir}/patch_{suffix}.png")
-            #     fusion_img = Image.fromarray(fusion).save(f"{dir}/fus_{suffix}.png")
-
             # meet the final early-stop criterion: (1) average cos_sim is larger than succ_threshold; (2) early_stop_cnt surpasses the patience
             if (
                 torch.abs(loss_cos_e) > succ_threshold
                 and early_stop_cnt > early_stop_patience
             ):
                 print("Early stop!")
-
-                # print(f"End: {duration:.4f}s")
-                # print(f"model_ckpt_path: {model_ckpt_path}")
-                # print(f"L1: {regular_best:.4f}")
-                # print(
-                #     "reg:", ",".join(regular_list)
-                # )  # the average L1 reg loss over all the epochs so far
-                # print(
-                #     "cos:", ",".join(cosine_list)
-                # )  # the average cos_sim loss over all the epochs so far
-                # print(f"clean_unnormalized_L1_norm_max: {clean_unnormalized_L1_norm_max}")
-                # print(f"clean_normalized_L1_norm_max: {clean_normalized_L1_norm_max}")
 
                 finalize(
                     args,
@@ -713,6 +540,12 @@ if __name__ == "__main__":
         default="cos_sim",
         help="our evaluation metric",
     )
+    parser.add_argument(
+        "--bd_encoders_folder",
+        type=str,
+        default="saved_openclip_bd_encoders_all",
+        help="folder containing backdoored encoders to evaluate",
+    )
     args = parser.parse_args()
     print(args)
 
@@ -757,72 +590,30 @@ if __name__ == "__main__":
     #         fp,
     #     )
 
-    for encoder in pretrained_clip_sources["openclip"]:
-        encoder_info = process_openclip_encoder(encoder)
-        arch = encoder_info["arch"]
-        key = encoder_info["key"]
+    # for encoder in pretrained_clip_sources["openclip"]:
+    #     encoder_info = process_openclip_encoder(encoder)
+    #     arch = encoder_info["arch"]
+    #     key = encoder_info["key"]
 
-        # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
-        # if "vit" in arch.lower():
-        #     args.coeff_l2_dist = 0.001
-        # elif "rn" in arch.lower():
-        #     args.coeff_l2_dist = 0.0001
-        # else:
-        #     raise Exception("Unknown model architecture")
+    #     main(
+    #         args,
+    #         "openclip",
+    #         encoder_info["gt"],
+    #         encoder_info["id"],
+    #         (arch, key),
+    #         fp,
+    #     )
 
-        # # # TODO[]: remove this later
-        # if not (
-        #     arch == "ViT-L-14"
-        #     and key in ["metaclip_400m", "metaclip_fullcc", "dfn2b", "dfn2b_s39b"]
-        # ):
-        #     continue
+    for encoder_name in os.listdir(args.bd_encoders_folder):
 
-        main(
-            args,
-            "openclip",
-            encoder_info["gt"],
-            encoder_info["id"],
-            (arch, key),
-            fp,
-        )
+        name_split = encoder_name.split("_")
+        arch = name_split[1]
+        key = "_".join(name_split[2:]).split("_trigger")[0]
 
-    # saved_encoders_folder = "saved_openclip_bd_encoders_all"
-    # for trigger in os.listdir(saved_encoders_folder):
-    #     trigger_folder = os.path.join(saved_encoders_folder, trigger)
+        id = f"OPENCLIP_BD_{arch}_{key}"
 
-    #     if os.path.isdir(trigger_folder):
-    #         for encoder_name in os.listdir(trigger_folder):
+        encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
 
-    #             encodeer_filepath = os.path.join(
-    #                 trigger_folder, encoder_name
-    #             )  # the full path for each encodeer
-
-    #             name_split = encoder_name.split("_")
-    #             arch = name_split[1]
-    #             key = "_".join(name_split[2:-6])
-
-    #             # # # TODO[]: remove this later
-    #             # if not (
-    #             #     arch == "ViT-L-14"
-    #             #     and key
-    #             #     in ["metaclip_400m", "metaclip_fullcc", "dfn2b", "dfn2b_s39b"]
-    #             # ):
-    #             #     continue
-
-    #             trainset_percent = name_split[-3]
-    #             ep = name_split[-1].split(".")[0]
-    #             id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
-
-    #             encoder_path = os.path.join(trigger_folder, encoder_name)
-
-    #             # # TODO[DONE]: use different coeff_l2_dist for VIT or Resnet
-    #             # if "vit" in arch.lower():
-    #             #     args.coeff_l2_dist = 0.001
-    #             # elif "rn" in arch.lower():
-    #             #     args.coeff_l2_dist = 0.0001
-    #             # else:
-    #             #     raise Exception("Unknown model architecture")
-
-    #             main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
+        main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     fp.close()

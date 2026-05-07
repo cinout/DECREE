@@ -1,5 +1,5 @@
 """
-Include DECREE's trigger inversion and score assigning stages
+Our own inversion
 """
 
 import os
