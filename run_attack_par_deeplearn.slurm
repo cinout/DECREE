@@ -36,7 +36,7 @@ conda activate anogpt
 
 python -u attack_encoder_new.py \
     --adaptive_attack_option_2 \
-    --adaptive_lambda 0.5 \
+    --adaptive_lambda 1 \
     # --multi_triggers \
     # --multi_trigger_mode single_target \
     # --frac_per_class 0.1 \
