@@ -134,7 +134,7 @@ imagenet_prompts = [
 ]
 
 imagenet_path = (
-    "./data/imagenet"  # a subset with 10 classes. The full one is imagenet-1k
+    "./data/imagenet-10"  # a subset with 10 classes. The full one is imagenet-1k
 )
 
 
