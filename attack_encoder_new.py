@@ -696,38 +696,34 @@ if __name__ == "__main__":
             encoder_info = process_openclip_encoder(encoder)
 
             if args.adaptive_attack or args.adaptive_attack_option_2:
-                if encoder_info["arch"] == "RN50" and encoder_info["key"] == "openai":
-                    args.trigger = "blend"
-                    args.frac_per_class = 0.05
-                    run(
-                        args,
-                        encoder_info["arch"],
-                        encoder_info["key"],
-                        encoder_info["manual_id"],
-                    )
-                elif encoder_info["arch"] == "RN50" and encoder_info["key"] == "cc12m":
-                    args.trigger = "ftrojan"
-                    args.frac_per_class = 0.05
-                    run(
-                        args,
-                        encoder_info["arch"],
-                        encoder_info["key"],
-                        encoder_info["manual_id"],
-                    )
-                elif (
-                    encoder_info["arch"] == "RN50" and encoder_info["key"] == "yfcc15m"
-                ):
-                    args.trigger = "badnets"
-                    args.frac_per_class = 0.01
-                    run(
-                        args,
-                        encoder_info["arch"],
-                        encoder_info["key"],
-                        encoder_info["manual_id"],
-                    )
-                elif (
-                    encoder_info["arch"] == "RN101" and encoder_info["key"] == "openai"
-                ):
+                # if encoder_info["arch"] == "RN50" and encoder_info["key"] == "openai":
+                #     args.trigger = "blend"
+                #     args.frac_per_class = 0.05
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #     )
+                # if encoder_info["arch"] == "RN50" and encoder_info["key"] == "cc12m":
+                #     args.trigger = "ftrojan"
+                #     args.frac_per_class = 0.05
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #     )
+                # if encoder_info["arch"] == "RN50" and encoder_info["key"] == "yfcc15m":
+                #     args.trigger = "badnets"
+                #     args.frac_per_class = 0.01
+                #     run(
+                #         args,
+                #         encoder_info["arch"],
+                #         encoder_info["key"],
+                #         encoder_info["manual_id"],
+                #     )
+                if encoder_info["arch"] == "RN101" and encoder_info["key"] == "openai":
                     args.trigger = "wanet"
                     args.frac_per_class = 0.05
                     run(
@@ -736,9 +732,7 @@ if __name__ == "__main__":
                         encoder_info["key"],
                         encoder_info["manual_id"],
                     )
-                elif (
-                    encoder_info["arch"] == "RN101" and encoder_info["key"] == "yfcc15m"
-                ):
+                if encoder_info["arch"] == "RN101" and encoder_info["key"] == "yfcc15m":
                     args.trigger = "wanet"
                     args.frac_per_class = 0.05
                     run(
@@ -747,7 +741,7 @@ if __name__ == "__main__":
                         encoder_info["key"],
                         encoder_info["manual_id"],
                     )
-                elif (
+                if (
                     encoder_info["arch"] == "ViT-B-16"
                     and encoder_info["key"] == "openai"
                 ):
@@ -759,7 +753,7 @@ if __name__ == "__main__":
                         encoder_info["key"],
                         encoder_info["manual_id"],
                     )
-                elif (
+                if (
                     encoder_info["arch"] == "ViT-B-16"
                     and encoder_info["key"] == "metaclip_fullcc"
                 ):
@@ -771,7 +765,7 @@ if __name__ == "__main__":
                         encoder_info["key"],
                         encoder_info["manual_id"],
                     )
-                elif (
+                if (
                     encoder_info["arch"] == "ViT-B-32"
                     and encoder_info["key"] == "openai"
                 ):
@@ -783,7 +777,7 @@ if __name__ == "__main__":
                         encoder_info["key"],
                         encoder_info["manual_id"],
                     )
-                elif (
+                if (
                     encoder_info["arch"] == "ViT-B-32"
                     and encoder_info["key"] == "laion2b_e16"
                 ):
@@ -795,7 +789,7 @@ if __name__ == "__main__":
                         encoder_info["key"],
                         encoder_info["manual_id"],
                     )
-                elif (
+                if (
                     encoder_info["arch"] == "ViT-B-32"
                     and encoder_info["key"] == "metaclip_400m"
                 ):
