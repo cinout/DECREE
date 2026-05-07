@@ -36,9 +36,8 @@ conda activate anogpt
 
 python -u decree.py \
   --seed 10 \
-  --learned_trigger_folder trigger_inv_decree_wo_maskreg_cc3m \
-  --eval_dataset cc3m \
-  --note "dataset:cc3m, eval_metric: cos_sim" \
+  --bd_encoders_folder saved_openclip_bd_encoders_adaptive_opt2_lambda_0.2 \
+  --note "adaptive_opt2 lambda=0.2" \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s

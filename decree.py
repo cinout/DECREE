@@ -28,7 +28,6 @@ from utils.encoders import (
     process_openclip_encoder,
 )
 
-
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 timestamp = (
     datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -250,7 +249,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
         load_model = load_model.to(DEVICE)
         mask_size = 224
     elif model_source == "openclip":
-        (model_name, pretrained_key) = encoder_path
+        model_name, pretrained_key = encoder_path
         model_ckpt_path = model_name + "_" + pretrained_key
         load_model, _, _ = open_clip.create_model_and_transforms(
             model_name, pretrained=pretrained_key
@@ -261,7 +260,7 @@ def main(args, model_source, gt, id, encoder_path, fp):
             mask_size = mask_size[0]
 
     elif model_source == "openclip_backdoored":
-        (bd_model_path, arch, key) = encoder_path
+        bd_model_path, arch, key = encoder_path
         load_model, _, _ = open_clip.create_model_and_transforms(arch, pretrained=key)
 
         mask_size = load_model.visual.image_size
@@ -700,19 +699,19 @@ if __name__ == "__main__":
     #             main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     # for adaptive_lambda in ["adaptive_lambda_0.5", "adaptive_lambda_5"]:
-    # for encoder_name in os.listdir(args.bd_encoders_folder):
+    for encoder_name in os.listdir(args.bd_encoders_folder):
 
-    #     name_split = encoder_name.split("_")
-    #     arch = name_split[1]
-    #     key = "_".join(name_split[2:-6])
+        name_split = encoder_name.split("_")
+        arch = name_split[1]
+        key = "_".join(name_split[2:-6])
 
-    #     trigger = name_split[-5]
-    #     trainset_percent = name_split[-3]
-    #     ep = name_split[-1].split(".")[0]
-    #     id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+        trigger = name_split[-5]
+        trainset_percent = name_split[-3]
+        ep = name_split[-1].split(".")[0]
+        id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
 
-    #     encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
+        encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
 
-    #     main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
+        main(args, "openclip_backdoored", 1, id, (encoder_path, arch, key), fp)
 
     fp.close()
