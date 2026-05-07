@@ -704,12 +704,13 @@ if __name__ == "__main__":
 
         name_split = encoder_name.split("_")
         arch = name_split[1]
-        key = "_".join(name_split[2:-6])
+        key = "_".join(name_split[2:]).split("_trigger")[0]
 
-        trigger = name_split[-5]
-        trainset_percent = name_split[-3]
-        ep = name_split[-1].split(".")[0]
-        id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+        # trigger = name_split[-5]
+        # trainset_percent = name_split[-3]
+        # ep = name_split[-1].split(".")[0]
+        # id = f"OPENCLIP_BD_{trigger}_trainsetp_{trainset_percent}_epoch_{ep}_{arch}_{key}"
+        id = f"OPENCLIP_BD_{arch}_{key}"
 
         encoder_path = os.path.join(args.bd_encoders_folder, encoder_name)
 
