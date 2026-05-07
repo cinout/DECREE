@@ -450,10 +450,37 @@ class PoisonedDataset(torch.utils.data.Dataset):
 
         if self.adaptive_attack_option_2:
             # build bd_img according to whether we have multiple triggers
+            ###### all clean images will return a bd_img
+            # if self.trigger_fns_list is not None:
+            #     ti = random.randrange(len(self.trigger_fns_list))
+            #     bd_img = self.trigger_fns_list[ti](img)
+            #     if idx in self.poison_indices:
+            #         is_poison = 1
+            #         if (
+            #             self.multi_trigger_mode == "multi_target"
+            #             and self.target_indices_list is not None
+            #         ):
+            #             label = self.target_indices_list[ti]
+            #         else:
+            #             label = self.target_index
+            #         return bd_img, label, is_poison, bd_img
+            #     else:
+            #         return img, label, is_poison, bd_img
+            # else:
+            #     bd_img = self.trigger_fn(img)
+            #     if idx in self.poison_indices:
+            #         # change label to target label
+            #         label = self.target_index
+            #         is_poison = 1
+            #         return bd_img, label, is_poison, bd_img
+            #     else:
+            #         return img, label, is_poison, bd_img
+
+            ######## bd images will return clean counterpart
             if self.trigger_fns_list is not None:
                 ti = random.randrange(len(self.trigger_fns_list))
-                bd_img = self.trigger_fns_list[ti](img)
                 if idx in self.poison_indices:
+                    bd_img = self.trigger_fns_list[ti](img)
                     is_poison = 1
                     if (
                         self.multi_trigger_mode == "multi_target"
@@ -462,18 +489,18 @@ class PoisonedDataset(torch.utils.data.Dataset):
                         label = self.target_indices_list[ti]
                     else:
                         label = self.target_index
-                    return bd_img, label, is_poison, bd_img
+                    return bd_img, label, is_poison, img
                 else:
-                    return img, label, is_poison, bd_img
+                    return img, label, is_poison, img
             else:
-                bd_img = self.trigger_fn(img)
                 if idx in self.poison_indices:
+                    bd_img = self.trigger_fn(img)
                     # change label to target label
                     label = self.target_index
                     is_poison = 1
-                    return bd_img, label, is_poison, bd_img
+                    return bd_img, label, is_poison, img
                 else:
-                    return img, label, is_poison, bd_img
+                    return img, label, is_poison, img
         else:
 
             if idx in self.poison_indices:

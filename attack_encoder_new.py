@@ -387,7 +387,7 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
             targets = content[1].to(device, non_blocking=True)  # indices of classes
             is_poison = content[2].to(device, non_blocking=True)
             if args.adaptive_attack_option_2:
-                bd_images_for_adaptive = content[3].to(device, non_blocking=True)
+                clean_images_for_adaptive = content[3].to(device, non_blocking=True)
 
             image_features = bd_model.encode_image(
                 last_normalize(images), normalize=True
@@ -445,17 +445,16 @@ def run(args, encoder_arch, encoder_key, manual_id, bd_model_path=None):
 
                 loss = loss + args.adaptive_lambda * adaptive_loss
             elif args.adaptive_attack_option_2:
-                bd_image_features = bd_model.encode_image(
-                    last_normalize(bd_images_for_adaptive), normalize=True
+                clean_for_adaptive_features = bd_model.encode_image(
+                    last_normalize(clean_images_for_adaptive), normalize=True
                 )
-
-                # Only penalize clean samples (is_poison == False).
-                clean_mask = ~is_poison.bool()
-                if clean_mask.sum() > 0:
-                    clean_feats = image_features[clean_mask]
-                    clean_bd_feats = bd_image_features[clean_mask]
+                # Only penalize bd samples (is_poison == True).
+                bd_mask = is_poison.bool()
+                if bd_mask.sum() > 0:
+                    bd_feats = image_features[bd_mask]
+                    clean_bd_feats = clean_for_adaptive_features[bd_mask]
                     # Both are normalized, so dot product = cosine similarity
-                    cos_sims = (clean_feats * clean_bd_feats).sum(dim=1)
+                    cos_sims = (bd_feats * clean_bd_feats).sum(dim=1)
                     adaptive_loss = cos_sims.mean()
                 else:
                     adaptive_loss = torch.tensor(0.0, device=image_features.device)
