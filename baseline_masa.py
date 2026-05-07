@@ -1,6 +1,5 @@
 import os
 
-
 os.environ["HF_HOME"] = os.path.abspath(
     "/data/gpfs/projects/punim1623/DECREE/external_clip_models"
 )
@@ -284,6 +283,34 @@ if __name__ == "__main__":
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+    """
+    multi trigger special cases (TODO: remove later)
+    """
+    saved_encoders_folder = "saved_openclip_bd_encoders_multi_trigger_multi_target"
+    all_bd_encoders = []
+    for encoder_name in os.listdir(saved_encoders_folder):
+
+        name_split = encoder_name.split("_")
+        arch = name_split[1]
+        key = "_".join(name_split[2:]).split("_trigger")[0]
+
+        id = f"OPENCLIP_BD_{arch}_{key}"
+
+        encoder_path = os.path.join(saved_encoders_folder, encoder_name)
+        enc_info = {
+            "id": id,
+            "arch": arch,
+            "key": key,
+            "path": encoder_path,
+            "gt": 1,
+        }
+
+        all_bd_encoders.append(("openclip_backdoored", enc_info))
+    for enc in all_bd_encoders:
+        agg_masa(args, enc)
+
+    exit()
 
     """
     Setup poisoned encoders

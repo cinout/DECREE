@@ -13,7 +13,7 @@
 
 #SBATCH --job-name="masa"
 #SBATCH --account=punim1623
-#SBATCH --time=1-23:00:00
+#SBATCH --time=0-13:00:00
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -35,8 +35,6 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u baseline_masa.py \
-  --clip_type bd_set_2 \
-  --seed 30 \
   
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
