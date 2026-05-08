@@ -35,8 +35,8 @@ eval "$(conda shell.bash hook)"
 conda activate anogpt
 
 python -u decree.py \
-  --seed 10 \
-  --bd_encoders_folder saved_openclip_bd_encoders_adaptive_opt3_lambda_1 \
+  --seed 20 \
+  --bd_encoders_folder saved_openclip_bd_encoders_adaptive_opt3_lambda_0.5 \
 
 ##Log this job's resource usage stats###
 my-job-stats -a -n -s
