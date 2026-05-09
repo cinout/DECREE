@@ -684,10 +684,11 @@ sns.kdeplot(
     fill=True,
     alpha=0.35,
 )
-plt.xlabel(r"s")
-plt.ylabel("Density")
+plt.xlabel(r"s", fontsize=18)
+plt.ylabel("Density", fontsize=18)
 # plt.title("Distributions of three lists")
-plt.legend()
+plt.legend(fontsize=18)
+plt.tick_params(axis="both", labelsize=18)
 plt.tight_layout()
 out_path = "dist_plot.png"
 plt.savefig(out_path, dpi=300)

@@ -1,0 +1,82 @@
+from sklearn.metrics import roc_auc_score, average_precision_score
+
+# positive (1): backdoor
+# negative (0): clean
+
+file_names = [
+    # "results/*results_Eminspector_rn101_runall.txt",
+    # "results/*results_Eminspector_vit_b_16_32_runall.txt",
+    # "results/*results_Eminspector_threeencoders_runall.txt",
+    # "results/*results_MASA_all.txt",
+    # "results/*results_openclip_cossim_comprehensive.txt",  # our ablation result with mask regularization. It also contains DECREE results
+    # "results/*results_decree_nomask_dataset_cc3m800.txt"  # our ablation study with cc3m
+    "results/*results_invert_onlycosine_no_maskreg.txt",  # our main result
+]
+
+
+threshold = 0.44 + 0.13
+for file_name in file_names:
+    print(f"============={file_name}=============")
+    file_handler = open(file_name, "r")
+    lines = file_handler.readlines()
+
+    tp, tn, fp, fn = 0, 0, 0, 0
+    tp_list, tn_list, fp_list, fn_list = [], [], [], []
+    total_clean, total_backdoor = 0, 0
+
+    for line in lines:
+        contents = line.split(",")
+        id, gt, pl1_norm, l2_norm_quantile = (
+            contents[0],
+            int(contents[1]),
+            float(contents[2]),
+            float(contents[3]),
+        )
+
+        # print(l2_norm_quantile)
+
+        pred = 1 if l2_norm_quantile > threshold else 0
+
+        if gt == 0:
+            # clean encoder
+            total_clean += 1
+            if pred == 0:
+                tn += 1
+                tn_list.append(id)
+            else:
+                fp += 1
+                fp_list.append(id)
+        else:
+            # poisoned encoder
+            total_backdoor += 1
+            if pred == 0:
+                fn += 1
+                fn_list.append(id)
+            else:
+                tp += 1
+                tp_list.append(id)
+
+    acc = (tp + tn) / (tp + tn + fp + fn)
+    tpr = tp / (tp + fn) if (tp + fn) > 0 else 0
+    fpr = fp / (fp + tn) if (fp + tn) > 0 else 0
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+    #
+    f1 = 2 * tp / (2 * tp + fp + fn) if (2 * tp + fp + fn) > 0 else 0
+
+    file_handler.close()
+    print(f"TP\tFP\tFN\tTN\tACC\tTPR\tFPR\tPrecision\tRecall\tF1\n")
+    print(
+        f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}\t{tpr*100:.1f}\t{fpr*100:.1f}\t{precision*100:.1f}\t{recall*100:.1f}\t{f1*100:.1f}"
+    )
+    print("--------------")
+    print(f"Total Clean: {total_clean}, Total Backdoor: {total_backdoor}")
+# print("--------------")
+# print(f"TP: {tp_list}")
+# print("--------------")
+# print(f"FP: {fp_list}")
+# print("--------------")
+# print(f"FN: {fn_list}")
+# print("--------------")
+# print(f"TN: {tn_list}")
+# print("--------------")

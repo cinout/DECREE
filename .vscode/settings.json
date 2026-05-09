@@ -1,5 +1,16 @@
 {
   "python-envs.defaultEnvManager": "ms-python.python:conda",
   "python-envs.defaultPackageManager": "ms-python.python:conda",
-  "python-envs.pythonProjects": []
+  "python-envs.pythonProjects": [],
+
+  "editor.showUnused": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportUnusedVariable": "warning",
+    "reportUnusedImport": "warning"
+  },
+  "workbench.colorCustomizations": {
+    "editorUnnecessary.foreground": "#6c6c6c"
+  }
 }
+
