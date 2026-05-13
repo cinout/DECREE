@@ -14,9 +14,10 @@ file_names = [
 ]
 
 
-threshold = 0.44 + 0.13
+# threshold = 0.40 + 0.13  # cc3m
+threshold = 0.44 + 0.26  # imagenet-10
 for file_name in file_names:
-    print(f"============={file_name}=============")
+    print(f"============={file_name} threshold:{threshold}=============")
     file_handler = open(file_name, "r")
     lines = file_handler.readlines()
 
@@ -65,9 +66,9 @@ for file_name in file_names:
     f1 = 2 * tp / (2 * tp + fp + fn) if (2 * tp + fp + fn) > 0 else 0
 
     file_handler.close()
-    print(f"TP\tFP\tFN\tTN\tACC\tTPR\tFPR\tPrecision\tRecall\tF1\n")
+    print(f"TP\tFP\tFN\tTN\tACC\tTPR\tFPR\tPrec\tF1\n")
     print(
-        f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}\t{tpr*100:.1f}\t{fpr*100:.1f}\t{precision*100:.1f}\t{recall*100:.1f}\t{f1*100:.1f}"
+        f"{tp}\t{fp}\t{fn}\t{tn}\t{acc*100:.1f}\t{tpr*100:.1f}\t{fpr*100:.1f}\t{precision*100:.1f}\t{f1*100:.1f}"
     )
     print("--------------")
     print(f"Total Clean: {total_clean}, Total Backdoor: {total_backdoor}")
